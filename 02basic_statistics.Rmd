@@ -1,0 +1,514 @@
+---
+title: "02basic_statistics"
+author: "Suguru Otani"
+date: "2019/7/3"
+output: 
+    html_document:
+      theme: cosmo
+      highlight: monochrome
+      toc: true
+      toc_float: false
+      toc_depth: 4
+      number_sections: true
+      code_folding: hide
+---
+<style>
+body, h1, h2, h3, h4 {
+    font-family: "Bookman", serif;
+}
+
+body {
+    color: #333333;
+}
+a, a:hover {
+    color: red;
+}
+pre {
+    font-size: 10px;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+search()
+```
+
+## Trend of world's shipping tonnage
+
+* Gross Tonnage of Japanese Merchant Vessels from http://www.mlit.go.jp/hakusyo/transport/index1_.htm
+* Gross Tonnage of top6 countries from http://www.mlit.go.jp/hakusyo/transport/shouwa41/ind060101/frame.html and Loyd statistics (missing 1961-1963 now)
+
+```{r}
+data <- readr::read_csv("data_totaltons.csv")
+data
+d <- data %>%
+  dplyr::select(-year_j,-Number, -shipping_quantity_world, -shipping_quantity_japan, -grosstons_liberia ) %>%
+  tidyr::gather(key = "variable", value = "value", -year) 
+head(d, 3)
+d2 <- d %>% 
+  group_by(year) %>%
+  summarize(mean_value = mean(value)) %>%
+  # pipe the above data frame into the knitr::kable function
+  knitr::kable()
+theme_set(theme_minimal())
+g <- ggplot(d, aes(x = year, y = value)) + 
+  geom_line(aes(color = variable), size = 1, alpha = 0.6) +
+  theme_minimal() + 
+  ggtitle("World's shipping tonnage") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("year") + ylab("shipping tonnage (million tons)") + expand_limits(y=0)
+g
+ggplot2::ggsave("shippingtonnage.png")
+```
+
+
+```{r}
+g <- ggplot(d, aes(x = year, y = value)) + 
+  geom_line(aes(color = variable), size = 1, alpha = 0.6) + 
+  facet_wrap(~variable) +
+  theme_minimal() + 
+  ggtitle("World's shipping tonnage") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("year") + ylab("shipping tonnage (million tons)") + expand_limits(y=0)
+g
+
+```
+
+## Trend of world's freight movement tonnage
+
+* shipping_quantity_japan is from book3 
+  + Ministry of Transport Shipping Bureau (missing 1961-1965 now)
+  + http://www.mlit.go.jp/hakusyo/transport/index1_.htm
+  
+```{r }
+d <- readr::read_csv("data_totaltons.csv")
+d
+d <- d %>%
+  dplyr::select(year, shipping_quantity_world, shipping_quantity_japan ) %>%
+  tidyr::gather(key = "variable", value = "value", -year)
+d
+theme_set(theme_minimal())
+g <- ggplot(d, aes(x = year, y = value)) + 
+  geom_line(aes(color = variable), size = 1, alpha = 0.7) +
+  theme_minimal() + 
+  ggtitle("World's freight movement tonnage") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("year") + ylab("freight movement tonnage (million tons)")
+g
+ggplot2::ggsave("freightmovementtonnage.png")
+```
+## Trends of the number of shipping firms in Japan
+
+```{r }
+d <- readr::read_csv("number_of_firms.csv")
+d
+d <- d %>%
+  dplyr::select(year, number_matched, unmatched ) %>%
+  tidyr::gather(key = "variable", value = "value", -year)
+d
+theme_set(theme_minimal())
+g <- ggplot(d, aes(x = year, y = value)) + 
+  geom_line(aes(color = variable), size = 1, alpha = 0.7) +
+  theme_minimal() + 
+  ggtitle("the number of shipping firms in Japan: (Missing after 1966)") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("year") + ylab("the number of firms")
+g
+ggplot2::ggsave("number_of_firms.png")
+```
+
+
+
+
+## planned shipbuilding
+
+The payment of planned shipbuilding is needed for calculation of the estimated amount of financial support.
+* https://www.mlit.go.jp/hakusyo/transport/shouwa39/ind060103/001.html#tabII-(I)-12
+
+
+```{r }
+d <- readr::read_csv("data_totaltons.csv")
+d
+d <- d %>%
+  dplyr::select(year, shipping_quantity_world, shipping_quantity_japan ) %>%
+  tidyr::gather(key = "variable", value = "value", -year)
+d
+theme_set(theme_minimal())
+g <- ggplot(d, aes(x = year, y = value)) + 
+  geom_line(aes(color = variable), size = 1, alpha = 0.7) +
+  theme_minimal() + 
+  ggtitle("World's freight movement tonnage") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("year") + ylab("freight movement tonnage (million tons)")
+g
+ggplot2::ggsave("freightmovementtonnage.png")
+```
+
+Note that `r d %>% count()` is the dimension
+
+## Descriptive data
+
+
+
+
+## Including Plots Phylogenetic tree
+
+Phylogenetic tree 
+See the https://cran.r-project.org/web/packages/data.tree/vignettes/data.tree.html#trees
+
+```{r}
+library(data.tree)
+
+top <- Node$new("Nippon Yusen")
+  second <- top$AddChild("Nippon Yusen")
+  temp <- second$AddChild("Hachimura Kisen")
+  temp <- second$AddChild("Kyoritsu Kisen")
+  temp <- second$AddChild("Okada Kisen")
+  temp <- second$AddChild("Taiheiyo Kaiun Sangyo")
+  temp <- second$AddChild("Kyoei tanker")
+  temp <- second$AddChild("Tokyo senpaku")
+  temp <- second$AddChild("Maruei Kisen")
+  temp <- second$AddChild("Hinomaru Kisen")
+  temp <- second$AddChild("Yamamoto Kisen")
+  temp <- second$AddChild("Mitsui Senpaku")
+  temp <- second$AddChild("Handa Sangyo Kisen")
+  temp <- second$AddChild("Taiheiyo Kisen")
+  temp <- second$AddChild("Fuji Kaiun")
+  temp <- second$AddChild("Nissan Kisen")
+  research <- top$AddChild("Mitsubishi Kaiun")
+  newProductLine <- research$AddChild("Fuji Mokuzai Boueki")
+  newProductLine <- research$AddChild("Chiyoda Kisen")
+  newProductLine <- research$AddChild("Yachiyo Kisen")
+  newProductLine <- research$AddChild("Kotani Kisen")
+  newProductLine <- research$AddChild("Chiyoda Koseki Yuso")
+  second_shinwa <- top$AddChild("Shinwa Kaiun")
+  temp <- second_shinwa$AddChild("Manno Kisen")
+  temp <- second_shinwa$AddChild("Haruumi Senpaku")
+  newLabs <- top$AddChild("Taiheiyo Kisen")
+  second_taiheiyo <- top$AddChild("Taiheiyo Kaiun")
+  temp <- second_taiheiyo$AddChild("Fuji Kisen")
+  temp <- second_taiheiyo$AddChild("Daiko Shosen")
+  newLabs <- top$AddChild("Taiyo Shosen")
+print(top)
+plot(top)
+
+SetGraphStyle(top, rankdir = "TB")
+SetEdgeStyle(top, arrowhead = "vee", color = "grey35", penwidth = 5, fontcolor = "black")
+SetNodeStyle(top, style = "filled,rounded", shape = "box", fillcolor = "Yellow",
+             fontcolor = "black", fontname = "helvetica", tooltip = GetDefaultTooltip)
+#SetNodeStyle(top$`Mitsubishi Kaiun`, fillcolor = "LightBlue", penwidth = "2px")
+#SetNodeStyle(Node$`Nippon Yusen`, fillcolor = "Red", penwidth = "2px")
+#SetNodeStyle(top, fillcolor = "LightBlue", penwidth = "2px")
+
+#png(file="Tree_Nippon_Yusen.png")
+#plot(top)
+#dev.off()
+plot(top)
+```
+
+```{r}
+library(data.tree)
+top <- Node$new("Syosen Mitsui Senpaku")
+  accounting <- top$AddChild("Mitsui Senpaku")
+    temp <- accounting$AddChild("Kusakabe Kisen")
+    temp <- accounting$AddChild("Inui Kisen")
+    temp <- accounting$AddChild("Meiji Kaiun")
+    temp <- accounting$AddChild("Touyou Kaiun")
+    temp <- accounting$AddChild("Kyoritsu Kisen")
+    temp <- accounting$AddChild("Tochigi Kisen")
+    temp <- accounting$AddChild("Sugaya Kisen")
+    temp <- accounting$AddChild("Baba Kisen")
+    temp <- accounting$AddChild("Mitsui Kinkai Kisen")
+    temp <- accounting$AddChild("Shimatani Kisen")
+    temp <- accounting$AddChild("Marutani Syokai")
+    temp <- accounting$AddChild("Itaya Syosen")
+  research <- top$AddChild("Osaka Shosen")
+    temp <- research$AddChild("Daiko Syosen")
+    temp <- research$AddChild("Nihon Sangyo Junkou Mihonichi Kyokai")
+    temp <- research$AddChild("Tozai Kisen")
+    temp <- research$AddChild("Sawayama Kisen")
+    temp <- research$AddChild("Sanko Kisen")
+    temp <- research$AddChild("Nihonkai Kisen")
+    temp <- research$AddChild("Tamai Syosen")
+    temp <- research$AddChild("Namura Kisen")
+    temp <- research$AddChild("Daian Syosen")
+    temp <- research$AddChild("Kinkai Syosen")
+    temp <- research$AddChild("Daido Kaiun")
+    temp <- research$AddChild("Touwa Senpaku")
+    temp <- research$AddChild("Awakoku kyodo kisen")
+    temp <- research$AddChild("Kamimine Kaiun")
+    temp <- research$AddChild("Takamasa Senpaku")
+    temp <- research$AddChild("Yachiyo kyodo kisen")
+    temp <- research$AddChild("Sugaya Kisen")
+    temp <- research$AddChild("Toukou Syosen")
+    temp <- research$AddChild("Hiroumi Kisen")
+    second <- top$AddChild("Daiichi Chuo Kisen")
+    temp <- second$AddChild("Sougo kisen")
+    temp <- second$AddChild("Hakusui Kisen")
+    temp <- second$AddChild("Tokushima Syosen")
+    temp <- second$AddChild("Sanoyasu syoji")
+    second_nihonkai <- top$AddChild("Nihonkai Kisen")
+    temp <- second_nihonkai$AddChild("Osaka Syosen")
+    temp <- second_nihonkai$AddChild("Daiko Syosen")
+    temp <- second_nihonkai$AddChild("Kotani Kaiun")
+print(top)
+plot(top)
+
+SetGraphStyle(top, rankdir = "TB")
+SetEdgeStyle(top, arrowhead = "vee", color = "grey35", penwidth = 2, fontcolor = "black")
+SetNodeStyle(top, style = "filled,rounded", shape = "box", fillcolor = "Green",
+             fontcolor = "black", fontname = "helvetica", tooltip = GetDefaultTooltip)
+#SetNodeStyle(top$`Osaka Shosen`, fillcolor = "LightBlue", penwidth = "2px")
+plot(top)
+```
+
+```{r}
+library(data.tree)
+top <- Node$new("Yamashita Kisen = Yamashita Shinnihon Kisen")
+  accounting <- top$AddChild("Daido Kaiun")
+    temp <- accounting$AddChild("Tokai Kaiun")
+    temp <- accounting$AddChild("Hiroumi Kisen")
+    temp <- accounting$AddChild("Matsuoka Kisen")
+    temp <- accounting$AddChild("Uwajima Unyu")
+
+  research <- top$AddChild("Nitto Syosen")
+    temp <- research$AddChild("Nisshin Kaiun")
+    temp <- research$AddChild("Nitto Kinkai")
+    temp <- research$AddChild("Nissin Kaiun")
+    temp <- research$AddChild("Kokusai Kisen")
+
+print(top)
+plot(top)
+
+SetGraphStyle(top, rankdir = "TB")
+SetEdgeStyle(top, arrowhead = "vee", color = "grey35", penwidth = 5, fontcolor = "black")
+SetNodeStyle(top, style = "filled,rounded", shape = "box", fillcolor = "LightBlue",
+             fontcolor = "black", fontname = "helvetica", tooltip = GetDefaultTooltip)
+#SetNodeStyle(top$`Osaka Shosen`, fillcolor = "LightBlue", penwidth = "2px")
+plot(top)
+```
+
+
+```{r}
+library(data.tree)
+top <- Node$new("Yamashita Kisen = Yamashita Shinnihon Kisen")
+  accounting <- top$AddChild("Kawasaki Kisen")
+    temp <- accounting$AddChild("Nichitoyo Kaiun")
+    temp <- accounting$AddChild("Goyo Kisen")
+    temp <- accounting$AddChild("Taiyo Kaiun")
+    temp <- accounting$AddChild("Hara Syosen")
+    temp <- accounting$AddChild("Kobe Kisen")
+    temp <- accounting$AddChild("Miyaji Kisen")
+    temp <- accounting$AddChild("Nihon Kisen")
+    temp <- accounting$AddChild("Nihon Syosen")
+    temp <- accounting$AddChild("Mitsui Senpaku")
+    temp <- accounting$AddChild("Nichiro Gyogyou")
+    temp <- accounting$AddChild("Asahi Kisen")
+    temp <- accounting$AddChild("Nihon Yusosen")
+    temp <- accounting$AddChild("Shinwa Kaiun")
+
+  research <- top$AddChild("Iino Kaiun")
+    temp <- research$AddChild("Kunimitsu Kaiun")
+    temp <- research$AddChild("Kokusai Kaiun")
+    temp <- research$AddChild("Nihon Senpaku")
+    temp <- research$AddChild("Nihon Umiriku")
+    temp <- research$AddChild("Hokusei Kaiun")
+print(top)
+plot(top)
+
+SetGraphStyle(top, rankdir = "TB")
+SetEdgeStyle(top, arrowhead = "vee", color = "grey35", penwidth = 5, fontcolor = "black")
+SetNodeStyle(top, style = "filled,rounded", shape = "box", fillcolor = "Blue",
+             fontcolor = "black", fontname = "helvetica", tooltip = GetDefaultTooltip)
+#SetNodeStyle(top$`Osaka Shosen`, fillcolor = "LightBlue", penwidth = "2px")
+plot(top)
+```
+
+
+```{r}
+library(data.tree)
+top <- Node$new("Yamashita Kisen = Yamashita Shinnihon Kisen")
+  accounting <- top$AddChild("Yamashita Kisen")
+    temp <- accounting$AddChild("Futaba Kaiun")
+    temp <- accounting$AddChild("Yamawa syosen")
+    temp <- accounting$AddChild("Yamatomo Kisen")
+    temp <- accounting$AddChild("Kasiwagi kisen sangyo")
+    temp <- accounting$AddChild("Nakamura Kisen")
+    temp <- accounting$AddChild("Yamashita Kinkai Kisen")
+    temp <- accounting$AddChild("Tarumoto Kisen")
+    temp <- accounting$AddChild("Nihon Senpaku")
+    temp <- accounting$AddChild("Hanshin Kisen")
+    temp <- accounting$AddChild("Shimatani Kisen")
+    temp <- accounting$AddChild("Tokushima Syokai")
+  research <- top$AddChild("Shinnihon Kisen")
+    temp <- research$AddChild("Konan Kisen")
+    temp <- research$AddChild("Tsurumaru Kisen")
+    temp <- research$AddChild("Shin Hitachi Kisen")
+    temp <- research$AddChild("Asahi Kaiun")
+    temp <- research$AddChild("Konan Kisen")
+    temp <- research$AddChild("Shinnihon senpaku sangyo")
+  second <- top$AddChild("Tamai Syosen")
+    temp <- second$AddChild("Sougo kisen")
+    temp <- second$AddChild("Hakusui Kisen")
+    temp <- second$AddChild("Tokushima Syosen")
+    temp <- second$AddChild("Sanoyasu syoji")
+  second_nissyo <- top$AddChild("Nissyo Kisen")
+    temp <- second_nissyo$AddChild("Maruni syokai")
+    temp <- second_nissyo$AddChild("Oohoshi Kaiun")
+    temp <- second_nissyo$AddChild("Komine Kisen")
+    temp <- second_nissyo$AddChild("Masamuki Kaiun")
+    temp <- second_nissyo$AddChild("Satoukoku Kisen")
+    temp <- second_nissyo$AddChild("Sumitomo Kaiun")
+    temp <- second_nissyo$AddChild("Maruraku Syoun")
+    temp <- second_nissyo$AddChild("Okada Kaiun")
+    temp <- second_nissyo$AddChild("Syotoku Suisan")
+    temp <- second_nissyo$AddChild("Oukouchi Kaiun")
+    temp <- second_nissyo$AddChild("Morijitu Unyu")
+  second_morita <- top$AddChild("Morita Kisen")
+  second_nakamura <- top$AddChild("Nakamura Kisen")
+    temp <- second_nakamura$AddChild("Fukujin Kisen")
+    
+  
+print(top)
+plot(top)
+
+SetGraphStyle(top, rankdir = "TB")
+SetEdgeStyle(top, arrowhead = "vee", color = "grey35", penwidth = 5, fontcolor = "black")
+SetNodeStyle(top, style = "filled,rounded", shape = "box", fillcolor = "Purple",
+             fontcolor = "black", fontname = "helvetica", tooltip = GetDefaultTooltip)
+#SetNodeStyle(top$`Osaka Shosen`, fillcolor = "LightBlue", penwidth = "2px")
+plot(top)
+```
+
+```{r}
+library(data.tree)
+top <- Node$new("Syowa Kaiun")
+  accounting <- top$AddChild("Nihon Yusosen")
+  research <- top$AddChild("Nissan Kisen")
+    temp <- research$AddChild("Nissan Senpaku")
+    temp <- research$AddChild("Nagoya Kisen")
+  research2 <- top$AddChild("Terukuni Kaiun")
+  research3 <- top$AddChild("Hinode Kisen")
+    temp <- research3$AddChild("Nihon Yusosen")
+    temp <- research3$AddChild("Konan Kisen")
+    temp <- research3$AddChild("Nihon Kisen")
+    temp <- research3$AddChild("Tomikuni Kaiun")
+    temp <- research3$AddChild("Shina Aahikawa")
+  research4 <- top$AddChild("Nichikuni Kisen")
+
+print(top)
+plot(top)
+
+SetGraphStyle(top, rankdir = "TB")
+SetEdgeStyle(top, arrowhead = "vee", color = "grey35", penwidth = 5, fontcolor = "black")
+SetNodeStyle(top, style = "filled,rounded", shape = "box", fillcolor = "deeppink",
+             fontcolor = "black", fontname = "helvetica", tooltip = GetDefaultTooltip)
+#SetNodeStyle(top$`Osaka Shosen`, fillcolor = "LightBlue", penwidth = "2px")
+plot(top)
+```
+
+## Basic statistics
+```{r}
+
+
+```
+
+```{r}
+data <- readr::read_csv("200318firmdata.csv")
+data <- data[,-3:-4]
+
+summary(data)
+```
+
+
+
+
+
+```{r}
+library(data.tree)
+acme <- Node$new("Iino Kaiun")
+  accounting <- acme$AddChild("Iino Kaiun")
+    software <- accounting$AddChild("Kyoei tanker")
+    standards <- accounting$AddChild("Tokyo senpaku")
+  research <- acme$AddChild("Kawasaki Kisen")
+    newProductLine <- research$AddChild("Shinwa Kaiun")
+    newLabs <- research$AddChild("Taiheiyo Kisen")
+    newLabs <- research$AddChild("Taiheiyo Kaiun")
+    newLabs <- research$AddChild("Taiyo Shosen")
+print(acme)
+plot(acme)
+
+SetGraphStyle(acme, rankdir = "TB")
+SetEdgeStyle(acme, arrowhead = "vee", color = "grey35", penwidth = 2, fontcolor = "black")
+SetNodeStyle(acme, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow",
+             fontcolor = "black", fontname = "helvetica", tooltip = GetDefaultTooltip)
+SetNodeStyle(acme$`Kawasaki Kisen`, fillcolor = "LightBlue", penwidth = "2px")
+plot(acme)
+```
+
+
+```{r, echo=TRUE}
+## Create tree structure in nested list
+makePtree <- function(data, prev=1) {
+    tab <- (t <- table(data[,1L]))[t>0] / nrow(data)*prev                     # calculate proportions at current level
+    ns <- sprintf("%s.%s=%.2f", names(data)[1L], names(tab), unname(c(tab)))  # names
+    if (NCOL(data) < 2L) return( ns )                                         # we are done, return names only
+    setNames(mapply(makePtree, split(data[,-1L,drop=F], data[,1L], drop=T),
+                    tab, SIMPLIFY = F), ns)                                   # recurse
+}
+
+## Create edgelist from nested list for igraph::graph_from_data_frame
+lst2edge <- function(lst) {
+    if (!is.list(lst)) return( data.frame(a=character(0), b=character(0)) )
+    do.call(rbind,
+            c(lapply(names(lst), function(x) {
+                if (!is.list(lst[[x]])) return( data.frame(a=x, b=lst[[x]]) )
+                data.frame(a=x, b=names(lst[[x]]))
+            }), lapply(lst, lst2edge)))
+}
+
+## sample data
+df<-data.frame( f1=factor( rep( LETTERS[1:2], each=50)),  
+                 f2=rep( letters[1:4], each=25),
+                 f3=rep( colors(1)[1:2], 25, each=2))
+
+## Apply functions
+lst <- makePtree(df)                                   # nested list
+dat <- lst2edge(lst)                                   # edgelist
+dat <- rbind(dat, data.frame(a="root", b=names(lst)))  # add a root node 
+
+## Make an igraph
+library(igraph)
+g <- graph_from_data_frame(dat)
+plot(g, layout=layout.reingold.tilford(g, root="root"))
+```
+
+```{r}
+## Create edgelist from nested list for igraph::graph_from_data_frame
+lst2edge <- function(lst) {
+    if (!is.list(lst)) return( data.frame(a=character(0), b=character(0)) )
+    do.call(rbind,
+            c(lapply(names(lst), function(x) {
+                if (!is.list(lst[[x]])) return( data.frame(a=x, b=paste0(x, lst[[x]])) )
+                data.frame(a=x, b=names(lst[[x]]))
+            }), lapply(lst, lst2edge)))
+}
+
+## Apply functions
+lst <- makePtree(df)                                           # nested list
+dat <- lst2edge(lst)                                           # edgelist
+dat <- rbind(dat, data.frame(a="root", b=names(lst)))          # add a root node 
+
+## Make an igraph
+g <- graph_from_data_frame(dat)
+
+## Fix the names of the last level (they are lengthened in lst2edge
+## so igraph doesn't show multiple incoming arrows to single nodes)
+V(g)$name <- gsub(".*?([^\\.]+=[^=]+$)", "\\1", V(g)$name)
+plot(g, layout=layout.reingold.tilford(g, root="root"),
+     vertex.label.dist=-0.1, vertex.label.degree=c(rep(pi/2, 7), rep(c(pi/2, 3*pi/2), 4)))
+```
+
