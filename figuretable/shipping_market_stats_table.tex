@@ -1,0 +1,19 @@
+%latex.default(file = table_name, title = "", booktabs = TRUE,     object = temp, col.just = rep("r", dim(temp)[2]), center = "none",     table.env = FALSE, cgroupTexCmd = "itshape", colnamesTexCmd = "itshape",     collabel.just = rep("r", dim(temp)[2]), rgroupTexCmd = "itshape",     n.rgroup = c(4, 5), rgroup = c("measure of economies of scale",         "measure of economies of scope"))%
+\begin{tabular}{lrrrrrrrr}
+\toprule
+\multicolumn{1}{l}{\itshape }&\multicolumn{1}{r}{\itshape N}&\multicolumn{1}{r}{\itshape mean}&\multicolumn{1}{r}{\itshape sd}&\multicolumn{1}{r}{\itshape min}&\multicolumn{1}{r}{\itshape q25}&\multicolumn{1}{r}{\itshape q50}&\multicolumn{1}{r}{\itshape q75}&\multicolumn{1}{r}{\itshape max}\tabularnewline
+\midrule
+{\itshape measure of economies of scale}&&&&&&&&\tabularnewline
+~~total tonnage size of liner&$118$&22334.220&82068.002&0.000&0.000&0.000&0.000&526000\tabularnewline
+~~total tonnage size of special&$118$&9541.415&19479.171&0.000&0.000&0.000&7204.500&98768\tabularnewline
+~~total tonnage size of tanker&$118$&20973.136&44468.924&0.000&0.000&0.000&24776.500&250173\tabularnewline
+~~total tonnage size of tramper&$118$&26962.186&38390.142&0.000&2283.250&11189.500&30933.750&166102\tabularnewline
+\midrule
+{\itshape measure of economies of scope}&&&&&&&&\tabularnewline
+~~share of liner&$118$&0.105&0.239&0.000&0.000&0.000&0.000&1\tabularnewline
+~~share of special&$118$&0.114&0.241&0.000&0.000&0.000&0.083&1\tabularnewline
+~~share of tanker&$118$&0.204&0.356&0.000&0.000&0.000&0.246&1\tabularnewline
+~~share of tramper&$118$&0.578&0.412&0.000&0.189&0.661&1.000&1\tabularnewline
+~~HHI based on carrier types&$118$&0.807&0.241&0.254&0.584&1.000&1.000&1\tabularnewline
+\bottomrule
+\end{tabular}

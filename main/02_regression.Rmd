@@ -223,7 +223,7 @@ Note that `r d %>% count()` is the dimension
 
 ```{r}
 #data <- readr::read_csv("200429firmdata.csv")
-data <- readr::read_csv("../input/201006firmdata.csv")
+data <- readr::read_csv("../input/210205firmdata_processed.csv")
 data <- data[,-3:-4]
 total_ton <- data[,4]+data[,5]+data[,6]+data[,7]
 colnames(data)[3:7] = c("type","liner","special","tramper","tanker")
@@ -366,7 +366,6 @@ x <- ggplot(data_hist, aes(x = value, fill = variable)) +
   labs("carrier type") +
   xlim(0,650000) + labs(fill="carrier type")
 g1 <- x
-#ggplot2::ggsave("carrier_type_tonnage.png")
 figure_name <- "../figuretable/carrier_type_tonnage.png"
 ggsave(filename = figure_name,
        plot = x,
@@ -429,7 +428,7 @@ ggsave(filename = figure_name,
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 library(cowplot)
-data <- readr::read_csv("../input/201006firmdata.csv")
+data <- readr::read_csv("../input/210205firmdata_processed.csv")
 data <- data %>% 
   dplyr::select(-source_name,-source_data)
 data <- data[,-8:-13]
@@ -443,6 +442,10 @@ colnames(data)=c("id", "name", "type","liner","special","tramper","tanker",
 
 data2 <- data %>% 
   dplyr::filter(is.na(type)!= 1) %>% 
+  dplyr::mutate(special = ifelse(is.na(special) == 1,
+                                 0, special)) %>%
+  dplyr::mutate(tramper = ifelse(is.na(tramper) == 1,
+                                 0, tramper)) %>%
   dplyr::mutate(total = liner + special + tramper + tanker) %>% 
   dplyr::mutate(firm_type = recode(type, 
                                  "合併会社"="main",
@@ -601,13 +604,6 @@ g5_liner <- ggplot(data2, aes(x ="", y = liner/10000, fill = group)) +
   ylab("share of tonnage size") + xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
-```
-
-
-```{r}
 g5_tramper <- ggplot(data2, aes(x ="", y = tramper/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Tramper") +
@@ -615,13 +611,6 @@ g5_tramper <- ggplot(data2, aes(x ="", y = tramper/10000, fill = group)) +
   ylab("share of tonnage size") + xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
-```
-
-
-```{r}
 g5_special <- ggplot(data2, aes(x ="", y = special/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Special") +
@@ -629,12 +618,6 @@ g5_special <- ggplot(data2, aes(x ="", y = special/10000, fill = group)) +
   ylab("share of tonnage size") + xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
-```
-
-```{r}
 g5_tanker <- ggplot(data2, aes(x ="", y = tanker/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Tanker") +
@@ -643,12 +626,7 @@ g5_tanker <- ggplot(data2, aes(x ="", y = tanker/10000, fill = group)) +
   coord_polar("y", start=0)
 legend <- cowplot::get_legend(g5_tanker)
 g5_tanker <- g5_tanker + theme(legend.position = "none")
-
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
 ```
-
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 if(0){
@@ -684,7 +662,74 @@ data2 <- data2 %>%
   dplyr::mutate(share_liner = liner/total) %>% 
   dplyr::mutate(share_special = special/total) %>%
   dplyr::mutate(share_tramper = tramper/total) %>% 
-  dplyr::mutate(share_tanker = tanker/total)
+  dplyr::mutate(share_tanker = tanker/total) %>% 
+  dplyr::filter(total > 0)
+# construct summary statistics table
+temp <- data2 %>%
+  dplyr::select(liner, special, tramper, tanker, 
+                share_liner, share_special, share_tramper, share_tanker,
+                HHI) %>% 
+  dplyr::rename(type_HHI = HHI,
+                tonnage_size_liner = liner,
+                tonnage_size_special = special,
+                tonnage_size_tramper = tramper,
+                tonnage_size_tanker = tanker) %>% 
+  tidyr::gather("variable", "value") %>%
+  dplyr::group_by(variable) %>%
+  dplyr::summarise(
+    N = sum(!is.na(value)),
+    mean = mean(value, na.rm = TRUE),
+    sd = sd(value, na.rm = TRUE),
+    min = min(value, na.rm = TRUE),
+    q25 = quantile(value, probs = .25, na.rm = TRUE),
+    q50 = quantile(value, probs = .5, na.rm = TRUE),
+    q75 = quantile(value, probs = .75, na.rm = TRUE),
+    max = max(value, na.rm = TRUE)) %>%
+  dplyr::mutate(
+    mean = format(round(mean, 3), 3),
+    sd = format(round(sd, 3), 3),
+    min = format(round(min, 3), 3),
+    q25 = format(round(q25, 3), 3),
+    q50 = format(round(q50, 3), 3),
+    q75 = format(round(q75, 3), 3),
+    max = format(round(max, 3), 3)) %>% 
+  dplyr::select(-variable) %>% 
+  as.data.frame()
+temp <- rbind(
+  temp[5:8,],
+  temp[1:4,],
+  temp[9,])
+rownames(temp) <-
+  c("total tonnage size of liner",
+    "total tonnage size of special",
+    "total tonnage size of tanker",
+    "total tonnage size of tramper",
+    "share of liner",
+    "share of special",
+    "share of tanker",
+    "share of tramper",
+    "HHI based on carrier types")
+# make a latex table
+table_name <-
+  "../figuretable/shipping_market_stats_table.tex"
+x <- Hmisc::latex(
+  file = table_name,
+  title = "",
+  booktabs = TRUE,
+  object = temp,
+  col.just = rep("r", dim(temp)[2]),
+  center = "none",
+  table.env = FALSE,
+  cgroupTexCmd = "itshape",
+  colnamesTexCmd = "itshape",
+  collabel.just = rep("r", dim(temp)[2]),
+  rgroupTexCmd = "itshape",
+  n.rgroup = c(4,5),
+  rgroup = c("measure of economies of scale", 
+             "measure of economies of scope")
+)
+
+# construct data for preliminary regression
 buyer_id = data2$id
 target_id = data2$id
 id_new <- expand.grid(buyer_id, target_id)
@@ -703,9 +748,12 @@ data3 <- id_new %>%
   dplyr::mutate(Daiichi_xy = ifelse(Daiichi.x == Daiichi.y, 1, 0)) %>% 
   dplyr::mutate(Mitsui_xy = ifelse(Mitsui.x == Mitsui.y, 1, 0)) %>% 
   dplyr::mutate(MitsuiShintaku_xy = ifelse(MitsuiShintaku.x == MitsuiShintaku.y, 1, 0)) %>% 
-  dplyr::mutate(Sumitomo_xy = ifelse(Sumitomo.x == Sumitomo.y, 1, 0)) %>% 
-  dplyr::mutate(SumitomoShintaku_xy = ifelse(SumitomoShintaku.x == SumitomoShintaku.y, 1, 0)) %>% 
-  dplyr::mutate(Mitsubishi_xy = ifelse(Mitsubishi.x == Mitsubishi.y, 1, 0)) %>% 
+  dplyr::mutate(Sumitomo_xy = 
+                  ifelse(Sumitomo.x == Sumitomo.y, 1, 0)) %>% 
+  dplyr::mutate(SumitomoShintaku_xy =
+                  ifelse(SumitomoShintaku.x == SumitomoShintaku.y, 1, 0)) %>% 
+  dplyr::mutate(Mitsubishi_xy =
+                  ifelse(Mitsubishi.x == Mitsubishi.y, 1, 0)) %>% 
   dplyr::mutate(Kangin = ifelse(Kangin.x == Kangin.y, 1, 0)) %>% 
   dplyr::mutate(MitsubishiShintaku_xy = ifelse(MitsubishiShintaku.x == MitsubishiShintaku.y, 1, 0)) %>% 
   dplyr::mutate(Kobe_xy = ifelse(Kobe.x == Kobe.y, 1, 0)) %>% 
@@ -720,7 +768,8 @@ data3 <- data3 %>%
                   Chogin_xy + Yasuda_xy + Daiichi_xy + Mitsui_xy +
                   MitsuiShintaku_xy + Sumitomo_xy + SumitomoShintaku_xy +
                   Mitsubishi_xy + Kangin + MitsubishiShintaku_xy + Kobe_xy +
-                  Daiwa_xy + Sanwa_xy + Tokai_xy + YasudaShintaku_xy + others_xy) %>% 
+                  Daiwa_xy + Sanwa_xy + Tokai_xy +
+                  YasudaShintaku_xy + others_xy) %>% 
   dplyr::mutate(bank_coverage_ratio = bank_coverage/19) %>% 
   dplyr::mutate(same_type = ifelse(firm_type.x == firm_type.y, 1, 0))
 
@@ -789,9 +838,21 @@ x <- stargazer(res1,res2,res3,res4,res_LPM,
           )
 ```
 
+
 \begin{table}[!ht]
 \scriptsize
-\caption{\textbf{Preliminary regression results for predicting matchings}. Observation unit: a one-to-one matching pair. The sample size is determined by all possible matching pairs from 121 firms in my data set. }
+\caption{\textbf{Summary statistics for independent variables}. }
+\label{tb:shipping_market_stats_table}
+\begin{center}
+\input{../figuretable/shipping_market_stats_table.tex}
+\end{center}
+\end{table}
+
+
+
+\begin{table}[!ht]
+\scriptsize
+\caption{\textbf{Preliminary regression results for predicting matchings}. Observation unit: a one-to-one matching pair. The sample size is determined by all possible matching pairs from 118 firms in my data set. }
 \begin{center}
 \input{../figuretable/regression_matching.tex}
 \end{center}
