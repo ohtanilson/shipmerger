@@ -1,0 +1,9 @@
+base
+tidyr
+dplyr
+ggplot2
+readr
+gridExtra
+stargazer
+cowplot
+reshape2
