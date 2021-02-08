@@ -393,7 +393,7 @@ total_tonnage_table <- data %>%
   dplyr::mutate(firm_type = recode(type, 
                                   "合併会社"="main",
                                  "系列会社"="affiliate",
-                                 "専属会社"="single-relationship",
+                                 "専属会社"="wholly-controlled",
                                  "グループ外"="unmatched"
                                  ))
 x <- ggplot(total_tonnage_table, aes(x = total, fill = firm_type)) + 
@@ -450,7 +450,7 @@ data2 <- data %>%
   dplyr::mutate(firm_type = recode(type, 
                                  "合併会社"="main",
                                  "系列会社"="affiliate",
-                                 "専属会社"="single-relationship",
+                                 "専属会社"="wholly-controlled",
                                  "グループ外"="unmatched"
                                  )) %>% 
   dplyr::filter(group != "nodata")
@@ -666,7 +666,7 @@ data2 <- data2 %>%
   dplyr::filter(total > 0)
 # construct summary statistics table
 temp <- data2 %>%
-  dplyr::select(liner, special, tramper, tanker, 
+  dplyr::select(total, liner, special, tramper, tanker, 
                 share_liner, share_special, share_tramper, share_tanker,
                 HHI) %>% 
   dplyr::rename(type_HHI = HHI,
@@ -696,11 +696,13 @@ temp <- data2 %>%
   dplyr::select(-variable) %>% 
   as.data.frame()
 temp <- rbind(
+  temp[9,],
   temp[5:8,],
   temp[1:4,],
-  temp[9,])
+  temp[10,])
 rownames(temp) <-
-  c("total tonnage size of liner",
+  c("total tonnage size",
+    "total tonnage size of liner",
     "total tonnage size of special",
     "total tonnage size of tanker",
     "total tonnage size of tramper",
@@ -724,7 +726,7 @@ x <- Hmisc::latex(
   colnamesTexCmd = "itshape",
   collabel.just = rep("r", dim(temp)[2]),
   rgroupTexCmd = "itshape",
-  n.rgroup = c(4,5),
+  n.rgroup = c(5,5),
   rgroup = c("measure of economies of scale", 
              "measure of economies of scope")
 )
@@ -858,4 +860,22 @@ x <- stargazer(res1,res2,res3,res4,res_LPM,
 \end{center}
 \label{tb:regression_matching}
 \end{table}
+
+
+```{r, echo=FALSE, results = 'hide', out.width="50%"}
+data2 <- data2[,-c(9:26)]
+data2 <- data2 %>% 
+  dplyr::mutate(type = recode(type, 
+                                 "合併会社"="main",
+                                 "系列会社"="affiliate",
+                                 "専属会社"="wholly-controlled",
+                                 "グループ外"="unmatched"
+                                 )) %>% 
+  dplyr::select(-name,-firm_type) %>% 
+  dplyr::select(id, type, group, everything())
+write.csv(x=data2, file="../output/data_for_maximum_rank_estimation.csv")
+
+```
+
+
 
