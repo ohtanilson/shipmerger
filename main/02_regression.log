@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2020.12.6)  7 FEB 2021 22:29
+This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2020.12.6)  8 FEB 2021 20:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -887,18 +887,19 @@ File: ../figuretable/carrier_dist_eachgroup.png Graphic file (type bmp)
 File: ../figuretable/carrier_share_eachgroup.png Graphic file (type bmp)
 <../figuretable/carrier_share_eachgroup.png>
 (../figuretable/shipping_market_stats_table.tex) (../figuretable/regression_mat
-ching.tex) [2] [3] [4] (./02_regression.aux)
+ching.tex) (../figuretable/total_tonnage_size_group_table.tex) [2] [3] [4] [5] 
+(./02_regression.aux)
 
 LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 20274 strings out of 477299
- 357930 string characters out of 5836108
- 889614 words of memory out of 5000000
- 39582 multiletter control sequences out of 15000+600000
+ 20279 strings out of 477299
+ 358142 string characters out of 5836108
+ 898692 words of memory out of 5000000
+ 39584 multiletter control sequences out of 15000+600000
  409881 words of font info for 80 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  94i,11n,118p,518b,521s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on 02_regression.pdf (4 pages).
+Output written on 02_regression.pdf (5 pages).

@@ -224,132 +224,9 @@ Note that `r d %>% count()` is the dimension
 ```{r}
 #data <- readr::read_csv("200429firmdata.csv")
 data <- readr::read_csv("../input/210205firmdata_processed.csv")
-data <- data[,-3:-4]
+data <- data[,c(-3,-4,-6:-11,-16,-18)] # pick up D/W
 total_ton <- data[,4]+data[,5]+data[,6]+data[,7]
 colnames(data)[3:7] = c("type","liner","special","tramper","tanker")
-# temp <- application_market_basic_stats %>%
-#   tidyr::gather("variable", "value") %>% 
-#   dplyr::group_by(variable) %>%
-#   dplyr::summarise(
-#     N = sum(!is.na(value)),
-#     mean = mean(value, na.rm = TRUE), 
-#     sd = sd(value, na.rm = TRUE), 
-#     min = min(value, na.rm = TRUE),
-#     q25 = quantile(value, probs = .25, na.rm = TRUE),
-#     q50 = quantile(value, probs = .5, na.rm = TRUE),
-#     q75 = quantile(value, probs = .75, na.rm = TRUE),
-#     max = max(value, na.rm = TRUE)) %>%
-#   dplyr::mutate(
-#     mean = format(round(mean, 3), 3),
-#     sd = format(round(sd, 3), 3),
-#     min = format(round(min, 3), 3),
-#     q25 = format(round(q25, 3), 3),
-#     q50 = format(round(q50, 3), 3),
-#     q75 = format(round(q75, 3), 3),
-#     max = format(round(max, 3), 3))
-# 
-# temp_vacancy_share_prefecture_category_level <- HHI_vacancy_based_prefecture_category_level %>%
-#   dplyr::select(market_unique_id1, vacancy_share_prefecture_category_level) %>% 
-#   dplyr::group_by(market_unique_id1) %>% 
-#   dplyr::summarise(mean_vacancy_share_prefecture_category_level = mean(vacancy_share_prefecture_category_level)) %>% 
-#   dplyr::ungroup() %>% 
-#   dplyr::select(mean_vacancy_share_prefecture_category_level) %>% 
-#   tidyr::gather("variable", "value") %>% 
-#   dplyr::group_by(variable) %>%
-#   dplyr::summarise(
-#     N = sum(!is.na(value)),
-#     mean = mean(value, na.rm = TRUE), 
-#     sd = sd(value, na.rm = TRUE), 
-#     min = min(value, na.rm = TRUE),
-#     q25 = quantile(value, probs = .25, na.rm = TRUE),
-#     q50 = quantile(value, probs = .5, na.rm = TRUE),
-#     q75 = quantile(value, probs = .75, na.rm = TRUE),
-#     max = max(value, na.rm = TRUE)) %>%
-#   dplyr::mutate(
-#     mean = format(round(mean, 3), 3),
-#     sd = format(round(sd, 3), 3),
-#     min = format(round(min, 3), 3),
-#     q25 = format(round(q25, 3), 3),
-#     q50 = format(round(q50, 3), 3),
-#     q75 = format(round(q75, 3), 3),
-#     max = format(round(max, 3), 3)) %>% 
-#   dplyr::select(-variable)
-# 
-# temp_HHI_vacancy_based_prefecture_category_level <- HHI_vacancy_based_prefecture_category_level %>%
-#   dplyr::distinct(market_unique_id1, HHI_vacancy_based_prefecture_category_level) %>% 
-#   dplyr::select(HHI_vacancy_based_prefecture_category_level) %>% 
-#   tidyr::gather("variable", "value") %>% 
-#   dplyr::group_by(variable) %>%
-#   dplyr::summarise(
-#     N = sum(!is.na(value)),
-#     mean = mean(value, na.rm = TRUE), 
-#     sd = sd(value, na.rm = TRUE), 
-#     min = min(value, na.rm = TRUE),
-#     q25 = quantile(value, probs = .25, na.rm = TRUE),
-#     q50 = quantile(value, probs = .5, na.rm = TRUE),
-#     q75 = quantile(value, probs = .75, na.rm = TRUE),
-#     max = max(value, na.rm = TRUE)) %>%
-#   dplyr::mutate(
-#     mean = format(round(mean, 3), 3),
-#     sd = format(round(sd, 3), 3),
-#     min = format(round(min, 3), 3),
-#     q25 = format(round(q25, 3), 3),
-#     q50 = format(round(q50, 3), 3),
-#     q75 = format(round(q75, 3), 3),
-#     max = format(round(max, 3), 3)) %>% 
-#   dplyr::select(-variable)
-# 
-# list_variables <- data.frame(variable = colnames(application_market_basic_stats))
-# application_market_basic_stats_table <- list_variables %>% 
-#   dplyr::left_join(temp, by = c("variable"="variable")) %>% 
-#   dplyr::select(-variable)
-# application_market_basic_stats_table <- 
-#   rbind(application_market_basic_stats_table, 
-#         temp_vacancy_share_prefecture_category_level,
-#         temp_HHI_vacancy_based_prefecture_category_level)
-# rownames(application_market_basic_stats_table) <-
-#   c("Num of job applications",
-#     "Posted wage (10,000 JPN Yen)",
-#     "Num of employees", 
-#     "Job rank D (Director, rank = 9)",
-#     "Job rank MG (manager, rank = 8)",
-#     "Job rank SL (Senior Leader, rank = 7)",
-#     "Job rank L (Leader, rank = 6)",
-#     "Job rank JL (Junior Leader, rank = 5)",
-#     "Job rank SP (Senior Player, rank = 4)",
-#     "Job rank P (Player, rank = 3)",
-#     "Job rank JP (Junior Player, rank = 2)",
-#     "Job rank A (Associate, rank = 1)",
-#     "Second language level",
-#     "Required education indicator (high school)",
-#     "Required education indicator (vaocational)",
-#     "Required education indicator (college)",
-#     "Required education indicator (technical)",
-#     "Required education indicator (university)",
-#     "Required education indicator (postgraduate)",
-#     "mean application share",
-#     "mean total applications",
-#     "HHI application-based",
-#     "mean vacancy share",
-#     "HHI vacancy-based"
-#     )
-# 
-# 
-# # make a latex table
-# table_name <-
-#   "../figuretable/application_market_basic_stats_table_mean_across_prefecture_category_market_level.tex"
-# x <- Hmisc::latex(
-#   file = table_name,
-#   title = "",
-#   booktabs = TRUE,
-#   object = application_market_basic_stats_table,
-#   col.just = rep("r", dim(application_market_basic_stats_table)[2]),
-#   center = "none",
-#   table.env = FALSE,
-#   cgroupTexCmd = "itshape",
-#   colnamesTexCmd = "itshape",
-#   collabel.just = rep("r", dim(application_market_basic_stats_table)[2])
-# )
 ```
 
 ```{r}
@@ -428,16 +305,13 @@ ggsave(filename = figure_name,
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 library(cowplot)
-data <- readr::read_csv("../input/210205firmdata_processed.csv")
-data <- data %>% 
-  dplyr::select(-source_name,-source_data)
-data <- data[,-8:-13]
-data <- data[,-9]
+
 bank_names = c("Fuji","Kogin","Chogin","Yasuda","Daiichi","Mitsui",
                "MitsuiShintaku","Sumitomo","SumitomoShintaku","Mitsubishi",
                "Kangin","MitsubishiShintaku","Kobe","Daiwa","Sanwa","Tokai",
                "YasudaShintaku","others")
-colnames(data)=c("id", "name", "type","liner","special","tramper","tanker",
+colnames(data)=c("id", "name", "type",
+                 "liner","special","tramper","tanker",
                  "group",bank_names)
 
 data2 <- data %>% 
@@ -462,7 +336,7 @@ x <- ggplot(data2, aes(x = total/10000, fill = firm_type)) +
   geom_histogram(position="dodge", alpha=0.8) +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("total tonnage size(10000 ton)") +
+  xlab("total tonnage size (10000 DW ton)") +
   xlim(0,70) + ylim(0,7) + labs(fill = "firm type") +
   facet_wrap(vars(group), ncol = 4) + theme(legend.position = c(0.9, 0.2))
 g3 <- x 
@@ -486,13 +360,14 @@ ggsave(filename = figure_name,
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 library(reshape2)
-data6 <- dplyr::select(data2, liner, tramper, special, tanker, firm_type, group)
+data6 <- dplyr::select(data2, liner, tramper,
+                       special, tanker, firm_type, group)
 data6 <- reshape2::melt(data6)
 x <- ggplot(data6, aes(x = value/10000, fill = variable)) + 
   geom_histogram(position="dodge", alpha=0.8) +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("total tonnage size(10000 ton)") +
+  xlab("total tonnage size (10000 DW ton)") +
   xlim(0,70) + ylim(0,7) + labs(fill = "carrier type") +
   facet_wrap(vars(group), ncol = 4) + theme(legend.position = c(0.9, 0.2))
 #   + ylab("count") + 
@@ -521,7 +396,7 @@ g4_liner <- ggplot(data2, aes(x = liner/10000, fill = group)) +
   geom_histogram(position="dodge", alpha=0.8) +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("tonnage size(10000 ton)") +
+  xlab("tonnage size (10000 DW ton)") +
   xlim(0,55) + labs(col="group") +
   theme(legend.position = "none")
 #   + ylab("count") + 
@@ -534,7 +409,7 @@ g4_tramper <- ggplot(data2, aes(x = tramper/10000, fill = group)) +
   geom_histogram(position="dodge", alpha=0.8) +
   ggtitle("Tramper") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("tonnage size(10000 ton)") +
+  xlab("tonnage size (10000 DW ton)") +
   xlim(0,55) + labs(col="group") +
   theme(legend.position = "none")
 #   + ylab("count") + 
@@ -547,7 +422,7 @@ g4_special <- ggplot(data2, aes(x = special/10000, fill = group)) +
   geom_histogram(position="dodge", alpha=0.8) +
   ggtitle("Special") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("tonnage size(10000 ton)") +
+  xlab("tonnage size (10000 DW ton)") +
   xlim(0,55) + labs(col="group") +
   theme(legend.position = "none")
 #   + ylab("count") + 
@@ -562,7 +437,7 @@ legend <- cowplot::get_legend(g4_tanker)
 g4_tanker <- g4_tanker +
   ggtitle("Tanker") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("tonnage size(10000 ton)") +
+  xlab("tonnage size (10000 DW ton)") +
   xlim(0,55) + labs(col="group") +
   theme(legend.position = "none")
 #   + ylab("count") + 
@@ -864,18 +739,71 @@ x <- stargazer(res1,res2,res3,res4,res_LPM,
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 data2 <- data2[,-c(9:26)]
-data2 <- data2 %>% 
+data3 <- data2 %>% 
   dplyr::mutate(type = recode(type, 
-                                 "合併会社"="main",
-                                 "系列会社"="affiliate",
-                                 "専属会社"="wholly-controlled",
+                                 "合併会社"="(1) main",
+                                 "系列会社"="(2) affiliate",
+                                 "専属会社"="(3) wholly-controlled",
                                  "グループ外"="unmatched"
                                  )) %>% 
   dplyr::select(-name,-firm_type) %>% 
-  dplyr::select(id, type, group, everything())
-write.csv(x=data2, file="../output/data_for_maximum_rank_estimation.csv")
+  dplyr::select(id, type, group, everything()) %>% 
+  dplyr::group_by(group) %>% 
+  dplyr::mutate(group_id = cur_group_id()) %>% 
+  dplyr::mutate(group_total_tonnage = sum(total)) %>% 
+  dplyr::ungroup() %>% 
+  dplyr::arrange(group_id)
+write.csv(x=data3, file="../output/data_for_maximum_rank_estimation.csv")
 
+data3_table <- data3 %>% 
+  dplyr::group_by(group, type) %>% 
+  dplyr::summarise(total_tonnage = sum(total),
+                   num_of_firms = dplyr::n())
+total_tonnage <- data3_table %>% 
+  dplyr::group_by(group) %>% 
+  dplyr::summarise(total_tonnage_group = sum(total_tonnage))
+data3_table <- cbind(data3_table,
+      c(total_tonnage$total_tonnage_group[1], "", "",
+        total_tonnage$total_tonnage_group[2], "", "",
+        total_tonnage$total_tonnage_group[3], "", "",
+        total_tonnage$total_tonnage_group[4], "", "",
+        total_tonnage$total_tonnage_group[5], "", "",
+        total_tonnage$total_tonnage_group[6], "", "",
+        total_tonnage$total_tonnage_group[7]))
+colnames(data3_table) <- c("group","firm type", "total tonnage",
+                           "number of firms", "total tonnage in a group")
+data3_table <- data3_table[,-1]
+table_name <-
+  "../figuretable/total_tonnage_size_group_table.tex"
+x <- Hmisc::latex(
+  file = table_name,
+  title = "",
+  booktabs = TRUE,
+  object = data3_table,
+  col.just = c("l", "r", "r", "r"),
+  center = "none",
+  table.env = FALSE,
+  #cgroupTexCmd = "itshape",
+  #colnamesTexCmd = "itshape",
+  #collabel.just = rep("r", dim(data3_table)[2])#,
+  rgroupTexCmd = "itshape",
+  n.rgroup = c(3,3,3,3,3,3,1),
+  rgroup = c("Nippon Yusen", 
+             "Mitsui OSK Line",
+             "Japan Line",
+             "Kawasaki Kisen Kaisha",
+             "Yamashita Shinnihon Kisen",
+             "Showa Line",
+             "Unmatched")
+)
 ```
 
 
-
+\begin{table}[!ht]
+\scriptsize
+\caption{\textbf{Summary of total tonnage size for each group}.}
+\begin{center}
+\input{../figuretable/total_tonnage_size_group_table.tex}
+\end{center}
+\label{tb:total_tonnage_size_group_table}
+\end{table}
