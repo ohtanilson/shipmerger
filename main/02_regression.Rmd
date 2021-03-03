@@ -95,7 +95,7 @@ ggsave(filename = figure_name,
 \begin{center}
 \includegraphics[height = 0.37\textheight]{../figuretable/shippingtonnage.png}
 \end{center}
-\caption{\textbf{The trend of world's shipping gross tonnage(mill tons)}: \textit{Source}: \cite{syuuyaku} which borrows the data of Statistical Tables in Lloyd's Statistics. The data contains only ships whose tonnage sizes are at least 100 ton. }
+\caption{\textbf{The trend of world's shipping gross tonnage(mill tons)}: \textit{Source}: \cite{syuuyaku} which borrows the data of Statistical Tables in Lloyd's Statistics. The data contains only ships whose tonnage sizes are at least 100 ton. The dotted vertical line divides the periods before and after mergers of my interest.}
 \label{fg:shippingtonnage}
 \end{figure}
 
@@ -718,7 +718,7 @@ x <- stargazer(res1,res2,res3,res4,res_LPM,
 
 \begin{table}[!ht]
 \scriptsize
-\caption{\textbf{Summary statistics for independent variables}. }
+\caption{\textbf{Summary statistics for independent variables}. \textit{Source} : \cite{listgaikou} and \cite{nostalgic}.}
 \label{tb:shipping_market_stats_table}
 \begin{center}
 \input{../figuretable/shipping_market_stats_table.tex}
@@ -773,6 +773,10 @@ data3_table <- cbind(data3_table,
 colnames(data3_table) <- c("group","firm type", "total tonnage",
                            "number of firms", "total tonnage in a group")
 data3_table <- data3_table[,-1]
+data3_table <- rbind(data3_table,
+                     c("",sum(data3_table[,2]),
+                       sum(data3_table[,3]),
+                       sum(data3_table[,2])))
 table_name <-
   "../figuretable/total_tonnage_size_group_table.tex"
 x <- Hmisc::latex(
@@ -787,23 +791,39 @@ x <- Hmisc::latex(
   #colnamesTexCmd = "itshape",
   #collabel.just = rep("r", dim(data3_table)[2])#,
   rgroupTexCmd = "itshape",
-  n.rgroup = c(3,3,3,3,3,3,1),
+  n.rgroup = c(3,3,3,3,3,3,1, 1),
   rgroup = c("Nippon Yusen", 
              "Mitsui OSK Line",
              "Japan Line",
              "Kawasaki Kisen Kaisha",
              "Yamashita Shinnihon Kisen",
              "Showa Line",
-             "Unmatched")
+             "Unmatched",
+             "Total")
 )
 ```
 
 
 \begin{table}[!ht]
 \scriptsize
-\caption{\textbf{Summary of total tonnage size for each group}.}
+\caption{\textbf{Summary of total tonnage size for each group}. \textit{Source} : \cite{listgaikou} and \cite{nostalgic}.}
 \begin{center}
 \input{../figuretable/total_tonnage_size_group_table.tex}
 \end{center}
 \label{tb:total_tonnage_size_group_table}
 \end{table}
+
+
+
+```{r, echo=FALSE, results = 'hide', out.width="50%"}
+denom = 1e6
+data3_for_maximum_rank_estimation <- data3 %>% 
+  dplyr::mutate(liner = liner/denom,
+                special = special/denom,
+                tramper = tramper/denom,
+                tanker = tanker/denom,
+                total = total/denom,
+                group_total_tonnage = group_total_tonnage/denom) 
+write.csv(x=data3_for_maximum_rank_estimation,
+          file="../output/data_for_maximum_rank_estimation.csv")
+```
