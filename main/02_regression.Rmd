@@ -78,7 +78,7 @@ x <- ggplot(d, aes(x = year, y = value)) +
   theme_minimal() + 
   ggtitle("World's shipping tonnage") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("year") + ylab("shipping tonnage (million tons)") +
+  xlab("year") + ylab("shipping tonnage (1000 tons)") +
   expand_limits(y=0) + 
   geom_vline(xintercept = 1964, linetype = "longdash") + 
   labs(shape = "Country", color = "Country")
@@ -95,7 +95,7 @@ ggsave(filename = figure_name,
 \begin{center}
 \includegraphics[height = 0.37\textheight]{../figuretable/shippingtonnage.png}
 \end{center}
-\caption{\textbf{The trend of world's shipping gross tonnage(mill tons)}: \textit{Source}: \cite{syuuyaku} which borrows the data of Statistical Tables in Lloyd's Statistics. The data contains only ships whose tonnage sizes are at least 100 ton. The dotted vertical line divides the periods before and after mergers of my interest.}
+\caption{\textbf{The trend of world's shipping gross tonnage (1000 tons)}: \textit{Source}: \cite{syuuyaku} which borrows the data of Statistical Tables in Lloyd's Statistics. The data contains ships whose tonnage sizes are at least 100 ton and includes fishing vessel. The dotted vertical line divides the periods before and after mergers of my interest.}
 \label{fg:shippingtonnage}
 \end{figure}
 
@@ -106,7 +106,7 @@ ggsave(filename = figure_name,
 #   theme_minimal() + 
 #   ggtitle("World's shipping tonnage") +
 #   theme(plot.title = element_text(hjust = 0.5)) +
-#   xlab("year") + ylab("shipping tonnage (million tons)") + expand_limits(y=0)
+#   xlab("year") + ylab("shipping tonnage (1000 tons)") + expand_limits(y=0)
 # g
 ```
 
@@ -127,7 +127,7 @@ ggsave(filename = figure_name,
 #   theme_minimal() + 
 #   ggtitle("World's freight movement tonnage") +
 #   theme(plot.title = element_text(hjust = 0.5)) +
-#   xlab("year") + ylab("freight movement tonnage (million tons)") +
+#   xlab("year") + ylab("freight movement tonnage (1000 tons)") +
 #   geom_vline(xintercept = 1964, linetype = "longdash")
 # #ggplot2::ggsave("freightmovementtonnage.png")
 # 
@@ -191,7 +191,7 @@ x <- ggplot(d, aes(x = year, y = value)) +
   theme_minimal() + 
   ggtitle("World's freight movement tonnage") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("year") + ylab("freight movement tonnage (million tons)")
+  xlab("year") + ylab("freight movement tonnage (1000 tons)")
 
 #ggplot2::ggsave("freightmovementtonnage.png")
 figure_name <- "../figuretable/freightmovementtonnage.png"
@@ -353,7 +353,7 @@ ggsave(filename = figure_name,
 \begin{center}
 \includegraphics[height = 0.37\textheight]{../figuretable/type_dist_eachgroup.png}
 \end{center}
-\caption{\textbf{Distribution of tonnage size for each firm type}. Observation unit: the total tonnage size for each firm type of each group.}
+\caption{\textbf{Distribution of tonnage size for each firm type}. Observation unit: the firm-level tonnage size for each firm type of each group after mergers.}
 \label{fg:type_dist_eachgroup}
 \end{figure}
 
@@ -380,14 +380,48 @@ ggsave(filename = figure_name,
        device = "png",
        width = 10,
        height = 7)
+
+data7 <- data6 %>% 
+  dplyr::group_by(group, variable) %>% 
+  dplyr::summarise(value = sum(value)) %>% 
+  dplyr::group_by(group) %>% 
+  dplyr::mutate(group_sum = sum(value)) %>% 
+  dplyr::ungroup()
+x <- ggplot(data7, aes(x = "", y = value/10000, fill = variable)) + 
+  geom_bar(width = 1, stat = "identity") +
+  #ggtitle("Histogram of tonnage size for each merger group") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("total tonnage size (10000 DW ton)") +
+  labs(fill = "carrier type") +
+  geom_hline(yintercept = 100, linetype = "longdash") + 
+  facet_wrap(vars(group), ncol = 4) + theme(legend.position = c(0.9, 0.2)) +
+  geom_text(aes(x = "", y = value/10000,
+                label = scales::percent(value/group_sum)),
+                #position=position_fill(vjust=0.5),
+                position=position_stack(0.5),
+                size = unit(2.0,"cm"))
+figure_name <- "../figuretable/carrier_composition_eachgroup.png"
+ggsave(filename = figure_name,
+       plot = x,
+       device = "png",
+       width = 10,
+       height = 7)
 ```
 
 \begin{figure}[!ht]
 \begin{center}
 \includegraphics[height = 0.37\textheight]{../figuretable/carrier_dist_eachgroup.png}
 \end{center}
-\caption{\textbf{Distribution of tonnage size for each carrier type}. Observation unit: the total tonnage size for each carrier type of each group. }
+\caption{\textbf{Distribution of tonnage size for each carrier type}. Observation unit: firm-level tonnage size for each carrier type of each group after mergers. }
 \label{fg:carrier_dist_eachgroup}
+\end{figure}
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[height = 0.37\textheight]{../figuretable/carrier_composition_eachgroup.png}
+\end{center}
+\caption{\textbf{Configuration of tonnage size for each carrier type}. Observation unit: group-level total tonnage size for each carrier type after mergers. The dotted horizontal line indicates the subsidy threshold.}
+\label{fg:carrier_composition_eachgroup}
 \end{figure}
 
 
@@ -503,6 +537,19 @@ legend <- cowplot::get_legend(g5_tanker)
 g5_tanker <- g5_tanker + theme(legend.position = "none")
 ```
 
+```{r}
+g6_liner <- ggplot(data2, aes(x ="", y = liner/10000, fill = group)) + 
+  geom_bar(width = 1, stat = "identity") +
+  ggtitle("Liner") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("share of tonnage size") + xlab("") +
+  coord_polar("y", start=0) +
+  theme(legend.position = "none")
+
+```
+
+
+
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 if(0){
 x <- gridExtra::grid.arrange(g5_liner, g5_tramper, legend,
@@ -523,7 +570,7 @@ ggsave(filename = figure_name,
 \begin{center}
 \includegraphics[height = 0.37\textheight]{../figuretable/carrier_share_eachgroup.png}
 \end{center}
-\caption{\textbf{Shares of each carrier type and each group}. Observation unit: the total tonnage size for each carrier type of each group. }
+\caption{\textbf{Shares of each carrier type and each group}. Observation unit: group-level tonnage size for each carrier type after mergers. }
 \label{fg:carrier_share_eachgroup}
 \end{figure}
 

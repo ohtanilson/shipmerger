@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2020.12.6)  9 FEB 2021 08:45
+This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2020.12.6)  12 MAR 2021 13:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -884,22 +884,49 @@ File: ../figuretable/type_dist_eachgroup.png Graphic file (type bmp)
 <../figuretable/type_dist_eachgroup.png>
 File: ../figuretable/carrier_dist_eachgroup.png Graphic file (type bmp)
 <../figuretable/carrier_dist_eachgroup.png>
+File: ../figuretable/carrier_composition_eachgroup.png Graphic file (type bmp)
+<../figuretable/carrier_composition_eachgroup.png>
 File: ../figuretable/carrier_share_eachgroup.png Graphic file (type bmp)
 <../figuretable/carrier_share_eachgroup.png>
+
+LaTeX Warning: Citation `listgaikou' on page 2 undefined on input line 188.
+
+
+LaTeX Warning: Citation `nostalgic' on page 2 undefined on input line 188.
+
+
+LaTeX Warning: Citation `listgaikou' on page 2 undefined on input line 188.
+
+
+LaTeX Warning: Citation `nostalgic' on page 2 undefined on input line 188.
+
 (../figuretable/shipping_market_stats_table.tex) (../figuretable/regression_mat
-ching.tex) (../figuretable/total_tonnage_size_group_table.tex) [2] [3] [4] [5] 
-(./02_regression.aux)
+ching.tex)
+
+LaTeX Warning: Citation `listgaikou' on page 2 undefined on input line 206.
+
+
+LaTeX Warning: Citation `nostalgic' on page 2 undefined on input line 206.
+
+
+LaTeX Warning: Citation `listgaikou' on page 2 undefined on input line 206.
+
+
+LaTeX Warning: Citation `nostalgic' on page 2 undefined on input line 206.
+
+(../figuretable/total_tonnage_size_group_table.tex) [2] [3] [4] [5] [6] (./02_r
+egression.aux)
 
 LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 20279 strings out of 477299
- 358142 string characters out of 5836108
- 897692 words of memory out of 5000000
- 39584 multiletter control sequences out of 15000+600000
+ 20286 strings out of 477299
+ 358461 string characters out of 5836108
+ 887156 words of memory out of 5000000
+ 39590 multiletter control sequences out of 15000+600000
  409881 words of font info for 80 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 94i,11n,118p,518b,521s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 94i,11n,118p,519b,521s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on 02_regression.pdf (5 pages).
+Output written on 02_regression.pdf (6 pages).
