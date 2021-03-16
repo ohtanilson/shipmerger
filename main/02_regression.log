@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2020.12.6)  12 MAR 2021 13:31
+This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2020.12.6)  15 MAR 2021 19:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -921,10 +921,10 @@ LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 20286 strings out of 477299
- 358461 string characters out of 5836108
- 887156 words of memory out of 5000000
- 39590 multiletter control sequences out of 15000+600000
+ 20290 strings out of 477299
+ 358562 string characters out of 5836108
+ 888287 words of memory out of 5000000
+ 39594 multiletter control sequences out of 15000+600000
  409881 words of font info for 80 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  94i,11n,118p,519b,521s stack positions out of 5000i,500n,10000p,200000b,80000s
