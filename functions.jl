@@ -13,10 +13,25 @@ using DataFramesMeta
 using BlackBoxOptim
 
 export expand_grid, carrier_struct_v1, carrier_mod,
+       #ship_merger_monte_carlo
        TB_toy,IS_outdomain,TB,IS_Sell,IS_Buyer,gen_X_mat,
 	   gen_X_interaction, gen_merger_cost,
        gen_subsidy, gen_utility_matrix, solve_equilibrium, gen_data,
-       score_b, maxscore_mc
+       score_b, maxscore_mc,
+	   ship_merger_score_estimation
+	   #=extract_buyer_covariates_if_ii_is_buyer,
+	   extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk,
+	   extract_target_covariates_if_ii_is_buyer,
+	   extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk,
+	   extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk,
+	   gen_merger_cost_for_buyer_ii,
+	   gen_subsidy_indicator_for_buyer_ii,
+	   gen_utility_est,
+	   gen_utility_est_without_subsidy,
+	   gen_unmatched_utility_est,
+	   score_b_est_data
+	   =#
+
 
 function expand_grid(args...)
     nargs= length(args)
@@ -42,7 +57,8 @@ function expand_grid(args...)
         cargs[:,i] .= x[repeat(mapped_nx,orep)]
         rep_fac= rep_fac * nx
     end
-    convert(DataFrame,cargs)
+    #convert(DataFrame,cargs)
+	DataFrame(Tables.table(cargs, header = Symbol.(:x, axes(cargs, 2))))
 end
 
 mutable struct carrier_struct_v1
@@ -72,7 +88,8 @@ function carrier_mod(;N::Int64=4,#11,#10,#,9,
     Random.seed!(randomseed)
     PN = 2^N;
     eps_dims = N + 1;   # dimension of ϵ for each individual
-    ton_mat = rand(ton_dist,N,ton_dim)
+    #ton_mat = rand(ton_dist,N,ton_dim)
+	ton_mat = rand(ton_dist,N,ton_dim)./100
 	X_mat = ton_mat
     #ω_vec = rand(ω_dist,N)
     ϵ_post_mat = rand(ϵ_dist,N,PN) # efficient version
@@ -154,6 +171,7 @@ function gen_X_mat(m::carrier_struct_v1)
 		sum_ton[i] = sum(ton[i,:])
 	end
 	X_mat = hcat(sum_ton,ton)
+	#X_mat = hcat(sum_ton,ton)/.100
 	X_share_mat = X_mat[:,2:end]./X_mat[:,1]
 	# 1st column is total tonnage, 2nd column gives log-size, and 3rd column gives share
 	X_mat = hcat(X_mat, X_share_mat)
@@ -165,7 +183,7 @@ function gen_X_interaction(m::carrier_struct_v1, X_mat::Array{Float64,2})
 	dim_X_mat_share = Int((dim_X_mat - 1)/2)
 	X_interaction = zeros(m.N, m.PN, dim_X_mat)
 	target_X = zeros(m.PN, dim_X_mat)
-	buyer_X = X_mat
+	buyer_X = copy(X_mat)
 	for j = 1:m.PN
 		temp_index = TB(m,j)
 		for k = 1:m.N
@@ -183,14 +201,16 @@ function gen_X_interaction(m::carrier_struct_v1, X_mat::Array{Float64,2})
 		target_X[j,2+dim_X_mat_share:end] = enum/denom
 	end
 	# taking log
-	target_X[2:end,1:1+dim_X_mat_share] = copy.(log.(1 .+target_X[2:end,1:1+dim_X_mat_share]))
-	buyer_X[1:end,1:1+dim_X_mat_share] = copy.(log.(1 .+buyer_X[1:end,1:1+dim_X_mat_share]))
+	if 0 == 1
+	    target_X[2:end,1:1+dim_X_mat_share] = copy.(log.(1 .+target_X[2:end,1:1+dim_X_mat_share]))
+	    buyer_X[1:end,1:1+dim_X_mat_share] = copy.(log.(1 .+buyer_X[1:end,1:1+dim_X_mat_share]))
+	end
 	# add exogenous shocks to population matrix to avoid non-integer solution
 	# pop_shock = rand(m.N,m.PN,m.ton_dim)
 	for i = 1:m.N, j = 1:m.PN
 		X_interaction[i,j,:] = buyer_X[i,:].*target_X[j,:]# + pop_shock[i,j,:]
 	end
-	return X_interaction,target_X
+	return X_interaction, target_X
 end
 
 function gen_merger_cost(m::carrier_struct_v1)
@@ -203,7 +223,7 @@ function gen_merger_cost(m::carrier_struct_v1)
 			# merger cost
 			num_of_firms_in_coalition = sum(temp_index)
 			total_tonnage = sum(ton[k,:])
-			merger_cost[k,j] = num_of_firms_in_coalition/log(total_tonnage)
+			merger_cost[k,j] = num_of_firms_in_coalition/log(total_tonnage*100)
 		end
 	end
 	return merger_cost
@@ -239,20 +259,30 @@ function gen_utility_matrix(m::carrier_struct_v1, X_interaction::Any, threshold_
 	δ = m.δ_0
 	utility = zeros(m.N,m.PN)
 	merger_cost = gen_merger_cost(m)
-	subsidy_index_mat,total_tonnage_in_coalition = gen_subsidy(m,threshold_tonnage,subsidy_amount, subsidy_type = subsidy_type)
+	subsidy_index_mat,total_tonnage_in_coalition = gen_subsidy(m,
+	                                                           threshold_tonnage,
+	                                                           subsidy_amount,
+															   subsidy_type = subsidy_type)
 	#exogenous_shock = randn(m.N, m.PN)
 	for i = 1:m.N, j= 1:m.PN
-		utility[i,j] = X_interaction[i,j,2]*1 + X_interaction[i,j,4]*β + subsidy_index_mat[i,j]*δ + m.ϵ_mat[i,j]
+		if IS_Sell(m,i,j)
+			# rescale selling payoff from quadratic interaction (x_i*x_i) into (x_i*1)
+			utility[i,j] = sqrt(X_interaction[i,j,2])*1 + sqrt(X_interaction[i,j,4])*β +
+			               subsidy_index_mat[i,j]*δ + m.ϵ_mat[i,j]
+		else
+			utility[i,j] = X_interaction[i,j,2]*1 + X_interaction[i,j,4]*β +
+			               subsidy_index_mat[i,j]*δ + m.ϵ_mat[i,j]
+		end
         utility[i,j] = utility[i,j] #+ exogenous_shock[i,j]
 	end
 	# assigning negative infinity to unreal allocation. (ex.) (1, (101)) and (1,(1,1,1))
 	for i = 1:m.N
         for j = 1:m.PN
-            if IS_outdomain(m.N,i,j)      # hard code an continuum agent model to reach an integer equilibrium
-                utility[i,j] = -99999999
+            if IS_outdomain(m.N,i,j) # hard code an continuum agent model to reach an integer equilibrium
+                utility[i,j] = -99999999 # unreal payoff
             elseif IS_Sell(m,i,j)
-                utility[i,1] = copy(utility[i,j]) # unmatched payoff
-				utility[i,j] = m.ϵ_mat[i,j]  # selling payoff
+                utility[i,1] = copy(utility[i,j]) # unmatched payoff(=buy myself now)
+				utility[i,j] = 0 + m.ϵ_mat[i,j]  # selling payoff
             else
 				utility[i,j] = utility[i,j] - merger_cost[i,j]*γ
 			end
@@ -263,7 +293,11 @@ end
 
 function solve_equilibrium(m::carrier_struct_v1,threshold_tonnage::Any,subsidy_amount::Any; subsidy_type::Any)
 	X_interaction,target_X = gen_X_interaction(m, gen_X_mat(m))
-	utility = gen_utility_matrix(m,X_interaction,threshold_tonnage,subsidy_amount,subsidy_type = subsidy_type)
+	utility = gen_utility_matrix(m,
+	                             X_interaction,
+	                             threshold_tonnage,
+								 subsidy_amount,
+								 subsidy_type = subsidy_type)
 	N = m.N
 	PN = m.PN
 	eta = m.eta
@@ -334,7 +368,8 @@ function gen_data(m::carrier_struct_v1;threshold_tonnage = 100,subsidy_amount = 
 	buydata = buyer_X
 	buyid = Array{Int64,1}(1:m.N)
 	buydata = hcat(buyid, buydata)
-	buydata = convert(DataFrame, buydata)
+	#buydata = convert(DataFrame, buydata)
+	buydata = DataFrame(Tables.table(buydata, header = Symbol.(:x, axes(buydata, 2))))
 	x = ["size"]
 	y = ["share"]
 	z = ["total_size_buyer"]
@@ -352,13 +387,16 @@ function gen_data(m::carrier_struct_v1;threshold_tonnage = 100,subsidy_amount = 
 	tardata = target_X
 	tarid = Array(1:m.PN)
 	tardata = hcat(tarid, tardata)
-	tardata = convert(DataFrame, tardata)
+	#tardata = convert(DataFrame, tardata)
+	tardata = DataFrame(Tables.table(tardata, header = Symbol.(:x, axes(tardata, 2))))
 	rename!(tardata, [:id, :total_size_target, :size1_target, :size2_target, :share1_target, :share2_target])
 	matchmaker = expand_grid(buyid, tarid)
 	rename!(matchmaker, [:buyid, :tarid])
-	matchdat = DataFrames.join(matchmaker, tardata, on = [(:tarid, :id)], kind = :left)
-	matchdat = DataFrames.join(matchdat, buydata, on = [(:buyid, :id)], kind = :left)
-	sort!(matchdat, (:buyid, :tarid));
+	matchdat = DataFrames.leftjoin(matchmaker, tardata,
+                               on = [:tarid => :id])
+	matchdat = DataFrames.leftjoin(matchdat, buydata,
+	                           on = [:buyid => :id])
+	sort!(matchdat, [:buyid, :tarid]);
 	#matchdat = within(matchdat, mval <- mval + rnorm(length(matchdat$mval), mean = 0, sd_err) )
 	mval = vec(utility') .+ vec(m.ϵ_mat')
 	matchdat = hcat(matchdat, mval)
@@ -370,7 +408,10 @@ function gen_data(m::carrier_struct_v1;threshold_tonnage = 100,subsidy_amount = 
 	  return utility, obsd
 end
 
-function score_b(m::carrier_struct_v1, beta::Vector{Float64}, data::DataFrame, num_agents::Int64, threshold_tonnage::Any, subsidy_amount::Any; subsidy_type::Any)
+function score_b(m::carrier_struct_v1, beta::Vector{Float64},
+	             data::DataFrame, num_agents::Int64,
+				 threshold_tonnage::Any, subsidy_amount::Any;
+				 subsidy_type::Any)
     I = num_agents
     temp = [Combinatorics.combinations(1:I,2)...]
     index_list = Array{Int64,2}(undef, length(temp), 2)
@@ -385,6 +426,7 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64}, data::DataFrame, n
 	#X_interaction[i,j,2]*1 + X_interaction[i,j,4]*β + subsidy_index_mat[i,j]*subsidy_amount*δ - merger_cost[i,j]*γ + m.ϵ_mat[i,j]
 	beta_hat, delta_hat, gamma_hat = beta # for Optim
 	utility = zeros(m.N, m.PN)
+	utility_without_subsidy = zeros(m.N, m.PN)
 	#exogenous_shock = randn(m.N, m.PN)
 	#println("******
 	#Assign utility specification
@@ -406,6 +448,10 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64}, data::DataFrame, n
 			end
         end
     end
+	for i = 1:m.N, j= 1:m.PN
+		utility_without_subsidy[i,j] = copy(utility[i,j])
+		utility_without_subsidy[i,j] = utility_without_subsidy[i,j] - subsidy_index_mat[i,j]*delta_hat
+	end
 	# construct inequality
 	matching_index = hcat(data.buyid, data.tarid)
 	unmatched_vec = zeros(m.N)
@@ -443,8 +489,15 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64}, data::DataFrame, n
 				payoff_unobs_match2 = utility[k,Int.(findall(m.Bundle .== swapped_bundle_id2))[1]]
 				ineq[i, kk, hh] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
 			end
-			#payoff_unobs_match1 = utility[idx[1],target_bundle_id[2]] # swapped
-			#payoff_unobs_match2 = utility[idx[2],target_bundle_id[1]] # swapped
+			# compare utility with and without subsidy
+			if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
+				# the observed pairwise data satisfy the subsidy threshold
+			    #ineq[i, 1, length(h_index) + 1] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]]
+			end
+			if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
+				# the observed pairwise data satisfy the subsidy threshold
+				#ineq[i, 1, length(h_index) + 2] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
+			end
 		elseif IS_Buyer(m,idx[1],target_bundle_id[1]) && IS_Sell(m,idx[2],target_bundle_id[2])
 			#println("iter $i = Case 2: firm 1 is a buyer and firm 2 is a seller.")
 			#Second, I construct inequalities from an observed coalition:
@@ -465,6 +518,11 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64}, data::DataFrame, n
 				#payoff_unobs_match2 = utility[k,Int.(findall(m.Bundle .== swapped_bundle_id2))[1]] # unmatched firm k
 				ineq[i,kk,1] = payoff_obs_match1 - payoff_unobs_match1 #- payoff_unobs_match2
 			end
+			# compare utility with and without subsidy
+			if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
+				# the observed pairwise data satisfy the subsidy threshold
+			    #ineq[i, 1, 2] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]]
+			end
 		elseif IS_Sell(m,idx[1],target_bundle_id[1]) && IS_Buyer(m,idx[2],target_bundle_id[2])
 			#println("iter $i = Case 3: firm 1 is a seller and firm 2 is a buyer.")
 			#Second, I construct inequalities from an observed coalition:
@@ -484,6 +542,11 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64}, data::DataFrame, n
 				#payoff_unobs_match1 = utility[k,Int.(findall(m.Bundle .== swapped_bundle_id1))[1]] # unmatched firm k
 				payoff_unobs_match2 = utility[idx[2],Int.(findall(m.Bundle .== swapped_bundle_id2))[1]] # drop firm k
 				ineq[i,kk,1] = payoff_obs_match2 - payoff_unobs_match2
+			end
+			# compare utility with and without subsidy
+			if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
+				# the observed pairwise data satisfy the subsidy threshold
+			    #ineq[i, 1, 2] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
 			end
 		elseif IS_Buyer(m,idx[1],target_bundle_id[1]) && unmatched_vec == TB_toy(m.N, target_bundle_id[2])
 			#println("iter $i = Case 4: firm 1 is a buyer and firm 2 is unmatched.")
@@ -508,6 +571,11 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64}, data::DataFrame, n
 				payoff_unobs_match2 = utility[b,Int.(findall(m.Bundle .== swapped_bundle_id2))[1]] # sell firm b
 				ineq[i,kk,1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
 			end
+			# compare utility with and without subsidy
+			if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
+				# the observed pairwise data satisfy the subsidy threshold
+			    #ineq[i, 1, 2] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]]
+			end
 		elseif unmatched_vec == TB_toy(m.N, target_bundle_id[1]) && IS_Buyer(m,idx[2],target_bundle_id[2])
 			#println("iter $i = Case 5: firm 1 is unmatched and firm 2 is a buyer.")
 			#Third, I construct inequalities from an unmatched target:
@@ -530,6 +598,11 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64}, data::DataFrame, n
 				payoff_unobs_match1 = utility[b,Int.(findall(m.Bundle .== swapped_bundle_id1))[1]] # sell firm b
 				payoff_unobs_match2 = utility[idx[2],Int.(findall(m.Bundle .== swapped_bundle_id2))[1]] # drop firm k and add firm b
 				ineq[i,kk,1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
+			end
+			# compare utility with and without subsidy
+			if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
+				# the observed pairwise data satisfy the subsidy threshold
+			    #ineq[i, 1, 2] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
 			end
 	    elseif unmatched_vec == TB_toy(m.N, target_bundle_id[1]) && unmatched_vec == TB_toy(m.N, target_bundle_id[2])
 			#println("iter $i = Case 6: both picked firms are unmatched.")
@@ -609,6 +682,11 @@ function maxscore_mc(num_agents::Int64;
    #@show myests
    return myests, res_abs_mean_err, res_sqrt, mynum_correct_ineq, truenum_correct_ineq, num_all_ineq
 end
+
+#------------------------------------#
+# used in ship_merger_score_estimation
+#------------------------------------#
+
 
 
 

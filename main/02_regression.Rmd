@@ -45,6 +45,7 @@ library(ggplot2)
 library(readr)
 library(gridExtra)
 library(stargazer)
+library(entropy)
 # search()
 ```
 
@@ -334,7 +335,7 @@ data2$group <- factor(data2$group,
                 "Japan Lines", "Kawasaki Kisen Kaisha",
                 "Yamashita-Shinnihon Kisen", "Showa Line", "unmatched"))
 x <- ggplot(data2, aes(x = total/10000, fill = firm_type)) + 
-  geom_histogram(position="dodge", alpha=0.8) +
+  geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("total tonnage size (10000 DW ton)") +
@@ -365,7 +366,7 @@ data6 <- dplyr::select(data2, liner, tramper,
                        special, tanker, firm_type, group)
 data6 <- reshape2::melt(data6)
 x <- ggplot(data6, aes(x = value/10000, fill = variable)) + 
-  geom_histogram(position="dodge", alpha=0.8) +
+  geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("total tonnage size (10000 DW ton)") +
@@ -393,6 +394,7 @@ x <- ggplot(data7, aes(x = "", y = value/10000, fill = variable)) +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ylab("total tonnage size (10000 DW ton)") +
+  xlab("") +
   labs(fill = "carrier type") +
   geom_hline(yintercept = 100, linetype = "longdash") + 
   facet_wrap(vars(group), ncol = 4) + theme(legend.position = c(0.9, 0.2)) +
@@ -427,8 +429,24 @@ ggsave(filename = figure_name,
 
 
 ```{r}
+table_discretize<- data2 %>% 
+  dplyr::mutate(discretized_liner = dplyr::case_when(
+    liner/10000 < 10 ~ "< 10",
+    liner/10000 >= 10 & liner/10000 < 20  ~ "10 to 20",
+    liner/10000 >= 20 & liner/10000 < 50 ~ "20 to 50",
+    liner/10000 > 50 ~ "50 <",
+  ))
+
 g4_liner <- ggplot(data2, aes(x = liner/10000, fill = group)) + 
-  geom_histogram(position="dodge", alpha=0.8) +
+  geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
+  ggtitle("Liner") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("tonnage size (10000 DW ton)") +
+  xlim(0,55) + labs(col="group") +
+  theme(legend.position = "none")
+g4_liner <- ggplot(table_discretize, aes(x = discretized_liner, 
+                                         fill = group)) + 
+  geom_bar(position="dodge", alpha=0.8) +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("tonnage size (10000 DW ton)") +
@@ -441,7 +459,7 @@ g4_liner <- ggplot(data2, aes(x = liner/10000, fill = group)) +
 
 ```{r}
 g4_tramper <- ggplot(data2, aes(x = tramper/10000, fill = group)) + 
-  geom_histogram(position="dodge", alpha=0.8) +
+  geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   ggtitle("Tramper") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("tonnage size (10000 DW ton)") +
@@ -454,7 +472,7 @@ g4_tramper <- ggplot(data2, aes(x = tramper/10000, fill = group)) +
 
 ```{r}
 g4_special <- ggplot(data2, aes(x = special/10000, fill = group)) + 
-  geom_histogram(position="dodge", alpha=0.8) +
+  geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   ggtitle("Special") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("tonnage size (10000 DW ton)") +
@@ -467,7 +485,7 @@ g4_special <- ggplot(data2, aes(x = special/10000, fill = group)) +
 
 ```{r}
 g4_tanker <- ggplot(data2, aes(x = tanker/10000, fill = group)) + 
-  geom_histogram(position="dodge", alpha=0.8) 
+  geom_histogram(position="dodge", alpha=0.8, binwidth = 10) 
 legend <- cowplot::get_legend(g4_tanker)
 g4_tanker <- g4_tanker +
   ggtitle("Tanker") +

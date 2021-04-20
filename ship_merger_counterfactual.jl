@@ -17,12 +17,12 @@ using JuMP, Gurobi
 #------------------------------#
 #  Counterfactual
 #------------------------------#
-data = CSV.read("data_for_maximum_rank_estimation.csv")
+data = CSV.read("data_for_maximum_rank_estimation.csv",DataFrame)
 rename!(data, :Column1 => :firm_id)
 data_for_counterfactual = @linq data |>
 	where(:type .== "(1) main")
 # assign theta_hat
-model_specification = "column 2"
+model_specification = "column_3_two_variables_main_firms_only"
 if model_specification == "column 3"
 	# full model
     myests_point_full_X_only = readdlm("julia_merger_result/myests_subsample_size_106_full_X_only.txt",',',Float64)
@@ -68,9 +68,67 @@ elseif model_specification == "column 2"
 					Statistics.quantile(myests_CI_scope_X_only[:,5], [0.025])[1],
 					final_ests_point_scope_X_only[6])
 					),digits = 2)
+elseif model_specification == "column_8_two_variables"
+	# check behavior
+	temp_subsidy_type = "shared"
+	file_name_variable = "x8"
+	size_of_subsample_temp = 30
+	calibrated_delta = 1
+	myests_point_scope_X_only = readdlm("julia_merger_result/myests_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+	num_correct_ineq_scope_X_only = readdlm("julia_merger_result/num_correct_ineq_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+	num_total_ineq_scope_X_only = readdlm("julia_merger_result/num_total_ineq_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+	accuracy_scope_X_only = vec(num_correct_ineq_scope_X_only./num_total_ineq_scope_X_only)
+	final_ests_point_scope_X_only = round.(myests_point_scope_X_only[findmax(accuracy_scope_X_only)[2],:],digits=2)
+	myests_CI_scope_X_only = readdlm("julia_merger_result/myests_subsample_size_$(size_of_subsample_temp)_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+	theta_hat_all_models = round.(hcat(vcat(zeros(7),
+	                final_ests_point_scope_X_only[1],
+					final_ests_point_scope_X_only[2],
+					calibrated_delta),
+					# the cheapest scenario
+					vcat(zeros(7),
+					#Statistics.quantile.(myests_CI_scope_X_only[:,1:4], [0.975])[1]
+					final_ests_point_scope_X_only[1],
+					Statistics.quantile(myests_CI_scope_X_only[:,2], [0.975])[1],
+					calibrated_delta),
+					# the most expensive scenario
+					vcat(zeros(7),
+					final_ests_point_scope_X_only[1],
+					Statistics.quantile(myests_CI_scope_X_only[:,2], [0.025])[1],
+					calibrated_delta)
+					),digits = 2)
+elseif model_specification == "column_3_two_variables_main_firms_only"
+	# check behavior
+	temp_subsidy_type = "shared"
+	file_name_variable = "x3"
+	size_of_subsample_temp = 0
+	calibrated_delta = 1
+	myests_point_scope_X_only = readdlm("julia_merger_result/myests_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+	num_correct_ineq_scope_X_only = readdlm("julia_merger_result/num_correct_ineq_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+	num_total_ineq_scope_X_only = readdlm("julia_merger_result/num_total_ineq_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+	accuracy_scope_X_only = vec(num_correct_ineq_scope_X_only./num_total_ineq_scope_X_only)
+	final_ests_point_scope_X_only = round.(myests_point_scope_X_only[findmax(accuracy_scope_X_only)[2],:],digits=2)
+	myests_CI_scope_X_only = readdlm("julia_merger_result/myests_subsample_size_$(size_of_subsample_temp)_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+	theta_hat_all_models = round.(hcat(vcat(zeros(2),
+	                final_ests_point_scope_X_only[1], # x3
+					zeros(5),
+					final_ests_point_scope_X_only[2],
+					calibrated_delta),
+					# the cheapest scenario
+					vcat(zeros(2),
+					#Statistics.quantile.(myests_CI_scope_X_only[:,1:4], [0.975])[1]
+					final_ests_point_scope_X_only[1], # x3
+					zeros(5),
+					Statistics.quantile(myests_CI_scope_X_only[:,2], [0.975])[1],
+					calibrated_delta),
+					# the most expensive scenario
+					vcat(zeros(2),
+					final_ests_point_scope_X_only[1], # x3
+					zeros(5),
+					Statistics.quantile(myests_CI_scope_X_only[:,2], [0.025])[1],
+					calibrated_delta)
+					),digits = 2)
 end
 
-myests_point_scope_X_only
 
 
 @time m = carrier_mod(randomseed = 8,
@@ -80,19 +138,12 @@ myests_point_scope_X_only
 					 γ_0 = 5.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 
-function extract_buyer_covariates_if_ii_is_buyer(ii, data)
-	# pick individual own covariates
-	buyer_X_scale = convert(Vector,data[ii,5:8])
-	buyer_X_scope = convert(Vector,data[ii,11:14])
-	res = vcat(buyer_X_scale,buyer_X_scope)
-	return res
-end
 
 function gen_utility_matrix_counterfactual(theta_hat::Vector,
 	                        data::DataFrame;
 							randomseed = temp_randomseed,
 	                        threshold_tonnage = 1, # 1 million
-							subsidy_amount = 100,
+							subsidy_amount = 1,
 							subsidy_type = "shared")
 	beta = theta_hat[1:8]
 	gamma = theta_hat[9]
@@ -138,6 +189,7 @@ function gen_utility_matrix_counterfactual(theta_hat::Vector,
 		#interaction_X_beta = beta.*buyer1_X.*target1_X
 		merger_cost = gen_merger_cost_for_buyer_ii(subsampled_id_list[i], buyer1_X, target1_X, data)
 		subsidy = gen_subsidy_indicator_for_buyer_ii(buyer1_X, target1_X,
+		                                             subsidy_type,
 		                                             subsidy_threshold = threshold_tonnage,
 													 subsidy_amount = subsidy_amount)
 		payoff_obs_match1 = sum(interaction_X_beta) - gamma*merger_cost + delta*subsidy
@@ -288,19 +340,20 @@ function iterate_simulation_counterfactual(model_id, theta_hat_all_models,
 end
 
 # test a single computation
-temp_model_id = 3
+temp_model_id = 2
 theta_hat = theta_hat_all_models[:,temp_model_id]
-theta_hat[1:4] .= 0 # drop scale covariates
-utility = gen_utility_matrix_counterfactual(theta_hat, data,
+#theta_hat[1:4] .= 0 # drop scale covariates
+utility = gen_utility_matrix_counterfactual(theta_hat,
+                        data,
 						randomseed = 1,
 						threshold_tonnage = 1, # 1 million
 						subsidy_amount = 0,
 						subsidy_type = "shared")
 
 matches = solve_equilibrium_counterfactual(m, utility)
-data_for_counterfactual
 for ii = 1:m.N
 	@show ii
+	@show utility[ii,matches[ii,:]]
     @show m.Bundle[matches[ii,:].>0]
 end
 @show number_of_groups_temp, number_of_unmatched_temp = gen_merger_composition(m, matches)
@@ -406,7 +459,7 @@ num_unmatched_list = zeros(length(model_list),
 	end
 end
 
-LaTeXTabulars.latex_tabular("ship_merger/figuretable/counterfactual_subsidy_threshold.tex",
+LaTeXTabulars.latex_tabular("julia_merger_table/counterfactual_subsidy_threshold.tex",
               Tabular("@{\\extracolsep{5pt}}lcccc"),
               [Rule(:top),
                ["","","Point Estimate Scenario", "The most expensive scenario", "The cheapest expenditure scenario"],
@@ -463,7 +516,7 @@ LaTeXTabulars.latex_tabular("ship_merger/figuretable/counterfactual_subsidy_thre
                Rule(:bottom)])
 
 
-LaTeXTabulars.latex_tabular("ship_merger/figuretable/counterfactual_subsidy_amount.tex",
+LaTeXTabulars.latex_tabular("julia_merger_table/counterfactual_subsidy_amount.tex",
               Tabular("@{\\extracolsep{5pt}}lcccc"),
               [Rule(:top),
                ["","","Point Estimate Scenario", "The most expensive scenario", "The cheapest expenditure scenario"],
