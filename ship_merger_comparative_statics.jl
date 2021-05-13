@@ -14,6 +14,7 @@ using Statistics
 using Distributions
 using Dates
 using JLD # restore for multidimensional array
+using StatsPlots # plot groupbar
 include(joinpath(dirname(@__FILE__),"functions.jl"))
 using .functions
 temp_randomseed = 1
@@ -27,6 +28,7 @@ temp_randomseed = 1
 					 δ_0 = 1.0,# coefficient of subsidy
 					 γ_0 = 0.0,# coefficient of additional merger cost
 					 ton_dim= 2)
+
 #-----------------------------------#
 # (1) calculate the number of firms
 #-----------------------------------#
@@ -42,8 +44,8 @@ function gen_plot_number_of_firms(m,
 					threshold_tonnage = temp_threshold_tonnage,
 					subsidy_amount = temp_subsidy_amount,
 					subsidy_type = temp_subsidy_type)
-	domain1 = [0:1.0:10;]
-	domain2 = [0:1.0:5;]
+	domain1 = [0:1.0:10;] # range of merger cost
+	domain2 = [0:1.0:5;] # range of subsidy sensitivity
 	num_of_group = ones(length(domain1), length(domain2), seed_max).*100
 	num_of_unmatched = ones(length(domain1), length(domain2), seed_max).*100
 	num_of_group_and_unmatched = ones(length(domain1), length(domain2), seed_max).*100
@@ -102,7 +104,7 @@ function gen_plot_number_of_firms(m,
 		           label="Num of groups [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[ii]), γ]")
 	end
 	Plots.plot!()
-	savefig("julia_merger_figure/plot_num_of_groups_$(temp_subsidy_type)_subsidy")
+	savefig("julia_merger_figure/plot_num_of_groups_threshold_$(temp_threshold_tonnage)_$(temp_subsidy_type)_subsidy")
 
 	Plots.plot(domain1, mean_num_of_unmatched[:,1],
 	           label="Num of unmatched [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[1]), γ]",
@@ -125,7 +127,7 @@ function gen_plot_number_of_firms(m,
 	Plots.hline!([m.N], label="",
 	             linestyle = :dash, color = :black)
 	Plots.plot!()
-	savefig("julia_merger_figure/plot_num_of_unmatched_$(temp_subsidy_type)_subsidy")
+	savefig("julia_merger_figure/plot_num_of_unmatched_threshold_$(temp_threshold_tonnage)_$(temp_subsidy_type)_subsidy")
 
 	Plots.plot(domain1, mean_num_of_group_and_unmatched[:,1],
 	           label="Num of post-merger firms [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[1]), γ]",
@@ -148,39 +150,44 @@ function gen_plot_number_of_firms(m,
 	Plots.hline!([m.N], label="",
 	             linestyle = :dash, color = :black)
 	Plots.plot!()
-	savefig("julia_merger_figure/plot_num_of_post_merger_firms_$(temp_subsidy_type)_subsidy")
-	return num_of_target_id
+	savefig("julia_merger_figure/plot_num_of_post_merger_firms_threshold_$(temp_threshold_tonnage)_$(temp_subsidy_type)_subsidy")
+	return num_of_target_id, num_of_group
 end
 temp_subsidy_type = "to_buyer"
-@time num_of_target_id = gen_plot_number_of_firms(m,
+@time num_of_target_id, num_of_group = gen_plot_number_of_firms(m,
                          temp_threshold_tonnage,
 						 temp_subsidy_amount,
 						 temp_subsidy_type;
 						 seed_max = 50)
-JLD.save("julia_merger_result/num_of_target_id_$(temp_subsidy_type)_subsidy.jld",
+JLD.save("julia_merger_result/num_of_target_id_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld",
          "data", num_of_target_id)
-num_of_target_id = JLD.load("julia_merger_result/num_of_target_id_$(temp_subsidy_type)_subsidy.jld")["data"]
-
+JLD.save("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld",
+         "data", num_of_group)
+num_of_target_id = JLD.load("julia_merger_result/num_of_target_id_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld")["data"]
+num_of_group = JLD.load("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld")["data"]
 #-------------------------#
 # shared subsidy case
 #-------------------------#
 temp_threshold_tonnage = 1
 temp_subsidy_amount = 1
 temp_subsidy_type = "shared"
-@time num_of_target_id = gen_plot_number_of_firms(m,
+@time num_of_target_id, num_of_group = gen_plot_number_of_firms(m,
                          temp_threshold_tonnage,
 						 temp_subsidy_amount,
 						 temp_subsidy_type;
 						 seed_max = 50)
-JLD.save("julia_merger_result/num_of_target_id_$(temp_subsidy_type)_subsidy.jld",
+JLD.save("julia_merger_result/num_of_target_id_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld",
          "data", num_of_target_id)
-num_of_target_id = JLD.load("julia_merger_result/num_of_target_id_$(temp_subsidy_type)_subsidy.jld")["data"]
+JLD.save("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld",
+         "data", num_of_group)
+num_of_target_id = JLD.load("julia_merger_result/num_of_target_id_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld")["data"]
+num_of_group = JLD.load("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld")["data"]
+
 #----------------------------------------#
 # (2) calculate the merger configuration
 #----------------------------------------#
-
-
-domain1 = vcat([0:1.0:10;],20)
+domain1 = vcat([0:1.0:10;],20) # range of merger cost
+domain2 = [0:1.0:5;] # range of subsity sensitivity
 model_list = zeros(length(domain1),length(domain2), m.N)
 k = 8
 for i in 1:length(domain1), j in 1:length(domain2)
@@ -221,7 +228,7 @@ for i in 1:length(domain1), j in 1:length(domain2)
 	end
 end
 obsd.total_size_buyer
-using StatsPlots
+
 model_list_ordered = zeros(length(domain1),length(domain2), m.N)
 for i in 1:length(domain1), j in 1:length(domain2)
 	model_list_ordered[i,j,:] = sort(model_list[i,j,:],rev=true)
@@ -245,8 +252,126 @@ end
 
 
 
+#----------------------------------------#
+# (3) calculate total expenditure
+#----------------------------------------#
+temp_subsidy_type = "to_buyer"
+temp_threshold_tonnage = 1
+temp_subsidy_amount = 1
+num_of_group = JLD.load("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld")["data"]
 
 
+domain1 = vcat([0:1.0:10;]) # range of merger cost
+domain2 = [0:1.0:5;] # range of subsity sensitivity
+mean_total_expenditure = zeros(length(domain1),length(domain2))
+for i in 1:length(domain1), j in 1:length(domain2)
+	solved_index = num_of_group[i,j,:].!=100
+	mean_total_expenditure[i,j] = mean(num_of_group[i,j,:][solved_index]*domain2[j])
+end
+Plots.plot(domain1, mean_total_expenditure[:,2],
+		   label="Total expenditure [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[2]), γ]",
+		   xlabel="γ",
+		   ylabel="Total expenditure (num of firms × subsidy amount)",
+		   legend=:topright,
+		   linestyle = :dash,
+		   ylim = [0, 16],
+		   alpha = 0.7,
+		   markershape = :auto,
+		   title = "Total expenditure: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
+for ii = 3:length(mean_total_expenditure[1,:])
+	Plots.plot!(domain1, mean_total_expenditure[:,ii],
+			   linestyle = :dash,
+			   alpha = 0.7,
+			   markershape = :auto,
+			   label="Total expenditure [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[ii]), γ]")
+end
+Plots.plot!()
+savefig("julia_merger_figure/plot_total_expenditure_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy")
+
+
+temp_subsidy_type = "to_buyer"
+temp_threshold_tonnage = 1.5
+temp_subsidy_amount = 1
+@time num_of_target_id, num_of_group = gen_plot_number_of_firms(m,
+                         temp_threshold_tonnage,
+						 temp_subsidy_amount,
+						 temp_subsidy_type;
+						 seed_max = 50)
+temp_threshold_tonnage = "1_5"
+JLD.save("julia_merger_result/num_of_target_id_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld",
+         "data", num_of_target_id)
+JLD.save("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld",
+         "data", num_of_group)
+num_of_group = JLD.load("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld")["data"]
+domain1 = vcat([0:1.0:10;]) # range of merger cost
+domain2 = [0:1.0:5;] # range of subsity sensitivity
+mean_total_expenditure = zeros(length(domain1),length(domain2))
+for i in 1:length(domain1), j in 1:length(domain2)
+	solved_index = num_of_group[i,j,:].!=100
+	mean_total_expenditure[i,j] = mean(num_of_group[i,j,:][solved_index]*domain2[j])
+end
+temp_threshold_tonnage = 1.5
+Plots.plot(domain1, mean_total_expenditure[:,2],
+		   label="Total expenditure [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[2]), γ]",
+		   xlabel="γ",
+		   ylabel="Total expenditure (num of firms × subsidy amount)",
+		   legend=:topright,
+		   linestyle = :dash,
+		   ylim = [0, 16],
+		   alpha = 0.7,
+		   markershape = :auto,
+		   title = "Total expenditure: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
+for ii = 3:length(mean_total_expenditure[1,:])
+	Plots.plot!(domain1, mean_total_expenditure[:,ii],
+			   linestyle = :dash,
+			   alpha = 0.7,
+			   markershape = :auto,
+			   label="Total expenditure [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[ii]), γ]")
+end
+Plots.plot!()
+temp_threshold_tonnage = "1_5"
+savefig("julia_merger_figure/plot_total_expenditure_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy")
+
+temp_subsidy_type = "to_buyer"
+temp_threshold_tonnage = 2
+temp_subsidy_amount = 1
+@time num_of_target_id, num_of_group = gen_plot_number_of_firms(m,
+                         temp_threshold_tonnage,
+						 temp_subsidy_amount,
+						 temp_subsidy_type;
+						 seed_max = 50)
+JLD.save("julia_merger_result/num_of_target_id_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld",
+         "data", num_of_target_id)
+JLD.save("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld",
+         "data", num_of_group)
+num_of_group = JLD.load("julia_merger_result/num_of_group_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy.jld")["data"]
+
+domain1 = vcat([0:1.0:10;]) # range of merger cost
+domain2 = [0:1.0:5;] # range of subsity sensitivity
+mean_total_expenditure = zeros(length(domain1),length(domain2))
+for i in 1:length(domain1), j in 1:length(domain2)
+	solved_index = num_of_group[i,j,:].!=100
+	mean_total_expenditure[i,j] = mean(num_of_group[i,j,:][solved_index]*domain2[j])
+end
+Plots.plot(domain1, mean_total_expenditure[:,2],
+		   label="Total expenditure [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[2]), γ]",
+		   xlabel="γ",
+		   ylabel="Total expenditure (num of firms × subsidy amount)",
+		   legend=:topright,
+		   linestyle = :dash,
+		   alpha = 0.7,
+		   ylim = [0, 16],
+		   markershape = :auto,
+		   title = "Total expenditure: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
+for ii = 3:length(mean_total_expenditure[1,:])
+	Plots.plot!(domain1, mean_total_expenditure[:,ii],
+			   linestyle = :dash,
+			   alpha = 0.7,
+			   markershape = :auto,
+			   label="Total expenditure [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[ii]), γ]")
+end
+Plots.plot!()
+savefig("julia_merger_figure/plot_total_expenditure_threshold_$(temp_threshold_tonnage)_comparative_statics_$(temp_subsidy_type)_subsidy")
 
 
 # end

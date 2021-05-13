@@ -30,244 +30,35 @@ temp_randomseed = 1
 data = CSV.read("data_for_maximum_rank_estimation.csv",DataFrame)
 rename!(data, :Column1 => :firm_id)
 
-num_agents = size(data)[1]
+#num_agents = size(data)[1]
 names(data)
 gdf = groupby(data, :group)
+#=
 liner_sum = combine(gdf, [:liner] => sum)
 special_sum = combine(gdf, [:special] => sum)
 tanker_sum = combine(gdf, [:tanker] => sum)
 tramper_sum = combine(gdf, [:tramper] => sum)
+=#
+temp_info_sum = Dict([("liner_sum", combine(gdf, [:liner] => sum)),
+                 ("special_sum", combine(gdf, [:special] => sum)),
+				 ("tanker_sum", combine(gdf, [:tanker] => sum)),
+				 ("tramper_sum", combine(gdf, [:tramper] => sum))])
 
 
-function extract_buyer_covariates_if_ii_is_buyer(ii, data)
-	# pick individual own covariates
-	buyer_X_scale = Vector(data[ii,5:8])
-	buyer_X_scope = Vector(data[ii,11:14])
-	res = vcat(buyer_X_scale,buyer_X_scope)
-	return res
-end
-
-function extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, data)
-	# pick individual own covariates
-	# pick up group names
-	group_names = data[ii,4]
-	# pick up deviating member
-	subdata = @linq data |>
-	    where(:group .== group_names)
-	deviater_X_scale = Vector(subdata[kk,5:8])
-	deviater_X_scope = Vector(subdata[kk,11:14])
-	res = vcat(deviater_X_scale, deviater_X_scope)
-	return res
-end
-
-function extract_target_covariates_if_ii_is_buyer(ii, data)
-	global liner_sum, special_sum, tanker_sum, tramper_sum
-	# pick up group names
-	group_names = data[ii,4]
-	# pick individual own covariates
-	buyer_X_scale = Vector(data[ii,5:8])
-	buyer_total_sum = data.total[ii]
-	target_total_sum = data.group_total_tonnage[ii]
-	# construct scale covariates
-	target_liner_sum = zeros(0)
-	target_special_sum = zeros(0)
-	target_tramper_sum = zeros(0)
-	target_tanker_sum = zeros(0)
-	for iter = 1:size(liner_sum,1)
-		if liner_sum.group[iter] == group_names
-			target_liner_sum = liner_sum.liner_sum[iter]
-		end
-		if special_sum.group[iter] == group_names
-			target_special_sum = special_sum.special_sum[iter]
-		end
-		if tramper_sum.group[iter] == group_names
-			target_tramper_sum = tramper_sum.tramper_sum[iter]
-		end
-		if tanker_sum.group[iter] == group_names
-			target_tanker_sum = tanker_sum.tanker_sum[iter]
-		end
-	end
-	# construct scope covariates
-	target_liner_share = (target_liner_sum-buyer_X_scale[1])/(target_total_sum-buyer_total_sum)
-	target_special_share = (target_special_sum-buyer_X_scale[2])/(target_total_sum-buyer_total_sum)
-	target_tramper_share = (target_tramper_sum-buyer_X_scale[3])/(target_total_sum-buyer_total_sum)
-	target_tanker_share = (target_tanker_sum-buyer_X_scale[4])/(target_total_sum-buyer_total_sum)
-	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
-	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
-	return res
-end
-
-function extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, data)
-	global liner_sum, special_sum, tanker_sum, tramper_sum
-	# pick up group names
-	group_names = data[ii,4]
-	# pick up deviating member
-	subdata = @linq data |>
-	    where(:group .== group_names)
-	subdata.id[kk] == data.id[ii]
-	deviater_X_scale = convert(Vector, subdata[kk,5:8])
-	deviater_total_sum = subdata[kk,9]
-	# pick individual own covariates
-	buyer_X_scale = convert(Vector,data[ii,5:8])
-	buyer_total_sum = data.total[ii]
-	target_total_sum = data.group_total_tonnage[ii]
-	# construct scale covariates
-	target_liner_sum = zeros(0)
-	target_special_sum = zeros(0)
-	target_tramper_sum = zeros(0)
-	target_tanker_sum = zeros(0)
-	for iter = 1:size(liner_sum,1)
-		if liner_sum.group[iter] == group_names
-			target_liner_sum = liner_sum.liner_sum[iter]
-
-		end
-		if special_sum.group[iter] == group_names
-			target_special_sum = special_sum.special_sum[iter]
-		end
-		if tramper_sum.group[iter] == group_names
-			target_tramper_sum = tramper_sum.tramper_sum[iter]
-		end
-		if tanker_sum.group[iter] == group_names
-			target_tanker_sum = tanker_sum.tanker_sum[iter]
-		end
-	end
-	# construct scope covariates
-	target_liner_share = (target_liner_sum-buyer_X_scale[1]-deviater_X_scale[1])/
-	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
-	target_special_share = (target_special_sum-buyer_X_scale[2]-deviater_X_scale[2])/
-	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
-	target_tramper_share = (target_tramper_sum-buyer_X_scale[3]-deviater_X_scale[3])/
-	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
-	target_tanker_share = (target_tanker_sum-buyer_X_scale[4]-deviater_X_scale[4])/
-	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
-	# modification dropping deviator firm kk
-	target_liner_sum = target_liner_sum - deviater_X_scale[1]
-	target_special_sum = target_special_sum - deviater_X_scale[2]
-	target_tramper_sum = target_tramper_sum - deviater_X_scale[3]
-	target_tanker_sum = target_tanker_sum - deviater_X_scale[4]
-	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
-	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
-	return res
-end
-
-
-function extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(ii, kk, data)
-	global liner_sum, special_sum, tanker_sum, tramper_sum
-	group_names = data[ii,4]
-	# pick individual own covariates
-	buyer_X_scale = convert(Vector,data[ii,5:8])
-	buyer_total_sum = data.total[ii]
-	target_total_sum = data.group_total_tonnage[ii]
-	# pick unmatched kk covariates
-	unmatched_X_scale = convert(Vector,data[kk,5:8])
-	unmatched_total_sum = data.total[kk]
-	# construct scale covariates
-	target_liner_sum = zeros(0)
-	target_special_sum = zeros(0)
-	target_tramper_sum = zeros(0)
-	target_tanker_sum = zeros(0)
-	for iter = 1:size(liner_sum,1)
-		#liner_sum.group[iter] == group_names
-		if liner_sum.group[iter] == group_names
-			target_liner_sum = liner_sum.liner_sum[iter]
-		end
-		if special_sum.group[iter] == group_names
-			target_special_sum = special_sum.special_sum[iter]
-		end
-		if tramper_sum.group[iter] == group_names
-			target_tramper_sum = tramper_sum.tramper_sum[iter]
-		end
-		if tanker_sum.group[iter] == group_names
-			target_tanker_sum = tanker_sum.tanker_sum[iter]
-		end
-	end
-	# construct scope covariates
-	target_liner_share = (target_liner_sum-buyer_X_scale[1]+unmatched_X_scale[1])/
-	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
-	target_special_share = (target_special_sum-buyer_X_scale[2]+unmatched_X_scale[2])/
-	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
-	target_tramper_share = (target_tramper_sum-buyer_X_scale[3]+unmatched_X_scale[3])/
-	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
-	target_tanker_share = (target_tanker_sum-buyer_X_scale[4]+unmatched_X_scale[4])/
-	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
-	# modification adding unmatched kk
-	target_liner_sum = target_liner_sum + unmatched_X_scale[1]
-	target_special_sum = target_special_sum + unmatched_X_scale[2]
-	target_tramper_sum = target_tramper_sum + unmatched_X_scale[3]
-	target_tanker_sum = target_tanker_sum + unmatched_X_scale[4]
-	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
-	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
-end
-
-function gen_merger_cost_for_buyer_ii(ii, buyer1_X, target1_X, data)
-	subdata = @linq data |>
-		where(:group .== data[ii,4])
-	# construct swapped matches
-	num_of_firms_in_coalition = size(subdata, 1)
-	total_tonnage = sum(buyer1_X[1:4]) + sum(target1_X[1:4])
-	merger_cost = num_of_firms_in_coalition/log(total_tonnage)
-	return merger_cost
-end
-
-function gen_subsidy_indicator_for_buyer_ii(buyer1_X, target1_X,
-	                                        subsidy_type;
-	                                        subsidy_threshold = 1,
-											subsidy_amount = 1)
-	total_tonnage = sum(buyer1_X[1:4]) + sum(target1_X[1:4])
-	subsidy_indicator = total_tonnage > subsidy_threshold
-	if subsidy_type == "shared"
-	    subsidy_effect = subsidy_amount*subsidy_indicator/total_tonnage
-	elseif subsidy_type == "to_buyer"
-		subsidy_effect = subsidy_amount*subsidy_indicator
-	end
-	return subsidy_effect
-end
-
-function gen_utility_est(ii, buyer1_X::Vector, target1_X::Vector, data,
-	                     beta, gamma, delta, subsidy_type)
-		#interaction_X_beta = beta.*log.(buyer1_X.*target1_X.+1)
-		buyer1_X_total = sum(buyer1_X[1:4])
-		target1_X_total = sum(target1_X[1:4])
-		#interaction_X_beta = 1.0*buyer1_X_total.*target1_X_total .+ beta.*buyer1_X.*target1_X
-		interaction_X_beta = vcat(1.0*buyer1_X_total.*target1_X_total, beta.*buyer1_X.*target1_X)
-		#interaction_X_beta = beta.*buyer1_X.*target1_X
-		merger_cost = gen_merger_cost_for_buyer_ii(ii, buyer1_X, target1_X, data)
-		subsidy = gen_subsidy_indicator_for_buyer_ii(buyer1_X, target1_X,
-		                                             subsidy_type,
-		                                             subsidy_amount = 1)
-		utility = sum(interaction_X_beta) - gamma*merger_cost + delta*subsidy
-	return utility
-end
-
-
-function gen_utility_est_without_subsidy(ii, buyer1_X::Vector, target1_X::Vector, data,
-	                     beta, gamma, delta)
-		#interaction_X_beta = beta.*log.(buyer1_X.*target1_X.+1)
-		buyer1_X_total = sum(buyer1_X[1:4])
-		target1_X_total = sum(target1_X[1:4])
-		interaction_X_beta = 1.0*buyer1_X_total.*target1_X_total .+ beta.*buyer1_X.*target1_X
-		#interaction_X_beta = beta.*buyer1_X.*target1_X
-		merger_cost = gen_merger_cost_for_buyer_ii(ii, buyer1_X, target1_X, data)
-		utility = sum(interaction_X_beta) - gamma*merger_cost + 0
-	return utility
-end
-
-function gen_unmatched_utility_est(buyer1_X::Vector, beta)
-		#interaction_X_beta = beta.*log.(buyer1_X.+1)
-		buyer1_X_total = sum(buyer1_X[1:4])
-		#interaction_X_beta = 1.0*buyer1_X_total .+ beta.*buyer1_X
-		#interaction_X_beta = 1.0*buyer1_X_total.*buyer1_X_total .+ beta.*buyer1_X.*buyer1_X
-		interaction_X_beta = 1.0*buyer1_X_total.*0.01 .+ beta.*buyer1_X.*0.01
-		#interaction_X_beta = beta.*buyer1_X
-		utility = sum(interaction_X_beta)
-	return utility
-end
 
 function score_b_est_data(subsampled_id_list,
 	                      data,
 	                      theta::Vector{Float64},
-						  subsidy_type)
-	global liner_sum, special_sum, tanker_sum, tramper_sum
+						  subsidy_type;
+						  info_sum = temp_info_sum,
+						  compare_matched_and_unmatched = "no",
+						  compare_with_and_without_subsidy = "yes")
+	#global liner_sum, special_sum, tanker_sum, tramper_sum
+	liner_sum = info_sum["liner_sum"]
+	special_sum = info_sum["special_sum"]
+	tanker_sum = info_sum["tanker_sum"]
+	tramper_sum = info_sum["tramper_sum"]
+
 	beta = theta[1:8]
 	gamma = theta[9] # coefficient on merger cost
 	delta = theta[10] # coefficient on subsidy indicator
@@ -290,10 +81,10 @@ function score_b_est_data(subsampled_id_list,
 			#println("iter $i = Case 1: both firms are buyers.")
 			# pick up buyer covariates
 			buyer1_X = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
-			buyer2_X = extract_target_covariates_if_ii_is_buyer(idx[2], data)
+			buyer2_X = extract_target_covariates_if_ii_is_buyer(idx[2], data, info_sum = temp_info_sum)
 			# pick up target covariates
-		    target1_X = extract_target_covariates_if_ii_is_buyer(idx[1], data)
-			target2_X = extract_target_covariates_if_ii_is_buyer(idx[2], data)
+		    target1_X = extract_target_covariates_if_ii_is_buyer(idx[1], data, info_sum = temp_info_sum)
+			target2_X = extract_target_covariates_if_ii_is_buyer(idx[2], data, info_sum = temp_info_sum)
 			#First, I construct matching maximum score inequality for two acquiring firms without price data:
 			payoff_obs_match1 = gen_utility_est(idx[1], buyer1_X, target1_X, data, beta, gamma, delta, subsidy_type) # buyer
 			payoff_obs_match2 = gen_utility_est(idx[2], buyer2_X, target2_X, data, beta, gamma, delta, subsidy_type) # buyer
@@ -301,23 +92,36 @@ function score_b_est_data(subsampled_id_list,
 			payoff_unobs_match2 = gen_utility_est(idx[2], buyer2_X, target1_X, data, beta, gamma, delta, subsidy_type) # swapped
 			#ineq[i, kk, hh] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
 			ineq[i, 1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
-			# compare utility with and without subsidy
-			# buyer 1
-			payoff_unobs_match1_without_subsidy = gen_utility_est_without_subsidy(idx[1], buyer1_X, target1_X, data, beta, gamma, delta)
-			buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
-			payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
-			#ineq[i, 2] = payoff_obs_unmatch1 - payoff_unobs_match1_without_subsidy
-			# buyer 2
-			payoff_unobs_match2_without_subsidy = gen_utility_est_without_subsidy(idx[2], buyer2_X, target2_X, data, beta, gamma, delta)
-			buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
-			payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
-			#ineq[i, 3] = payoff_obs_unmatch2 - payoff_unobs_match2_without_subsidy
+			if compare_with_and_without_subsidy == "yes"
+				# compare utility with and without subsidy
+				# buyer 1
+				payoff_unobs_match1_without_subsidy = gen_utility_est_without_subsidy(idx[1], buyer1_X, target1_X, data, beta, gamma, delta)
+				buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
+				payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
+				ineq[i, 2] = payoff_obs_unmatch1 - payoff_unobs_match1_without_subsidy
+				ineq[i, 3] = payoff_obs_match1 - payoff_obs_unmatch1 # with subsidy
+				# buyer 2
+				payoff_unobs_match2_without_subsidy = gen_utility_est_without_subsidy(idx[2], buyer2_X, target2_X, data, beta, gamma, delta)
+				buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
+				payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
+				ineq[i, 4] = payoff_obs_unmatch2 - payoff_unobs_match2_without_subsidy
+				ineq[i, 5] = payoff_obs_match2 - payoff_obs_unmatch2 # with subsidy
+			end
+			if compare_matched_and_unmatched == "yes"
+				# compare matched utility with unmatched utility
+				buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
+				payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
+				buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
+				payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
+				ineq[i, 2] = payoff_obs_match1 - payoff_obs_unmatch1
+				ineq[i, 3] = payoff_obs_match2 - payoff_obs_unmatch2
+			end
 		#elseif IS_Buyer(m,idx[1],target_bundle_id[1]) && IS_Sell(m,idx[2],target_bundle_id[2])
 		elseif type_list_firm1[i] == "(1) main" && (type_list_firm2[i] != "(1) main" && type_list_firm2[i] != "unmatched")
 			#println("iter $i = Case 2: firm 1 is a buyer and firm 2 is a seller.")
 			#Second, I construct inequalities from an observed coalition:
 			buyer1_X = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
-			target1_X = extract_target_covariates_if_ii_is_buyer(idx[1], data)
+			target1_X = extract_target_covariates_if_ii_is_buyer(idx[1], data, info_sum = temp_info_sum)
 			payoff_obs_match1 = gen_utility_est(idx[1], buyer1_X, target1_X, data, beta, gamma, delta, subsidy_type) # buyer
 			# choose a firm out of coalition of buyer's bundle
 			subdata = @linq data |>
@@ -325,7 +129,7 @@ function score_b_est_data(subsampled_id_list,
 		    # construct swapped matches
 			for kk = 1:size(subdata, 1)
 				if subdata.id[kk] != data.id[idx[1]]
-					target1_X_dropping_kk = extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(idx[1], kk, data)
+					target1_X_dropping_kk = extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(idx[1], kk, data, info_sum = temp_info_sum)
 					payoff_unobs_match1 = gen_utility_est(idx[1], buyer1_X, target1_X_dropping_kk, data, beta, gamma, delta, subsidy_type)
 					buyer2_X_unmatched_deviator_kk = extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk(idx[1], kk, data)
 					payoff_unobs_match2 = gen_unmatched_utility_est(buyer2_X_unmatched_deviator_kk, beta)
@@ -335,18 +139,27 @@ function score_b_est_data(subsampled_id_list,
 					#println("buyer and dropped firm are the same so null valued.")
 				end
 			end
-			# compare utility with and without subsidy
-			# buyer 1
-			payoff_unobs_match1_without_subsidy = gen_utility_est_without_subsidy(idx[1], buyer1_X, target1_X, data, beta, gamma, delta)
-			buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
-			payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
-			#ineq[i, size(subdata, 1)+1] = payoff_obs_unmatch1 - payoff_unobs_match1_without_subsidy
+			if compare_with_and_without_subsidy == "yes"
+				# compare utility with and without subsidy
+				# buyer 1
+				payoff_unobs_match1_without_subsidy = gen_utility_est_without_subsidy(idx[1], buyer1_X, target1_X, data, beta, gamma, delta)
+				buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
+				payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
+				ineq[i, size(subdata, 1)+1] = payoff_obs_unmatch1 - payoff_unobs_match1_without_subsidy
+				ineq[i, size(subdata, 1)+2] = payoff_obs_match1 - payoff_obs_unmatch1 # with subsidy
+			end
+			if compare_matched_and_unmatched == "yes"
+				# compare matched utility with unmatched utility
+				buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
+				payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
+				ineq[i, size(subdata, 1)+3] = payoff_obs_match1 - payoff_obs_unmatch1
+			end
 		#elseif IS_Sell(m,idx[1],target_bundle_id[1]) && IS_Buyer(m,idx[2],target_bundle_id[2])
 	    elseif (type_list_firm1[i] != "(1) main" && type_list_firm1[i] != "unmatched") && type_list_firm2[i] == "(1) main"
 			#println("iter $i = Case 3: firm 1 is a seller and firm 2 is a buyer.")
 			#Second, I construct inequalities from an observed coalition:
 			buyer2_X = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
-			target2_X = extract_target_covariates_if_ii_is_buyer(idx[2], data)
+			target2_X = extract_target_covariates_if_ii_is_buyer(idx[2], data, info_sum = temp_info_sum)
 			payoff_obs_match2 = gen_utility_est(idx[2], buyer2_X, target2_X, data, beta, gamma, delta, subsidy_type) # buyer
 			# choose a firm out of coalition of buyer's bundle
 			subdata = @linq data |>
@@ -354,7 +167,7 @@ function score_b_est_data(subsampled_id_list,
 			# construct swapped matches
 			for kk = 1:size(subdata, 1)
 				if subdata.id[kk] != data.id[idx[2]]
-					target2_X_dropping_kk = extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(idx[2], kk, data)
+					target2_X_dropping_kk = extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(idx[2], kk, data, info_sum = temp_info_sum)
 					payoff_unobs_match2 = gen_utility_est(idx[2], buyer2_X, target2_X_dropping_kk, data, beta, gamma, delta, subsidy_type)
 					buyer1_X_unmatched_deviator_kk = extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk(idx[2], kk, data)
 					payoff_unobs_match1 = gen_unmatched_utility_est(buyer1_X_unmatched_deviator_kk, beta)
@@ -364,31 +177,49 @@ function score_b_est_data(subsampled_id_list,
 					#println("buyer and dropped firm are the same so null valued.")
 				end
 			end
-			# compare utility with and without subsidy
-			# buyer 2
-			payoff_unobs_match2_without_subsidy = gen_utility_est_without_subsidy(idx[2], buyer2_X, target2_X, data, beta, gamma, delta)
-			buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
-			payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
-			#ineq[i, size(subdata, 1)+1] = payoff_obs_unmatch2 - payoff_unobs_match2_without_subsidy
+			if compare_with_and_without_subsidy == "yes"
+				# compare utility with and without subsidy
+				# buyer 2
+				payoff_unobs_match2_without_subsidy = gen_utility_est_without_subsidy(idx[2], buyer2_X, target2_X, data, beta, gamma, delta)
+				buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
+				payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
+				ineq[i, size(subdata, 1)+1] = payoff_obs_unmatch2 - payoff_unobs_match2_without_subsidy
+				ineq[i, size(subdata, 1)+2] = payoff_obs_match2 - payoff_obs_unmatch2 # with subsidy
+			end
+			if compare_matched_and_unmatched == "yes"
+				# compare matched utility with unmatched utility
+				buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
+				payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
+				ineq[i, size(subdata, 1)+3] = payoff_obs_match2 - payoff_obs_unmatch2
+			end
 		#elseif IS_Buyer(m,idx[1],target_bundle_id[1]) && unmatched_vec == TB_toy(m.N, target_bundle_id[2])
 	    elseif type_list_firm1[i] == "(1) main" && type_list_firm2[i] == "unmatched"
 			#println("iter $i = Case 4: firm 1 is a buyer and firm 2 is unmatched.")
 			#Third, I construct inequalities from an unmatched target:
 			buyer1_X = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
-			target1_X = extract_target_covariates_if_ii_is_buyer(idx[1], data)
+			target1_X = extract_target_covariates_if_ii_is_buyer(idx[1], data, info_sum = temp_info_sum)
 			payoff_obs_match1 = gen_utility_est(idx[1], buyer1_X, target1_X, data, beta, gamma, delta, subsidy_type) # buyer
 			buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
 			payoff_obs_match2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta) # unmatched
 			# construct swapped matches
-			target1_X_adding_unmatched_kk = extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(idx[1], idx[2], data)
+			target1_X_adding_unmatched_kk = extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(idx[1], idx[2], data, info_sum = temp_info_sum)
 			payoff_unobs_match1 = gen_utility_est(idx[1], buyer1_X, target1_X_adding_unmatched_kk, data, beta, gamma, delta, subsidy_type) # swapped
-			ineq[i,1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1
-			# compare utility with and without subsidy
-			# buyer 1
-			payoff_unobs_match1_without_subsidy = gen_utility_est_without_subsidy(idx[1], buyer1_X, target1_X, data, beta, gamma, delta)
-			buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
-			payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
-			#ineq[i,2] = payoff_obs_unmatch1 - payoff_unobs_match1_without_subsidy
+			ineq[i, 1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1
+			if compare_with_and_without_subsidy == "yes"
+				# compare utility with and without subsidy
+				# buyer 1
+				payoff_unobs_match1_without_subsidy = gen_utility_est_without_subsidy(idx[1], buyer1_X, target1_X, data, beta, gamma, delta)
+				buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
+				payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
+				ineq[i, 2] = payoff_obs_unmatch1 - payoff_unobs_match1_without_subsidy
+				ineq[i, 3] = payoff_obs_match1 - payoff_obs_unmatch1 # with subsidy
+			end
+			if compare_matched_and_unmatched == "yes"
+				# compare matched utility with unmatched utility
+				buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
+				payoff_obs_unmatch1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta)
+				ineq[i, 4] = payoff_obs_match1 - payoff_obs_unmatch1
+			end
 		#elseif unmatched_vec == TB_toy(m.N, target_bundle_id[1]) && IS_Buyer(m,idx[2],target_bundle_id[2])
 	    elseif type_list_firm1[i] == "unmatched" && type_list_firm2[i] == "(1) main"
 			#println("iter $i = Case 5: firm 1 is unmatched and firm 2 is a buyer.")
@@ -396,19 +227,28 @@ function score_b_est_data(subsampled_id_list,
 			buyer1_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[1], data)
 			payoff_obs_match1 = gen_unmatched_utility_est(buyer1_X_unmatched, beta) # unmatched
 			buyer2_X = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
-			target2_X = extract_target_covariates_if_ii_is_buyer(idx[2], data)
+			target2_X = extract_target_covariates_if_ii_is_buyer(idx[2], data, info_sum = temp_info_sum)
 			payoff_obs_match2 = gen_utility_est(idx[2], buyer2_X, target2_X, data, beta, gamma, delta, subsidy_type) # buyer
 			# choose a firm out of coalition
 			# construct swapped matches
-			target2_X_adding_unmatched_kk = extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(idx[2], idx[1], data)
+			target2_X_adding_unmatched_kk = extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(idx[2], idx[1], data, info_sum = temp_info_sum)
 			payoff_unobs_match2 = gen_utility_est(idx[2], buyer2_X, target2_X_adding_unmatched_kk, data, beta, gamma, delta, subsidy_type) # swapped
 			ineq[i,1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match2
 			# buyer 2
-			# compare utility with and without subsidy
-			payoff_unobs_match2_without_subsidy = gen_utility_est_without_subsidy(idx[2], buyer2_X, target2_X, data, beta, gamma, delta)
-			buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
-			payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
-			#ineq[i,2] = payoff_obs_unmatch2 - payoff_unobs_match2_without_subsidy
+			if compare_with_and_without_subsidy == "yes"
+				# compare utility with and without subsidy
+				payoff_unobs_match2_without_subsidy = gen_utility_est_without_subsidy(idx[2], buyer2_X, target2_X, data, beta, gamma, delta)
+				buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
+				payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
+				ineq[i,2] = payoff_obs_unmatch2 - payoff_unobs_match2_without_subsidy
+				ineq[i,3] = payoff_obs_match2 - payoff_obs_unmatch2 # with subsidy
+			end
+			if compare_matched_and_unmatched == "yes"
+				# compare matched utility with unmatched utility
+				buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
+				payoff_obs_unmatch2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta)
+				ineq[i,4] = payoff_obs_match2 - payoff_obs_unmatch2
+			end
 		#elseif unmatched_vec == TB_toy(m.N, target_bundle_id[1]) && unmatched_vec == TB_toy(m.N, target_bundle_id[2])
 	    elseif type_list_firm1[i] == "unmatched" && type_list_firm2[i] == "unmatched"
 			#println("iter $i = Case 6: both picked firms are unmatched.")
@@ -419,9 +259,9 @@ function score_b_est_data(subsampled_id_list,
 			buyer2_X_unmatched = extract_buyer_covariates_if_ii_is_buyer(idx[2], data)
 			payoff_obs_match2 = gen_unmatched_utility_est(buyer2_X_unmatched, beta) # unmatched
 			# construct swapped matches
-			target1_X_adding_unmatched_kk = extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(idx[1], idx[2], data)
+			target1_X_adding_unmatched_kk = extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(idx[1], idx[2], data, info_sum = temp_info_sum)
 			payoff_unobs_match1 = gen_utility_est(idx[1], buyer1_X_unmatched, target1_X_adding_unmatched_kk, data, beta, gamma, delta, subsidy_type) # swapped
-			target2_X_adding_unmatched_kk = extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(idx[2], idx[1], data)
+			target2_X_adding_unmatched_kk = extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(idx[2], idx[1], data, info_sum = temp_info_sum)
 			payoff_unobs_match2 = gen_utility_est(idx[2], buyer2_X_unmatched, target2_X_adding_unmatched_kk, data, beta, gamma, delta, subsidy_type) # swapped
 			ineq[i,1,1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
 		else
@@ -442,8 +282,13 @@ function iterate_estimation(data,
 	                        num_its=10,
 	                        size_of_subsample=60,
 							num_steps_DE=10,
-							temp_calibrated_delta = 1)
-	global liner_sum, special_sum, tanker_sum, tramper_sum
+							temp_calibrated_delta = 1,
+							info_sum = temp_info_sum)
+	#global liner_sum, special_sum, tanker_sum, tramper_sum
+	liner_sum = info_sum["liner_sum"]
+	special_sum = info_sum["special_sum"]
+	tanker_sum = info_sum["tanker_sum"]
+	tramper_sum = info_sum["tramper_sum"]
 	myests = zeros(num_its, param_dim)
 	num_correct_ineq = zeros(num_its, 1)
 	num_total_ineq = zeros(num_its, 1)
@@ -455,14 +300,15 @@ function iterate_estimation(data,
 	for iter = 1:num_its
 		Random.seed!(iter)
 		picked_not_main_firm_id = StatsBase.sample(data_not_main_firm.firm_id,
-		                                           0, replace = false)
+		                                           size_of_subsample,
+												   replace = false)
 		subsampled_id_list = vcat(main_firm_id, picked_not_main_firm_id)
 		# Estimation
-		temp_search_domain = [(-100.0,100.0),(-100.0,100.0),(-100.0,100.0),(-100.0,100.0),
-		                	  (-100.0,100.0),(-100.0,100.0),(-100.0,100.0),(-100.0,100.0)]
+		temp_search_domain = [(-200.0,200.0),(-200.0,200.0),(-200.0,200.0),(-200.0,200.0),
+		                	  (-200.0,200.0),(-200.0,200.0),(-200.0,200.0),(-200.0,200.0)]
 		m_res = BlackBoxOptim.bboptimize(theta -> score_bthis(subsampled_id_list, data, theta, subsidy_type,
 										              calibrated_delta = temp_calibrated_delta)[1];
-		                                SearchRange = vcat(temp_search_domain[1:(param_dim-1)],(-10.0, 10.0)),
+		                                SearchRange = vcat(temp_search_domain[1:(param_dim-1)],(-100.0, 2000.0)),
 										NumDimensions = param_dim,
 										Method = :de_rand_1_bin,
 										MaxSteps = num_steps_DE)
@@ -558,11 +404,13 @@ temp_subsidy_type = "shared"
 variable_list = ["β₁","β₂","β₃","β₄","β₅","β₆","β₇","β₈","γ","δ"]
 function plot_score_single_variable(temp_subsidy_type;
 	                                domain,
+									data,
+									variable_list,
 									calibrated_delta_list,
 	                                variable::String,
-									file_name_variable::String)
-	global data
-	global variable_list
+									file_name_variable::String,
+									info_sum = temp_info_sum)
+	#global data, variable_list
 	single_variable_index = [1:1:length(variable_list);][variable_list .== variable][1]
 	for kk in 1:length(calibrated_delta_list)
 		calibrated_delta = calibrated_delta_list[kk]
@@ -573,8 +421,11 @@ function plot_score_single_variable(temp_subsidy_type;
 			                    theta,
 								zeros(9-single_variable_index),
 								calibrated_delta) # first parameter must be normalized to 1
-			score_res, total_num_ineq = score_b_est_data(subsampled_id_list, data,
-			                            target_theta, subsidy_type)
+			score_res, total_num_ineq = score_b_est_data(subsampled_id_list,
+			                            data,
+			                            target_theta,
+										subsidy_type,
+										info_sum = temp_info_sum)
 			res = -1.0.*score_res .+ 100000.0 # need to be Float64 for bboptimize
 			println("score:$(res) \n" )
 			return res, score_res, total_num_ineq
@@ -610,83 +461,119 @@ want_to_run = "not_run"
 	variable_list = ["β₁","β₂","β₃","β₄","β₅","β₆","β₇","β₈","γ","δ"]
 	# economies of scale
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-2:10:300;],
 	                           calibrated_delta_list = [0],
 	                           variable = "β₁", file_name_variable = "x1")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-2:10:300;],
 	                           calibrated_delta_list = [0],
 	                           variable = "β₂", file_name_variable = "x2")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-2:10:300;],
 	                           calibrated_delta_list = [0],
 	                           variable = "β₃", file_name_variable = "x3")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-2:10:300;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₄", file_name_variable = "x4")
 	# economies of scope
 	plot_score_single_variable(temp_subsidy_type,
-	                           domain = [-5:0.2:2;],
+	                           data = data,
+	                           variable_list = variable_list,
+	                           domain = [-5:0.5:2;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₅", file_name_variable = "x5")
 	plot_score_single_variable(temp_subsidy_type,
-	                           domain = [-5:0.2:2;],
+	                           data = data,
+	                           variable_list = variable_list,
+	                           domain = [-5:0.5:2;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₆", file_name_variable = "x6")
 	plot_score_single_variable(temp_subsidy_type,
-	                           domain = [-5:0.2:2;],
+	                           data = data,
+	                           variable_list = variable_list,
+	                           domain = [-5:0.5:2;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₇", file_name_variable = "x7")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-5:0.2:2;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₈", file_name_variable = "x8")
 	# merger cost
 	plot_score_single_variable(temp_subsidy_type,
-	                           domain = [-1:0.1:5;],
-							   calibrated_delta_list = [0,1,2,5],
+	                           data = data,
+	                           variable_list = variable_list,
+	                           domain = [-1:10:400;],
+							   calibrated_delta_list = [1,5,10],
 	                           variable = "γ", file_name_variable = "gamma")
 	temp_subsidy_type = "to_buyer"
 	variable_list = ["β₁","β₂","β₃","β₄","β₅","β₆","β₇","β₈","γ","δ"]
 	# economies of scale
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-2:10:300;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₁", file_name_variable = "x1")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-2:10:300;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₂", file_name_variable = "x2")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-2:10:300;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₃", file_name_variable = "x3")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-2:10:300;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₄", file_name_variable = "x4")
 	# economies of scope
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-5:0.2:2;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₅", file_name_variable = "x5")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-5:0.2:2;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₆", file_name_variable = "x6")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-5:0.2:2;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₇", file_name_variable = "x7")
 	plot_score_single_variable(temp_subsidy_type,
+	                           data = data,
+	                           variable_list = variable_list,
 	                           domain = [-5:0.2:2;],
 							   calibrated_delta_list = [0],
 	                           variable = "β₈", file_name_variable = "x8")
 	# merger cost
 	plot_score_single_variable(temp_subsidy_type,
-	                           domain = [-1:0.1:5;],
-							   calibrated_delta_list = [0,1,2,5],
+	                           data = data,
+	                           variable_list = variable_list,
+	                           domain = [-1:5:400;],
+							   calibrated_delta_list = [1,5,10],
 	                           variable = "γ", file_name_variable = "gamma")
 end
 #730.659082 seconds (4.44 G allocations: 431.315 GiB, 7.14% gc time)
@@ -694,25 +581,33 @@ end
 
 function plot_contour_score_two_variables(temp_subsidy_type;
 	                                domain,
+									data,
+									variable_list,
+									gamma_list,
 									calibrated_delta_list,
 	                                variable::String,
-									file_name_variable::String)
-	global data
-	global variable_list, gamma_list
+									file_name_variable::String,
+									info_sum = temp_info_sum)
+	#global data, variable_list, gamma_list
 	single_variable_index = [1:1:length(variable_list);][variable_list .== variable][1]
-	gamma_list
 	for kk in 1:length(calibrated_delta_list)
 		calibrated_delta = calibrated_delta_list[kk]
-		function score_bthis_only_target_x(subsampled_id_list, data,
-			                               theta, gg, subsidy_type)
+		function score_bthis_only_target_x(subsampled_id_list,
+			                               data,
+			                               theta,
+										   gg,
+										   subsidy_type)
 			#target_theta = vcat(1, zeros(3), theta) # first parameter must be normalized to 1
 			target_theta = vcat(zeros(single_variable_index-1),
 			                    theta,
 								zeros(8-single_variable_index),
 								gg,
 								calibrated_delta) # first parameter must be normalized to 1
-			score_res, total_num_ineq = score_b_est_data(subsampled_id_list, data,
-			                            target_theta, subsidy_type)
+			score_res, total_num_ineq = score_b_est_data(subsampled_id_list,
+										data,
+										target_theta,
+										subsidy_type,
+										info_sum = temp_info_sum)
 			res = -1.0.*score_res .+ 100000.0 # need to be Float64 for bboptimize
 			println("score:$(res) \n" )
 			return res, score_res, total_num_ineq
@@ -728,6 +623,7 @@ function plot_contour_score_two_variables(temp_subsidy_type;
 		end
 		if kk == 1
 			Plots.contour(domain, gamma_list, Int.(100000.0.-res_contor)', fill = true,
+			#Plots.plot(domain, gamma_list, Int.(100000.0.-res_contor)',st = [:contourf],
 			              ylabel = "γ (merger cost)",
 						  xlabel = "$variable",
 						  title = "Objective value: (subsidy type)=($(temp_subsidy_type))")
@@ -740,46 +636,103 @@ end
 
 want_to_run = "not_run"
 @time if want_to_run == "run"
-	gamma_list = [0.3:0.2:1.5;]
+	temp_calibrated_delta_list = [5]
+	#gamma_list = [70:10.0:200;]
+	#temp_domain = [100.0:50.0:1500;]
 	temp_subsidy_type = "shared"
 	variable_list = ["β₁","β₂","β₃","β₄","β₅","β₆","β₇","β₈","γ","δ"]
+	gamma_list = [30:10.0:500;]
 	plot_contour_score_two_variables(temp_subsidy_type,
-							   domain = [20:0.1:25;],
-							   calibrated_delta_list = [1],
+							   #domain = [-10.0:10.0:100;],
+							   #domain = [-40.0:10:40;],
+							   domain = [-20:20:200;],
+							   data = data,
+	                           variable_list = variable_list,
+							   gamma_list = gamma_list,
+							   calibrated_delta_list = temp_calibrated_delta_list,
 							   variable = "β₂", file_name_variable = "x2")
+	gamma_list = [60:10.0:500;]
+	#gamma_list = [15:5.0:200;]
+	#gamma_list = [19.52:0.02:19.62;]
+	#gamma_list = [400:200.0:2000;]
+	#temp_domain = [1100.0:50.0:1300;]
 	plot_contour_score_two_variables(temp_subsidy_type,
-							   domain = [-1:1:50;],
-							   calibrated_delta_list = [1],
+							   #domain = [-40:10:40;],
+							   domain = [-10:2:10;],
+							   #domain = [-9.91:0.01:-9.8;],
+							   data = data,
+	                           variable_list = variable_list,
+							   gamma_list = gamma_list,
+							   calibrated_delta_list = temp_calibrated_delta_list,
 							   variable = "β₄", file_name_variable = "x4")
+	#gamma_list = [20.0:2.0:200.0;]
+	#gamma_list = [100:50.0:300;]
 	plot_contour_score_two_variables(temp_subsidy_type,
-							   domain = [-7.0:0.1:0.0;],
-							   calibrated_delta_list = [1],
+							   #domain = [-20:3:1;],
+							   domain = [-40:10:0;],
+							   data = data,
+	                           variable_list = variable_list,
+							   gamma_list = gamma_list,
+							   calibrated_delta_list = temp_calibrated_delta_list,
 							   variable = "β₅", file_name_variable = "x5")
+	#gamma_list = [30.0:10.0:200.0;]
+	#gamma_list = [50:10.0:130;]
+	gamma_list = [80:10.0:500;]
 	plot_contour_score_two_variables(temp_subsidy_type,
-							   domain = [-20.0:0.2:-0.0;],
-							   calibrated_delta_list = [1],
+							   #domain = [-10:2:0;],
+							   domain = [-20:10:0;],
+							   data = data,
+	                           variable_list = variable_list,
+							   gamma_list = gamma_list,
+							   calibrated_delta_list = temp_calibrated_delta_list,
 							   variable = "β₇", file_name_variable = "x7")
-	gamma_list = [0.5:0.1:1.5;]
+	#gamma_list = [40.0:10.0:200.0;]
+	#gamma_list = [80:10.0:200;]
+	#gamma_list = [50:50.0:300;]
+	gamma_list = [70:2.0:120;]
 	plot_contour_score_two_variables(temp_subsidy_type,
-							   domain = [-35.0:2.0:-0.0;],
-							   calibrated_delta_list = [1],
+	                           #domain = [-10:5:15;],
+							   domain = [7:0.3:19;],
+							   data = data,
+	                           variable_list = variable_list,
+							   gamma_list = gamma_list,
+							   calibrated_delta_list = temp_calibrated_delta_list,
 							   variable = "β₈", file_name_variable = "x8")
 
 	# change scale of merger cost
-	gamma_list = [0.4:0.2:1.5;]
+	#gamma_list = [0.4:0.2:1.5;]
+	#gamma_list = [69:0.1:72.0;]
+	#gamma_list = [60:5.0:120;]
+	#gamma_list = [40:10.0:100;]
+	gamma_list = [380:5.0:430;]
 	plot_contour_score_two_variables(temp_subsidy_type,
-							   domain = [-0.5:0.2:3;],
-							   calibrated_delta_list = [1],
+	                           #domain = [-10:5:15;],
+							   domain = [90:2:100;],
+							   data = data,
+	                           variable_list = variable_list,
+							   gamma_list = gamma_list,
+							   calibrated_delta_list = temp_calibrated_delta_list,
 							   variable = "β₆", file_name_variable = "x6")
-	#
-	gamma_list = [0.3:1.0:10.0;]
+	gamma_list = [300:50.0:2000;]
+	#gamma_list = [0.3:1.0:10.0;]
+	#gamma_list = [30.0:2.0:200.0;]
 	plot_contour_score_two_variables(temp_subsidy_type,
-							   domain = [0:4:120;],
-							   calibrated_delta_list = [1],
+	                           #domain = [-10:10:40;],
+							   domain = [10:20:200;],
+							   data = data,
+	                           variable_list = variable_list,
+							   gamma_list = gamma_list,
+							   calibrated_delta_list = temp_calibrated_delta_list,
 							   variable = "β₁", file_name_variable = "x1")
+	#gamma_list = [60.0:1:250;]
+	gamma_list = [300:50.0:2000;]
 	plot_contour_score_two_variables(temp_subsidy_type,
-							   domain = [0:4:120;],
-							   calibrated_delta_list = [1],
+	                           #domain = [-20:10:40;],
+							   domain = [-40:20:200;],
+							   data = data,
+	                           variable_list = variable_list,
+							   gamma_list = gamma_list,
+							   calibrated_delta_list = temp_calibrated_delta_list,
 							   variable = "β₃", file_name_variable = "x3")
 end
 #3039.685852 seconds (11.68 G allocations: 1.109 TiB, 4.31% gc time)
@@ -793,12 +746,12 @@ function point_estimate(subsidy_type;
 	                    size_of_fullsample = 106,
 	                    num_steps_DE_temp = 50,
 	                    num_its_temp = 100,
-						temp_calibrated_delta = 1)
+						temp_temp_calibrated_delta = 1)
 	# model 1
     @time num_correct_ineq, num_total_ineq, myests = iterate_estimation(data,
 	                                                  score_bthis_scale_X_only,
 													  subsidy_type,
-													  temp_calibrated_delta = 1,
+													  temp_calibrated_delta = temp_temp_calibrated_delta,
                                                       param_dim = 5,
 													  num_its = num_its_temp,
 													  size_of_subsample = size_of_fullsample,
@@ -816,7 +769,7 @@ function point_estimate(subsidy_type;
 	@time num_correct_ineq, num_total_ineq, myests = iterate_estimation(data,
 	                                                      score_bthis_scale_and_scope_X_only,
 														  subsidy_type,
-														  temp_calibrated_delta = 1,
+														  temp_calibrated_delta = temp_temp_calibrated_delta,
 	                                                      param_dim = 5,
 														  num_its=num_its_temp,
 														  size_of_subsample=size_of_fullsample,
@@ -834,7 +787,7 @@ function point_estimate(subsidy_type;
 	@time num_correct_ineq, num_total_ineq, myests = iterate_estimation(data,
 	                                                      score_bthis_full_X,
 														  subsidy_type,
-														  temp_calibrated_delta = 1,
+														  temp_calibrated_delta = temp_temp_calibrated_delta,
 	                                                      param_dim = 9,
 														  num_its=num_its_temp,
 														  size_of_subsample=size_of_fullsample,
@@ -852,7 +805,7 @@ function point_estimate(subsidy_type;
 	@time num_correct_ineq, num_total_ineq, myests = iterate_estimation(data,
 	                                                      score_bthis_x45678_merger_cost,
 														  subsidy_type,
-														  temp_calibrated_delta = 1,
+														  temp_calibrated_delta = temp_temp_calibrated_delta,
 	                                                      param_dim = 6,
 														  num_its=num_its_temp,
 														  size_of_subsample=size_of_fullsample,
@@ -874,12 +827,13 @@ end
 function construct_CI(subsidy_type;
 	                  num_its_bootstrap = 100,
 	                  num_steps_DE_temp = 50,
-	                  size_of_subsample_temp = 60)
+	                  size_of_subsample_temp = 60,
+					  temp_temp_calibrated_delta = 1)
     # model 1
 	@time num_correct_ineq, num_total_ineq, myests = iterate_estimation(data,
 	                                                  score_bthis_scale_X_only,
 													  subsidy_type,
-													  temp_calibrated_delta = 1,
+													  temp_calibrated_delta = temp_temp_calibrated_delta,
                                                       param_dim = 5,
 													  num_its=num_its_bootstrap,
 													  size_of_subsample=size_of_subsample_temp,
@@ -897,7 +851,7 @@ function construct_CI(subsidy_type;
 	@time num_correct_ineq, num_total_ineq, myests = iterate_estimation(data,
 	                                                      score_bthis_scale_and_scope_X_only,
 														  subsidy_type,
-														  temp_calibrated_delta = 1,
+														  temp_calibrated_delta = temp_temp_calibrated_delta,
 	                                                      param_dim = 5,
 														  num_its=num_its_bootstrap,
 														  size_of_subsample=size_of_subsample_temp,
@@ -915,7 +869,7 @@ function construct_CI(subsidy_type;
 	@time num_correct_ineq, num_total_ineq, myests = iterate_estimation(data,
 	                                                      score_bthis_full_X,
 														  subsidy_type,
-														  temp_calibrated_delta = 1,
+														  temp_calibrated_delta = temp_temp_calibrated_delta,
 	                                                      param_dim = 9,
 														  num_its=num_its_bootstrap,
 														  size_of_subsample=size_of_subsample_temp,
@@ -933,7 +887,7 @@ function construct_CI(subsidy_type;
 	@time num_correct_ineq, num_total_ineq, myests = iterate_estimation(data,
 	                                                      score_bthis_x45678_merger_cost,
 														  subsidy_type,
-														  temp_calibrated_delta = 1,
+														  temp_calibrated_delta = temp_temp_calibrated_delta,
 	                                                      param_dim = 6,
 														  num_its=num_its_bootstrap,
 														  size_of_subsample=size_of_subsample_temp,
@@ -979,9 +933,10 @@ if you_want_run == "run"
 	temp_subsidy_type = "shared"
 	@time point_estimate(temp_subsidy_type,
 	                     num_steps_DE_temp = 50,
-	                     num_its_temp = 100,
+	                     num_its_temp = 20,
 						 #num_its_temp = 2,
-						 size_of_fullsample = 106)
+						 size_of_fullsample = 106,
+						 temp_temp_calibrated_delta = 5)
 	#@time point_estimate(num_steps_DE_temp = 100, num_its_temp = 2)
 	#1007.291976 seconds (5.74 G allocations: 557.036 GiB, 6.62% gc time)
 	#@time point_estimate(num_steps_DE_temp = 100,  num_its_temp = 10)
@@ -992,7 +947,8 @@ if you_want_run == "run"
 	                   num_its_bootstrap = 200,
 	                   #num_its_bootstrap = 2,
 	                   num_steps_DE_temp = 50,
-					   size_of_subsample_temp = 30)
+					   size_of_subsample_temp = 30,
+					   temp_temp_calibrated_delta = 5)
 	#34558.137605 seconds (162.34 G allocations: 15.437 TiB, 5.96% gc time)
 	#@time point_estimate(num_steps_DE_temp = 50,  num_its_bootstrap = 200)
 	#73597.442566 seconds (90.89 G allocations: 8.674 TiB, 11.04% gc time)
@@ -1022,7 +978,7 @@ end
 #--------------------#
 # model 1
 temp_subsidy_type = "shared"
-size_of_subsample_temp = 60
+size_of_subsample_temp = 30
 function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 	                                     size_of_subsample_temp = 60)
 	myests_point_scale_X_only = readdlm("julia_merger_result/myests_subsample_size_106_$(temp_subsidy_type)_subsidy_scale_X_only.txt",',',Float64)
@@ -1106,7 +1062,7 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 				   #beta_0
 				   ["", "", "", "", ""],
 				   ["total\$_{b}\$ \$\\times\$ total\$_{t}\$", L"\beta_0", "+1", "+1", "+1", "+1"],
-				   ["" , "" , "(Superconsistent)", "(Superconsistent)", "(Superconsistent)", "(Superconsistent)"],
+				   ["" , "" , "(S)", "(S)", "(S)", "(S)"],
 				   #beta_1
 				   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_1",
 				    final_ests_point_scale_X_only[1], "", final_ests_point_full_X_only[1], ""],
@@ -1181,18 +1137,18 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 				   #gamma merger cost (note the sign is reverse)
 				   ["", "", "", "", "", ""],
 				   ["", "", "", "", "", ""],
-	               ["merger cost", L"\gamma",
+	               ["merger cost", "-\$\\gamma\$",
 				   -final_ests_point_scale_X_only[5], -final_ests_point_scope_X_only[5],
 				    -final_ests_point_full_X_only[9], -final_ests_point_x45678_merger_cost[6]],
 				   ["" , "" ,
-				   "[$(CI_scale_X_only_table[1,4]), $(CI_scale_X_only_table[2,4])]",
+				   "[$(CI_scale_X_only_table[1,5]), $(CI_scale_X_only_table[2,5])]",
 				   "[$(CI_scope_X_only_table[1,5]), $(CI_scope_X_only_table[2,5])]",
 				   "[$(CI_full_X_only_table[1,9]), $(CI_full_X_only_table[2,9])]",
 				   "[$(CI_x45678_merger_cost_table[1,6]), $(CI_x45678_merger_cost_table[2,6])]"],
 				   #delta subsidy sensitivity
 	               ["subsidy sensitivity (\$s^{\\text{shared}}\$)", L"\delta",
 				   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
-				   1, 1, 1, 1],
+				   5, 5, 5, 5],
 				   ["", "", "", "", "", ""],
 	               Rule(),           # a nice \hline to make it ugly
 				   ["\$\\sharp\$ Inequalities in Point Estimate" , "" ,
@@ -1245,7 +1201,7 @@ function plot_point_estimate_histogram(temp_subsidy_type)
 	                xlabel = "β₄",
 					title = "Subsidy type ($temp_subsidy_type)",
 	                label = "point-estimated β₄",
-					xlim =[-100,100],
+					xlim =[-200,200],
 					alpha = 0.3)
 	Plots.vline!([final_ests_point_scope_X_only[1]],
 	             label = "β₄ (highest score:$(best_accuracy_scope_X_only))",
@@ -1266,7 +1222,7 @@ function plot_point_estimate_histogram(temp_subsidy_type)
 	                xlabel = "β₅",
 					title = "Subsidy type ($temp_subsidy_type)",
 	                label = "point-estimated β₅",
-					xlim =[-100,100],
+					xlim =[-200,200],
 					alpha = 0.3)
 	Plots.vline!([final_ests_point_scope_X_only[2]],
 	             label = "β₅ (highest score:$(best_accuracy_scope_X_only))",
@@ -1286,7 +1242,7 @@ function plot_point_estimate_histogram(temp_subsidy_type)
 	                xlabel = "β₆",
 					title = "Subsidy type ($temp_subsidy_type)",
 	                label = "point-estimated β₆",
-					xlim =[-100,100],
+					xlim =[-200,200],
 					alpha = 0.3)
 	Plots.vline!([final_ests_point_scope_X_only[3]],
 	             label = "β₆ (highest score:$(best_accuracy_scope_X_only))",
@@ -1306,7 +1262,7 @@ function plot_point_estimate_histogram(temp_subsidy_type)
 	                xlabel = "β₇",
 					title = "Subsidy type ($temp_subsidy_type)",
 	                label = "point-estimated β₇",
-					xlim =[-100,100],
+					xlim =[-200,200],
 					alpha = 0.3)
 	Plots.vline!([final_ests_point_scope_X_only[4]],
 	             label = "β₇ (highest score:$(best_accuracy_scope_X_only))",
@@ -1326,7 +1282,7 @@ function plot_point_estimate_histogram(temp_subsidy_type)
 	                xlabel = "β₈",
 					title = "Subsidy type ($temp_subsidy_type)",
 	                label = "point-estimated β₈",
-					xlim =[-100,100],
+					xlim =[-200,200],
 					alpha = 0.3)
 	Plots.vline!([final_ests_point_scope_X_only[5]],
 	             label = "β₈ (highest score:$(best_accuracy_scope_X_only))",
@@ -1346,7 +1302,7 @@ function plot_point_estimate_histogram(temp_subsidy_type)
 	                xlabel = "γ (merger cost)",
 					title = "Subsidy type ($temp_subsidy_type)",
 	                label = "point-estimated γ",
-					xlim =[-10,10],
+					xlim =[-200,200],
 					alpha = 0.3)
 	Plots.vline!([-final_ests_point_scope_X_only[6]],
 	             label = "γ (highest score:$(best_accuracy_scope_X_only))",
@@ -1376,21 +1332,27 @@ end
 temp_subsidy_type = "shared"
 variable_list = ["β₁","β₂","β₃","β₄","β₅","β₆","β₇","β₈","γ","δ"]
 function point_estimate_two_variables(subsidy_type;
+	                    data,
+						variable_list,
 	                    size_of_fullsample = 106,
 	                    num_steps_DE_temp = 50,
 	                    num_its_temp = 100,
 						calibrated_delta_list = [1],
 						variable::String,
-						file_name_variable::String)
-	global data ,liner_sum, special_sum, tanker_sum, tramper_sum
-	global variable_list, gamma_list
+						file_name_variable::String,
+						info_sum = temp_info_sum)
+	#global data, variable_list, gamma_list
+	liner_sum = info_sum["liner_sum"]
+	special_sum = info_sum["special_sum"]
+	tanker_sum = info_sum["tanker_sum"]
+	tramper_sum = info_sum["tramper_sum"]
 	single_variable_index = [1:1:length(variable_list);][variable_list .== variable][1]
 	for kk = 1:length(calibrated_delta_list)
 		calibrated_delta_kk = calibrated_delta_list[kk]
 		function score_bthis_only_target_x(subsampled_id_list, data,
 										   theta, subsidy_type;
-										   calibrated_delta = calibrated_delta_kk)
-			global liner_sum, special_sum, tanker_sum, tramper_sum
+										   calibrated_delta = calibrated_delta_kk,
+										   info_sum = info_sum)
 			#target_theta = vcat(1, zeros(3), theta) # first parameter must be normalized to 1
 			target_theta = vcat(zeros(single_variable_index-1),
 								theta[1],
@@ -1424,16 +1386,22 @@ function point_estimate_two_variables(subsidy_type;
 end
 
 function construct_CI_two_variables(subsidy_type;
+					  data,
+					  variable_list,
 	                  num_its_bootstrap = 100,
 	                  num_steps_DE_temp = 50,
 	                  size_of_subsample_temp = 60,
 					  calibrated_delta_list = [1],
 					  variable::String,
-					  file_name_variable::String)
-	global data
-	global variable_list, gamma_list
+					  file_name_variable::String,
+					  info_sum = temp_info_sum)
+	#global data
+	#global variable_list, gamma_list
+	liner_sum = info_sum["liner_sum"]
+	special_sum = info_sum["special_sum"]
+	tanker_sum = info_sum["tanker_sum"]
+	tramper_sum = info_sum["tramper_sum"]
 	single_variable_index = [1:1:length(variable_list);][variable_list .== variable][1]
-
 	for kk = 1:length(calibrated_delta_list)
 		calibrated_delta_kk = calibrated_delta_list[kk]
 		function score_bthis_only_target_x(subsampled_id_list, data,
@@ -1479,22 +1447,30 @@ file_name_variable_list = ["x1","x2","x3","x4","x5","x6","x7","x8"]
 you_want_run = "not_run"
 Threads.nthreads()
 JULIA_NUM_THREADS=8
+temp_calibrated_delta_list = [5]
 if you_want_run == "run"
 	@time Threads.@threads for ii = 1:length(file_name_variable_list)
 		temp_file_name = file_name_variable_list[ii]
 		temp_target_variable = variable_list[ii]
 	    @time point_estimate_two_variables(temp_subsidy_type;
+							data = data,
+	    					variable_list = variable_list,
 		                    size_of_fullsample = 106,
 		                    num_steps_DE_temp = 50,
-		                    num_its_temp = 100,
-							calibrated_delta_list = [1],
+		                    num_its_temp = 20,#100,
+							calibrated_delta_list = temp_calibrated_delta_list,
 							variable = temp_target_variable,
-							file_name_variable = temp_file_name)
+							file_name_variable = temp_file_name,
+							info_sum = temp_info_sum)
 	end
 	#300*8model
 	#3343.760520 seconds (34.51 G allocations: 3.277 TiB, 67.25% gc time)
 	#5000*8model
 	#87096.960875 seconds (320.63 G allocations: 30.447 TiB, 33.96% gc time)
+	#2500*8models
+	#44417.409025 seconds (285.45 G allocations: 20.823 TiB, 32.66% gc time, 0.00% compilation time)
+	#1000*8models
+	#6474.324370 seconds (112.92 G allocations: 8.237 TiB, 30.34% gc time)
 end
 
 if you_want_run == "run"
@@ -1502,18 +1478,24 @@ if you_want_run == "run"
 		temp_file_name = file_name_variable_list[ii]
 		temp_target_variable = variable_list[ii]
 		construct_CI_two_variables(temp_subsidy_type;
-			                  num_its_bootstrap = 200,
+							  data = data,
+    	    				  variable_list = variable_list,
+			                  num_its_bootstrap = 100,
 			                  num_steps_DE_temp = 50,
 			                  size_of_subsample_temp = 30,
-							  calibrated_delta_list = [1],
+							  calibrated_delta_list = temp_calibrated_delta_list,
 							  variable = temp_target_variable,
-							  file_name_variable = temp_file_name)
+							  file_name_variable = temp_file_name,
+  							  info_sum = temp_info_sum)
 	end
 	#500*8model
 	#668.661895 seconds (13.49 G allocations: 1.288 TiB, 35.19% gc time)
 	#10000*8
-	#13360
 	#13125.682549 seconds (180.28 G allocations: 17.204 TiB, 23.98% gc time)
+	#140238.952268 seconds (576.93 G allocations: 41.820 TiB, 24.50% gc time, 0.00% compilation time)
+	# 200boot*50DE on 210430
+	#52134.231030 seconds (323.61 G allocations: 23.661 TiB, 20.94% gc time, 0.00% compilation time)
+	#20015.040089 seconds (325.65 G allocations: 23.805 TiB, 27.57% gc time, 0.00% compilation time)
 end
 
 # check behavior
@@ -1555,6 +1537,7 @@ for ii = 1:length(file_name_variable_list)
 	                                    digits=2)
 	myests_CI_all[ii,:,:] = readdlm("julia_merger_result/myests_subsample_size_$(size_of_subsample_temp)_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
 end
+maximum(num_correct_ineq_all[:,:,1],dims = 2)
 final_ests_point_all
 myests_CI_all[1,:,2]
 # CI
@@ -1566,9 +1549,10 @@ for ii = 1:length(file_name_variable_list)
 	CI_all_table[ii,:,:] = round.(hcat(
 		Statistics.quantile(myests_CI_all[ii,:,1], [0.025,0.975]),
 		Statistics.quantile(-myests_CI_all[ii,:,2], [0.025,0.975])
-		),digits=2)
+		),digits=1)
 end
 CI_all_table[1,:,:]
+maximum(num_correct_ineq_all[1,:,:])
 total_ineq_all = Int64(num_total_ineq_all[8,findmax(accuracy_all[8,:])[2]])
 LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(temp_subsidy_type)_subsidy.tex",
 			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
@@ -1666,7 +1650,10 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(te
 			   #delta subsidy sensitivity
 			   ["subsidy sensitivity", L"\delta",
 			   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
-			   1, 1, 1, 1, 1, 1, 1, 1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1]],
 			   ["", "", "", "", "", "", "", "", "", ""],
 			   Rule(),           # a nice \hline to make it ugly
 			   ["\$\\sharp\$ Inequalities (Point)" , "" ,
@@ -1729,18 +1716,28 @@ LaTeXTabulars.latex_tabular("julia_merger_table/ratio_score_results_two_variable
 #-----------------------#
 # estimate only main firm
 #-----------------------#
+temp_subsidy_type = "shared"
+variable_list = ["β₁","β₂","β₃","β₄","β₅","β₆","β₇","β₈","γ","δ"]
+file_name_variable_list = ["x1","x2","x3","x4","x5","x6","x7","x8"]
+you_want_run = "not_run"
+Threads.nthreads()
+JULIA_NUM_THREADS=8
+temp_calibrated_delta_list = [1000]
 if you_want_run == "run"
 	# choose only main firms
 	@time Threads.@threads for ii = 1:length(file_name_variable_list)
 		temp_file_name = file_name_variable_list[ii]
 		temp_target_variable = variable_list[ii]
 	    @time point_estimate_two_variables(temp_subsidy_type;
+		                    data = data,
+		                    variable_list = variable_list,
 		                    size_of_fullsample = 0,
-							num_steps_DE_temp = 50,
-		                    num_its_temp = 1000,
-							calibrated_delta_list = [1],
+							num_steps_DE_temp = 200,#50,
+		                    num_its_temp = 200,#1000,
+							calibrated_delta_list = temp_calibrated_delta_list,
 							variable = temp_target_variable,
-							file_name_variable = temp_file_name)
+							file_name_variable = temp_file_name,
+							info_sum = temp_info_sum)
 	end
 	#300*8model
 	#228.085250 seconds (4.92 G allocations: 364.622 GiB, 32.77% gc time)
@@ -1780,18 +1777,17 @@ for ii = 1:length(file_name_variable_list)
 	num_correct_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
 	num_total_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_total_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
 	accuracy_all[ii,:] = num_correct_ineq_all[ii,:,1]./num_total_ineq_all[ii,:,1]
-	final_ests_point_all[ii,:] = round.(myests_point_all[ii, findmax(accuracy_all[ii,:])[2], :],
-	                                    digits=2)
+	final_ests_point_all[ii,:] = round.(myests_point_all[ii, findmax(num_correct_ineq_all[ii,:,1])[2], :],
+	                                    digits=1)
 end
-sum()
-sum(num_correct_ineq_all[1,:,1] .== 61)
+
 CI_all_table = zeros(model_all_length,2,2)
 for ii = 1:length(file_name_variable_list)
 	temp_myests_point_all = myests_point_all[ii,num_correct_ineq_all[ii,:,1].==Int(findmax(num_correct_ineq_all[ii,:,1])[1]),:]
 	CI_all_table[ii,:,:] = round.(hcat(
-		Statistics.quantile(temp_myests_point_all[:,1], [0.025,0.975]),
-		Statistics.quantile(-temp_myests_point_all[:,2], [0.025,0.975])
-		),digits=2)
+		Statistics.quantile(temp_myests_point_all[:,1], [0.0,1.0]),
+		Statistics.quantile(-temp_myests_point_all[:,2], [0.0,1.0])
+		),digits=1)
 end
 
 total_ineq_all = Int64(num_total_ineq_all[8,findmax(accuracy_all[8,:])[2]])
@@ -1799,11 +1795,11 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(te
 			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
 			  [Rule(:top),
 			   ["","","", "", "", "", "", "", "", ""],
-			   ["","",
-			   "Point Est", "Point", "Point", "Point", "Point", "Point", "Point", "Point"],
 			   #["","",
-			   #"[95\\% CI]", "[95\\% CI]", "[95\\% CI]", "[95\\% CI]",
-			   # "[95\\% CI]", "[95\\% CI]", "[95\\% CI]", "[95\\% CI]"],
+			   #"Point Est", "Point", "Point", "Point", "Point", "Point", "Point", "Point"],
+			   ["","",
+			   "[LB, UB]", "[LB, UB]", "[LB, UB]", "[LB, UB]",
+			    "[LB, UB]", "[LB, UB]", "[LB, UB]", "[LB, UB]"],
 			   Rule(:mid),
 			   ["Economies of scale", "", "", "", "", "", "", ""],
 			   #beta_0
@@ -1814,72 +1810,72 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(te
 			    "(S)", "(S)", "(S)", "(S)"],
 			   #beta_1
 			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_1",
-				final_ests_point_all[1,1], "", "", "",
-				 "", "", "", ""],
-			   ["" , "" ,
+			   #final_ests_point_all[1,1], "", "", "",
+			   # "", "", "", ""],
+			   #["" , "" ,
 			   "[$(CI_all_table[1,1,1]), $(CI_all_table[1,2,1])]",
 			   "", "", "",
 			   "", "", "", ""],
 			   #beta_2
 			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_2",
-				"", final_ests_point_all[2,1], "", "",
-				"", "", "", ""],
-			   ["" , "" ,
+				#"", final_ests_point_all[2,1], "", "",
+				#"", "", "", ""],
+			   #["" , "" ,
 			   "", "[$(CI_all_table[2,1,1]), $(CI_all_table[2,2,1])]", "", "",
 			   "", "", "", ""],
 			   #beta_3
 			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_3",
-			   "", "", final_ests_point_all[3,1], "",
-			   "", "", "", ""],
-			   ["" , "" ,
+			   #"", "", final_ests_point_all[3,1], "",
+			   #"", "", "", ""],
+			   #["" , "" ,
 			   "", "", "[$(CI_all_table[3,1,1]), $(CI_all_table[3,2,1])]", "",
 			   "", "", "", ""],
 			   # beta_4
 			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_4",
-			   "", "", "", final_ests_point_all[4,1],
-			   "", "", "", ""],
-			   ["" , "" ,
+			   #"", "", "", final_ests_point_all[4,1],
+			   #"", "", "", ""],
+			   #["" , "" ,
 			   "", "", "", "[$(CI_all_table[4,1,1]), $(CI_all_table[4,2,1])]",
 			   "", "", "", ""],
 			   #beta_5
 			   ["Economies of scope", "", "", "", "", "", "", "", "", ""],
 			   ["", "", "", "", "", "", "", "", "", ""],
 			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_5",
-			   "", "", "", "",
-			   final_ests_point_all[5,1], "", "", ""],
-			   ["" , "" ,
+			   #"", "", "", "",
+			   #final_ests_point_all[5,1], "", "", ""],
+			   #["" , "" ,
 			   "", "", "", "",
 			   "[$(CI_all_table[5,1,1]), $(CI_all_table[5,2,1])]", "", "", ""],
 			   #beta_6
 			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_6",
-			   "", "", "", "",
-			   "", final_ests_point_all[6,1], "", ""],
-			   ["" , "" ,
+			   #"", "", "", "",
+			   #"", final_ests_point_all[6,1], "", ""],
+			   #["" , "" ,
 			   "", "", "", "",
 			   "", "[$(CI_all_table[6,1,1]), $(CI_all_table[6,2,1])]", "", ""],
 			   #beta_7
 			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_7",
-			   "", "", "", "",
-			   "", "", final_ests_point_all[7,1], ""],
-			   ["" , "" ,
+			   #"", "", "", "",
+			   #"", "", final_ests_point_all[7,1], ""],
+			   #["" , "" ,
 			   "", "", "", "",
 			   "", "", "[$(CI_all_table[7,1,1]), $(CI_all_table[7,2,1])]", ""],
 			   #beta_8
 			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_8",
-			   "", "", "", "",
-			   "", "", "", final_ests_point_all[8,1]],
-			   ["" , "" ,
+			   #"", "", "", "",
+			   #"", "", "", final_ests_point_all[8,1]],
+			   #["" , "" ,
 			   "", "", "", "",
 			   "", "", "", "[$(CI_all_table[8,1,1]), $(CI_all_table[8,2,1])]"],
 			   #gamma merger cost (note the sign is reverse)
 			   ["", "", "", "", "", "", "", "", "", ""],
 			   ["", "", "", "", "", "", "", "", "", ""],
 			   ["merger cost", "-\$\\gamma\$",
-			   -final_ests_point_all[1,2], -final_ests_point_all[2,2],
-			   -final_ests_point_all[3,2], -final_ests_point_all[4,2],
-			   -final_ests_point_all[5,2], -final_ests_point_all[6,2],
-			   -final_ests_point_all[7,2], -final_ests_point_all[8,2]],
-			   ["" , "" ,
+			   #-final_ests_point_all[1,2], -final_ests_point_all[2,2],
+			   #-final_ests_point_all[3,2], -final_ests_point_all[4,2],
+			   #-final_ests_point_all[5,2], -final_ests_point_all[6,2],
+			   #-final_ests_point_all[7,2], -final_ests_point_all[8,2]],
+			   #["" , "" ,
 			   "[$(CI_all_table[1,1,2]), $(CI_all_table[1,2,2])]",
 			   "[$(CI_all_table[2,1,2]), $(CI_all_table[2,2,2])]",
 			   "[$(CI_all_table[3,1,2]), $(CI_all_table[3,2,2])]",
@@ -1891,7 +1887,10 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(te
 			   #delta subsidy sensitivity
 			   ["subsidy sensitivity", L"\delta",
 			   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
-			   1, 1, 1, 1, 1, 1, 1, 1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1]],
 			   ["", "", "", "", "", "", "", "", "", ""],
 			   Rule(),           # a nice \hline to make it ugly
 			   ["\$\\sharp\$ Inequalities (Point)" , "" ,

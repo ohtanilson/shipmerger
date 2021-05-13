@@ -53,7 +53,7 @@ library(entropy)
 
 * Gross Tonnage of Japanese Merchant Vessels from http://www.mlit.go.jp/hakusyo/transport/index1_.htm
 
-* Gross Tonnage of top6 countries from http://www.mlit.go.jp/hakusyo/transport/shouwa41/ind060101/frame.html and Loyd statistics (missing 1961-1963 now)
+* Gross Tonnage of top6 countries from http://www.mlit.go.jp/hakusyo/transport/shouwGroup41/ind060101/frame.html and Loyd statistics (missing 1961-1963 now)
 
 ```{r,echo=FALSE,results = 'hide', out.width="50%"}
 data_totaltons <- readr::read_csv("../input/data_totaltons.csv")
@@ -179,7 +179,7 @@ ggsave(filename = figure_name,
 ## planned shipbuilding
 
 The payment of planned shipbuilding is needed for calculation of the estimated amount of financial support.
-* https://www.mlit.go.jp/hakusyo/transport/shouwa39/ind060103/001.html#tabII-(I)-12
+* https://www.mlit.go.jp/hakusyo/transport/shouwGroup39/ind060103/001.html#tabII-(I)-12
 
 
 ```{r }
@@ -316,7 +316,7 @@ colnames(data)=c("id", "name", "type",
                  "liner","special","tramper","tanker",
                  "group",bank_names)
 
-data2 <- data %>% 
+datGroup2 <- data %>% 
   dplyr::filter(is.na(type)!= 1) %>% 
   dplyr::mutate(special = ifelse(is.na(special) == 1,
                                  0, special)) %>%
@@ -330,11 +330,11 @@ data2 <- data %>%
                                  "グループ外"="unmatched"
                                  )) %>% 
   dplyr::filter(group != "nodata")
-data2$group <- factor(data2$group, 
+datGroup2$group <- factor(datGroup2$group, 
      levels = c("Nippon Yusen", "Mitsui O.S.K. Lines",
                 "Japan Lines", "Kawasaki Kisen Kaisha",
                 "Yamashita-Shinnihon Kisen", "Showa Line", "unmatched"))
-x <- ggplot(data2, aes(x = total/10000, fill = firm_type)) + 
+x <- ggplot(datGroup2, aes(x = total/10000, fill = firm_type)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -362,10 +362,10 @@ ggsave(filename = figure_name,
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 library(reshape2)
-data6 <- dplyr::select(data2, liner, tramper,
+datGroup6 <- dplyr::select(datGroup2, liner, tramper,
                        special, tanker, firm_type, group)
-data6 <- reshape2::melt(data6)
-x <- ggplot(data6, aes(x = value/10000, fill = variable)) + 
+datGroup6 <- reshape2::melt(datGroup6)
+x <- ggplot(datGroup6, aes(x = value/10000, fill = variable)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -383,13 +383,13 @@ ggsave(filename = figure_name,
        width = 10,
        height = 7)
 
-data7 <- data6 %>% 
+datGroup7 <- datGroup6 %>% 
   dplyr::group_by(group, variable) %>% 
   dplyr::summarise(value = sum(value)) %>% 
   dplyr::group_by(group) %>% 
   dplyr::mutate(group_sum = sum(value)) %>% 
   dplyr::ungroup()
-x <- ggplot(data7, aes(x = "", y = value/10000, fill = variable)) + 
+x <- ggplot(datGroup7, aes(x = "", y = value/10000, fill = variable)) + 
   geom_bar(width = 1, stat = "identity") +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -429,7 +429,7 @@ ggsave(filename = figure_name,
 
 
 ```{r}
-table_discretize<- data2 %>% 
+table_discretize<- datGroup2 %>% 
   dplyr::mutate(discretized_liner = dplyr::case_when(
     liner/10000 < 10 ~ "< 10",
     liner/10000 >= 10 & liner/10000 < 20  ~ "10 to 20",
@@ -437,7 +437,7 @@ table_discretize<- data2 %>%
     liner/10000 > 50 ~ "50 <",
   ))
 
-g4_liner <- ggplot(data2, aes(x = liner/10000, fill = group)) + 
+g4_liner <- ggplot(datGroup2, aes(x = liner/10000, fill = group)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -458,7 +458,7 @@ g4_liner <- ggplot(table_discretize, aes(x = discretized_liner,
 ```
 
 ```{r}
-g4_tramper <- ggplot(data2, aes(x = tramper/10000, fill = group)) + 
+g4_tramper <- ggplot(datGroup2, aes(x = tramper/10000, fill = group)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   ggtitle("Tramper") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -471,7 +471,7 @@ g4_tramper <- ggplot(data2, aes(x = tramper/10000, fill = group)) +
 ```
 
 ```{r}
-g4_special <- ggplot(data2, aes(x = special/10000, fill = group)) + 
+g4_special <- ggplot(datGroup2, aes(x = special/10000, fill = group)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   ggtitle("Special") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -484,7 +484,7 @@ g4_special <- ggplot(data2, aes(x = special/10000, fill = group)) +
 ```
 
 ```{r}
-g4_tanker <- ggplot(data2, aes(x = tanker/10000, fill = group)) + 
+g4_tanker <- ggplot(datGroup2, aes(x = tanker/10000, fill = group)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) 
 legend <- cowplot::get_legend(g4_tanker)
 g4_tanker <- g4_tanker +
@@ -525,28 +525,28 @@ ggsave(filename = figure_name,
 ## pie charts
 
 ```{r}
-g5_liner <- ggplot(data2, aes(x ="", y = liner/10000, fill = group)) + 
+g5_liner <- ggplot(datGroup2, aes(x ="", y = liner/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ylab("share of tonnage size") + xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-g5_tramper <- ggplot(data2, aes(x ="", y = tramper/10000, fill = group)) + 
+g5_tramper <- ggplot(datGroup2, aes(x ="", y = tramper/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Tramper") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ylab("share of tonnage size") + xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-g5_special <- ggplot(data2, aes(x ="", y = special/10000, fill = group)) + 
+g5_special <- ggplot(datGroup2, aes(x ="", y = special/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Special") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ylab("share of tonnage size") + xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-g5_tanker <- ggplot(data2, aes(x ="", y = tanker/10000, fill = group)) + 
+g5_tanker <- ggplot(datGroup2, aes(x ="", y = tanker/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Tanker") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -557,7 +557,7 @@ g5_tanker <- g5_tanker + theme(legend.position = "none")
 ```
 
 ```{r}
-g6_liner <- ggplot(data2, aes(x ="", y = liner/10000, fill = group)) + 
+g6_liner <- ggplot(datGroup2, aes(x ="", y = liner/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -597,7 +597,7 @@ ggsave(filename = figure_name,
 ## Regression
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
-data2 <- data2 %>% 
+datGroup2 <- datGroup2 %>% 
   dplyr::mutate(HHI = (liner/total)^2+(special/total)^2+
                   (tramper/total)^2+(tanker/total)^2) %>% 
   dplyr::mutate(share_liner = liner/total) %>% 
@@ -606,7 +606,7 @@ data2 <- data2 %>%
   dplyr::mutate(share_tanker = tanker/total) %>% 
   dplyr::filter(total > 0)
 # construct summary statistics table
-temp <- data2 %>%
+temp <- datGroup2 %>%
   dplyr::mutate(tonnage_size = total/1000000,
                 tonnage_size_liner = liner/1000000,
                 tonnage_size_special = special/1000000,
@@ -678,13 +678,13 @@ x <- Hmisc::latex(
 )
 
 # construct data for preliminary regression
-buyer_id = data2$id
-target_id = data2$id
+buyer_id = datGroup2$id
+target_id = datGroup2$id
 id_new <- expand.grid(buyer_id, target_id)
 colnames(id_new) <- c("buyer_id","target_id")
-data3 <- id_new %>% 
-  dplyr::full_join(data2, by = c("buyer_id" = "id")) %>%
-  dplyr::full_join(data2, by = c("target_id" = "id")) %>% 
+datGroup3 <- id_new %>% 
+  dplyr::full_join(datGroup2, by = c("buyer_id" = "id")) %>%
+  dplyr::full_join(datGroup2, by = c("target_id" = "id")) %>% 
   dplyr::filter(buyer_id != target_id) %>% 
   #dplyr::select(group.x,group.y) %>% 
   #dplyr::filter(is.na(type)!= 1) %>% 
@@ -710,7 +710,7 @@ data3 <- id_new %>%
   dplyr::mutate(Tokai_xy = ifelse(Tokai.x == Tokai.y, 1, 0)) %>% 
   dplyr::mutate(YasudaShintaku_xy = ifelse(YasudaShintaku.x == YasudaShintaku.y, 1, 0)) %>%
   dplyr::mutate(others_xy = ifelse(others.x == others.y, 1, 0)) 
-data3 <- data3 %>% 
+datGroup3 <- datGroup3 %>% 
   replace(is.na(.), 0) %>%
   dplyr::mutate(bank_coverage = Fuji_xy + Kogin_xy +
                   Chogin_xy + Yasuda_xy + Daiichi_xy + Mitsui_xy +
@@ -724,13 +724,13 @@ data3 <- data3 %>%
 res1 <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
                  log(special.x*special.y+1)  + log(tanker.x*tanker.y+1)+
                  log(total.x*total.y+1) ,
-               data = data3, family = "binomial")
+               data = datGroup3, family = "binomial")
 res2 <- glm(match ~ bank_coverage_ratio + log(HHI.x*HHI.y+1) 
                     + log(share_liner.x*share_liner.y+1)
                     + log(share_special.x*share_special.y+1) 
                     + log(share_tramper.x*share_tramper.y+1)
                     + log(share_tanker.x*share_tanker.y+1),
-               data = data3, family = "binomial")
+               data = datGroup3, family = "binomial")
 res3 <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
                  log(special.x*special.y+1)  + log(tanker.x*tanker.y+1) +
                  log(total.x*total.y+1) + bank_coverage_ratio 
@@ -739,7 +739,7 @@ res3 <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
                  + log(share_special.x*share_special.y+1) 
                  + log(share_tramper.x*share_tramper.y+1)
                  + log(share_tanker.x*share_tanker.y+1),
-               data = data3, family = "binomial")
+               data = datGroup3, family = "binomial")
 res4 <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
                  log(special.x*special.y+1)  + log(tanker.x*tanker.y+1) +
                  log(total.x*total.y+1) + bank_coverage_ratio + log(HHI.x*HHI.y+1) 
@@ -748,7 +748,7 @@ res4 <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
                  + log(share_tramper.x*share_tramper.y+1)
                  + log(share_tanker.x*share_tanker.y+1)
                  + same_type,
-               data = data3, family = "binomial")
+               data = datGroup3, family = "binomial")
 res_LPM <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
                  log(special.x*special.y+1)  + log(tanker.x*tanker.y+1) +
                  log(total.x*total.y+1) + bank_coverage_ratio + log(HHI.x*HHI.y+1)+
@@ -757,7 +757,7 @@ res_LPM <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
                  + log(share_tramper.x*share_tramper.y+1)
                  + log(share_tanker.x*share_tanker.y+1)
                  + same_type,
-                 data = data3)
+                 data = datGroup3)
 table_name <-
   "../figuretable/regression_matching.tex"
 x <- stargazer(res1,res2,res3,res4,res_LPM,
@@ -809,8 +809,8 @@ x <- stargazer(res1,res2,res3,res4,res_LPM,
 
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
-data2 <- data2[,-c(9:26)]
-data3 <- data2 %>% 
+datGroup2 <- datGroup2[,-c(9:26)]
+datGroup3 <- datGroup2 %>% 
   dplyr::mutate(type = recode(type, 
                                  "合併会社"="(1) main",
                                  "系列会社"="(2) affiliate",
@@ -824,16 +824,17 @@ data3 <- data2 %>%
   dplyr::mutate(group_total_tonnage = sum(total)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(group_id)
-write.csv(x=data3, file="../output/data_for_maximum_rank_estimation.csv")
+write.csv(x=datGroup3, file="../output/data_for_maximum_rank_estimation.csv")
 
-data3_table <- data3 %>% 
+datGroup3_table <- datGroup3 %>% 
+  dplyr::filter(total > 0) %>% 
   dplyr::group_by(group, type) %>% 
   dplyr::summarise(total_tonnage = sum(total),
                    num_of_firms = dplyr::n())
-total_tonnage <- data3_table %>% 
+total_tonnage <- datGroup3_table %>% 
   dplyr::group_by(group) %>% 
   dplyr::summarise(total_tonnage_group = sum(total_tonnage))
-data3_table <- cbind(data3_table,
+datGroup3_table <- cbind(datGroup3_table,
       c(total_tonnage$total_tonnage_group[1], "", "",
         total_tonnage$total_tonnage_group[2], "", "",
         total_tonnage$total_tonnage_group[3], "", "",
@@ -841,26 +842,26 @@ data3_table <- cbind(data3_table,
         total_tonnage$total_tonnage_group[5], "", "",
         total_tonnage$total_tonnage_group[6], "", "",
         total_tonnage$total_tonnage_group[7]))
-colnames(data3_table) <- c("group","firm type", "total tonnage",
+colnames(datGroup3_table) <- c("group","firm type", "total tonnage",
                            "number of firms", "total tonnage in a group")
-data3_table <- data3_table[,-1]
-data3_table <- rbind(data3_table,
-                     c("",sum(data3_table[,2]),
-                       sum(data3_table[,3]),
-                       sum(data3_table[,2])))
+datGroup3_table <- datGroup3_table[,-1]
+datGroup3_table <- rbind(datGroup3_table,
+                     c("",sum(datGroup3_table[,2]),
+                       sum(datGroup3_table[,3]),
+                       sum(datGroup3_table[,2])))
 table_name <-
   "../figuretable/total_tonnage_size_group_table.tex"
 x <- Hmisc::latex(
   file = table_name,
   title = "",
   booktabs = TRUE,
-  object = data3_table,
+  object = datGroup3_table,
   col.just = c("l", "r", "r", "r"),
   center = "none",
   table.env = FALSE,
   #cgroupTexCmd = "itshape",
   #colnamesTexCmd = "itshape",
-  #collabel.just = rep("r", dim(data3_table)[2])#,
+  #collabel.just = rep("r", dim(datGroup3_table)[2])#,
   rgroupTexCmd = "itshape",
   n.rgroup = c(3,3,3,3,3,3,1, 1),
   rgroup = c("Nippon Yusen", 
@@ -888,14 +889,14 @@ x <- Hmisc::latex(
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 denom = 1e6
-data3_for_maximum_rank_estimation <- data3 %>% 
+datGroup3_for_maximum_rank_estimation <- datGroup3 %>% 
   dplyr::mutate(liner = liner/denom,
                 special = special/denom,
                 tramper = tramper/denom,
                 tanker = tanker/denom,
                 total = total/denom,
                 group_total_tonnage = group_total_tonnage/denom) 
-write.csv(x=data3_for_maximum_rank_estimation,
+write.csv(x=datGroup3_for_maximum_rank_estimation,
           file="../output/data_for_maximum_rank_estimation.csv")
 ```
 
@@ -937,12 +938,9 @@ p <- networkD3::sankeyNetwork(Links = links,
                               sinksRight=FALSE)
 # save the widget
 # library(htmlwidgets)
-# saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankeyBasic1.html"))
+# saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankeyBasiGroup12.html"))
 ```
 
-```{r, echo=FALSE, results = 'hide', out.width="50%"}
-p
-```
 
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
@@ -994,7 +992,7 @@ p <- networkD3::sankeyNetwork(Links = links,
 p
 # save the widget
 # library(htmlwidgets)
-# saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankeyBasic1.html"))
+# saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankeyBasiGroup12.html"))
 ```
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
@@ -1007,67 +1005,96 @@ links <- data.frame(
            "Yamashita Kisen (id 9-17)", "Shin-nihon Kisen (id 10-18)",
            "Nihon Yusosen (id 11-23)", "Nissan Kisen (id 12-24)",
            # 1st layer
-           "A (subsidy=100)", "C (subsidy=100)", 
-           "A (subsidy=100)", "A (subsidy=100)",
-           "B (subsidy=100)", "C (subsidy=100)",
-           "A (subsidy=100)", "D (subsidy=100)",
-           "unmatched (subsidy=100)", "A (subsidy=100)",
-           "D (subsidy=100)", "B (subsidy=100)",
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)", 
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)",
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)",
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)",
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)",
+           "Group2 (amount=0.1)", "Group1 (amount=0.1)",
            # 2nd layer
-           "A (subsidy=1000)", "C (subsidy=1000)", 
-           "A (subsidy=1000)", "A (subsidy=1000)",
-           "B (subsidy=1000)", "C (subsidy=1000)",
-           "A (subsidy=1000)", "D (subsidy=1000)",
-           "unmatched (subsidy=1000)", "A (subsidy=1000)",
-           "D (subsidy=1000)", "B (subsidy=1000)",
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)", 
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)",
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)",
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)",
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)",
+           "Group2 (amount=0.25)", "Group1 (amount=0.25)",
            # 3rd layer
-           "E (subsidy=5000)","E (subsidy=5000)",
-           "E (subsidy=5000)","E (subsidy=5000)",
-           "F (subsidy=5000)","E (subsidy=5000)",
-           "E (subsidy=5000)", "E (subsidy=5000)",
-           "unmatched (subsidy=5000)", "E (subsidy=5000)",
-           "E (subsidy=5000)", "F (subsidy=5000)",
+           "unmatched1 (amount=0.5)", "Group1 (amount=0.5)", 
+           "Group2 (amount=0.5)", "unmatched4 (amount=0.5)",
+           "Group3 (amount=0.5)", "Group2 (amount=0.5)",
+           "Group4 (amount=0.5)", "Group5 (amount=0.5)",
+           "Group1 (amount=0.5)", "Group3 (amount=0.5)",
+           "Group4 (amount=0.5)", "Group5 (amount=0.5)",
            #4th layer
-           "E (subsidy=15000)","E (subsidy=15000)",
-           "E (subsidy=15000)","E (subsidy=15000)",
-           "E (subsidy=15000)","E (subsidy=15000)",
-           "E (subsidy=15000)", "E (subsidy=15000)",
-           "unmatched (subsidy=15000)", "E (subsidy=15000)",
-           "E (subsidy=15000)", "E (subsidy=15000)"), 
-  target=c("A (subsidy=100)", "C (subsidy=100)", 
-           "A (subsidy=100)", "A (subsidy=100)",
-           "B (subsidy=100)", "C (subsidy=100)",
-           "A (subsidy=100)", "D (subsidy=100)",
-           "unmatched (subsidy=100)", "A (subsidy=100)",
-           "D (subsidy=100)", "B (subsidy=100)",
-           # 1st layer
-           "A (subsidy=1000)", "C (subsidy=1000)", 
-           "A (subsidy=1000)", "A (subsidy=1000)",
-           "B (subsidy=1000)", "C (subsidy=1000)",
-           "A (subsidy=1000)", "D (subsidy=1000)",
-           "unmatched (subsidy=1000)", "A (subsidy=1000)",
-           "D (subsidy=1000)", "B (subsidy=1000)",
+           "Group6 (amount=0.75)", "Group1 (amount=0.75)", 
+           "Group2 (amount=0.75)", "Group6 (amount=0.75)",
+           "Group3 (amount=0.75)", "Group2 (amount=0.75)",
+           "Group4 (amount=0.75)", "Group5 (amount=0.75)",
+           "Group1 (amount=0.75)", "Group3 (amount=0.75)",
+           "Group4 (amount=0.75)", "Group5 (amount=0.75)",
+           #5th layer
+           "Group6 (amount=1.0)", "Group1 (amount=1.0)", 
+           "Group2 (amount=1.0)", "Group6 (amount=1.0)",
+           "Group3 (amount=1.0)", "Group2 (amount=1.0)",
+           "Group4 (amount=1.0)", "Group5 (amount=1.0)",
+           "Group1 (amount=1.0)", "Group3 (amount=1.0)",
+           "Group4 (amount=1.0)", "Group5 (amount=1.0)",
+           #6th layer
+           "Group6 (amount=2.0)", "Group1 (amount=2.0)", 
+           "Group8 (amount=2.0)", "Group6 (amount=2.0)",
+           "Group3 (amount=2.0)", "Group7 (amount=2.0)",
+           "Group7 (amount=2.0)", "Group5 (amount=2.0)",
+           "Group1 (amount=2.0)", "Group3 (amount=2.0)",
+           "Group8 (amount=2.0)", "Group5 (amount=2.0)"), 
+  target=c(# 1st layer
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)", 
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)",
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)",
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)",
+           "Group1 (amount=0.1)", "Group1 (amount=0.1)",
+           "Group2 (amount=0.1)", "Group1 (amount=0.1)",
            # 2nd layer
-           "E (subsidy=5000)","E (subsidy=5000)",
-           "E (subsidy=5000)","E (subsidy=5000)",
-           "F (subsidy=5000)","E (subsidy=5000)",
-           "E (subsidy=5000)", "E (subsidy=5000)",
-           "unmatched (subsidy=5000)", "E (subsidy=5000)",
-           "E (subsidy=5000)", "F (subsidy=5000)",
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)", 
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)",
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)",
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)",
+           "Group1 (amount=0.25)", "Group1 (amount=0.25)",
+           "Group2 (amount=0.25)", "Group1 (amount=0.25)",
            # 3rd layer
-           "E (subsidy=15000)","E (subsidy=15000)",
-           "E (subsidy=15000)","E (subsidy=15000)",
-           "E (subsidy=15000)","E (subsidy=15000)",
-           "E (subsidy=15000)", "E (subsidy=15000)",
-           "unmatched (subsidy=15000)", "E (subsidy=15000)",
-           "E (subsidy=15000)", "E (subsidy=15000)",
-           # 4th layer
-           "E (subsidy=30000)", "E (subsidy=30000)",
-           "E (subsidy=30000)", "E (subsidy=30000)",
-           "E (subsidy=30000)", "E (subsidy=30000)",
-           "E (subsidy=30000)", "E (subsidy=30000)",
-           "E (subsidy=30000)", "E (subsidy=30000)",
-           "E (subsidy=30000)", "E (subsidy=30000)"
+           "unmatched1 (amount=0.5)", "Group1 (amount=0.5)", 
+           "Group2 (amount=0.5)", "unmatched4 (amount=0.5)",
+           "Group3 (amount=0.5)", "Group2 (amount=0.5)",
+           "Group4 (amount=0.5)", "Group5 (amount=0.5)",
+           "Group1 (amount=0.5)", "Group3 (amount=0.5)",
+           "Group4 (amount=0.5)", "Group5 (amount=0.5)",
+           #4th layer
+           "Group6 (amount=0.75)", "Group1 (amount=0.75)", 
+           "Group2 (amount=0.75)", "Group6 (amount=0.75)",
+           "Group3 (amount=0.75)", "Group2 (amount=0.75)",
+           "Group4 (amount=0.75)", "Group5 (amount=0.75)",
+           "Group1 (amount=0.75)", "Group3 (amount=0.75)",
+           "Group4 (amount=0.75)", "Group5 (amount=0.75)",
+           #5th layer
+           "Group6 (amount=1.0)", "Group1 (amount=1.0)", 
+           "Group2 (amount=1.0)", "Group6 (amount=1.0)",
+           "Group3 (amount=1.0)", "Group2 (amount=1.0)",
+           "Group4 (amount=1.0)", "Group5 (amount=1.0)",
+           "Group1 (amount=1.0)", "Group3 (amount=1.0)",
+           "Group4 (amount=1.0)", "Group5 (amount=1.0)",
+           #6th layer
+           "Group6 (amount=2.0)", "Group1 (amount=2.0)", 
+           "Group8 (amount=2.0)", "Group6 (amount=2.0)",
+           "Group3 (amount=2.0)", "Group7 (amount=2.0)",
+           "Group7 (amount=2.0)", "Group5 (amount=2.0)",
+           "Group1 (amount=2.0)", "Group3 (amount=2.0)",
+           "Group8 (amount=2.0)", "Group5 (amount=2.0)",
+           #7th layer
+           "Group6 (amount=3.0)", "Group1 (amount=3.0)", 
+           "Group8 (amount=3.0)", "Group6 (amount=3.0)",
+           "Group3 (amount=3.0)", "Group7 (amount=3.0)",
+           "Group7 (amount=3.0)", "Group5 (amount=3.0)",
+           "Group1 (amount=3.0)", "Group3 (amount=3.0)",
+           "Group8 (amount=3.0)", "Group5 (amount=3.0)"
            ), 
   value=c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           # 1st layer
@@ -1077,6 +1104,10 @@ links <- data.frame(
           # 3rd layer
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           # 4th layer
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          # 5th layer
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          # 6th layer
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
   )
 
@@ -1113,67 +1144,83 @@ links <- data.frame(
            "Yamashita Kisen (id 9-17)", "Shin-nihon Kisen (id 10-18)",
            "Nihon Yusosen (id 11-23)", "Nissan Kisen (id 12-24)",
            # 1st layer
-           "A (threshold=1mil)", "C (threshold=1mil)", 
-           "A (threshold=1mil)", "A (threshold=1mil)",
-           "B (threshold=1mil)", "C (threshold=1mil)",
-           "A (threshold=1mil)", "D (threshold=1mil)",
-           "unmatched (threshold=1mil)", "A (threshold=1mil)",
-           "D (threshold=1mil)", "B (threshold=1mil)",
+           "Group1 (threshold=1mil)", "Group4 (threshold=1mil)", 
+           "Group3 (threshold=1mil)", "Group1 (threshold=1mil)",
+           "Group2 (threshold=1mil)", "Group3 (threshold=1mil)",
+           "Group5 (threshold=1mil)", "Group6 (threshold=1mil)",
+           "Group4 (threshold=1mil)", "Group2 (threshold=1mil)",
+           "Group5 (threshold=1mil)", "Group6 (threshold=1mil)",
            # 2nd layer
-           "A (threshold=2mil)", "C (threshold=2mil)", 
-           "A (threshold=2mil)", "E (threshold=2mil)",
-           "B (threshold=2mil)", "C (threshold=2mil)",
-           "E (threshold=2mil)", "D (threshold=2mil)",
-           "unmatched (threshold=2mil) ", "unmatched (threshold=2mil)",
-           "D (threshold=2mil)", "B (threshold=2mil)",
+           "Group1 (threshold=2mil)", "Group8 (threshold=2mil)", 
+           "Group8 (threshold=2mil)", "Group1 (threshold=2mil)",
+           "Group7 (threshold=2mil)", "Group8 (threshold=2mil)",
+           "Group7 (threshold=2mil)", "Group1 (threshold=2mil)",
+           "unmatched (threshold=2mil)", "Group7 (threshold=2mil)",
+           "Group8 (threshold=2mil)", "Group7 (threshold=2mil)",
            # 3rd layer
-           "A (threshold=3mil)","C (threshold=3mil)",
-           "A (threshold=3mil)","A (threshold=3mil)",
-           "B (threshold=3mil)","C (threshold=3mil)",
-           "A (threshold=3mil)", "D (threshold=3mil)",
-           "unmatched (threshold=3mil) ", "unmatched (threshold=3mil)",
-           "D (threshold=3mil)", "B (threshold=3mil)",
+           "Group1 (threshold=3mil)","Group8 (threshold=3mil)",
+           "Group8 (threshold=3mil)","Group9 (threshold=3mil)",
+           "Group9 (threshold=3mil)","Group8 (threshold=3mil)",
+           "Group1 (threshold=3mil)", "Group1 (threshold=3mil)",
+           "Group9 (threshold=3mil)", "Group1 (threshold=3mil)",
+           "Group8 (threshold=3mil)", "Group9 (threshold=3mil)",
            #4th layer
-           "A (threshold=4mil)","C (threshold=4mil)",
-           "A (threshold=4mil)","A (threshold=4mil)",
-           "B (threshold=4mil)","C (threshold=4mil)",
-           "A (threshold=4mil)", "D (threshold=4mil)",
-           "unmatched (threshold=4mil) ", "unmatched (threshold=4mil)",
-           "D (threshold=4mil)", "B (threshold=4mil)"), 
-  target=c("A (threshold=1mil)", "C (threshold=1mil)", 
-           "A (threshold=1mil)", "A (threshold=1mil)",
-           "B (threshold=1mil)", "C (threshold=1mil)",
-           "A (threshold=1mil)", "D (threshold=1mil)",
-           "unmatched (threshold=1mil)", "A (threshold=1mil)",
-           "D (threshold=1mil)", "B (threshold=1mil)",
-           # 1st layer
-           "A (threshold=2mil)", "C (threshold=2mil)", 
-           "A (threshold=2mil)", "E (threshold=2mil)",
-           "B (threshold=2mil)", "C (threshold=2mil)",
-           "E (threshold=2mil)", "D (threshold=2mil)",
-           "unmatched (threshold=2mil) ", "unmatched (threshold=2mil)",
-           "D (threshold=2mil)", "B (threshold=2mil)",
+           "Group10 (threshold=4mil)","Group11 (threshold=4mil)",
+           "Group10 (threshold=4mil)","Group10 (threshold=4mil)",
+           "Group11 (threshold=4mil)","Group11 (threshold=4mil)",
+           "Group10 (threshold=4mil)", "Group11 (threshold=4mil)",
+           "Group10 (threshold=4mil)", "Group11 (threshold=4mil)",
+           "Group10 (threshold=4mil)", "unmatched12 (threshold=4mil)",
+           #5th layer
+           "Group12 (threshold=5mil)","Group12 (threshold=5mil)",
+           "Group12 (threshold=5mil)","Group12 (threshold=5mil)",
+           "Group11 (threshold=5mil)","unmatched5 (threshold=5mil)",
+           "Group12 (threshold=5mil)", "Group12 (threshold=5mil)",
+           "Group12 (threshold=5mil)", "Group12 (threshold=5mil)",
+           "unmatched11 (threshold=5mil)", "unmatched12 (threshold=5mil)"
+           ), 
+  target=c(# 1st layer
+           "Group1 (threshold=1mil)", "Group4 (threshold=1mil)", 
+           "Group3 (threshold=1mil)", "Group1 (threshold=1mil)",
+           "Group2 (threshold=1mil)", "Group3 (threshold=1mil)",
+           "Group5 (threshold=1mil)", "Group6 (threshold=1mil)",
+           "Group4 (threshold=1mil)", "Group2 (threshold=1mil)",
+           "Group5 (threshold=1mil)", "Group6 (threshold=1mil)",
            # 2nd layer
-           "A (threshold=3mil)","C (threshold=3mil)",
-           "A (threshold=3mil)","A (threshold=3mil)",
-           "B (threshold=3mil)","C (threshold=3mil)",
-           "A (threshold=3mil)", "D (threshold=3mil)",
-           "unmatched (threshold=3mil) ", "unmatched (threshold=3mil)",
-           "D (threshold=3mil)", "B (threshold=3mil)",
+           "Group1 (threshold=2mil)", "Group8 (threshold=2mil)", 
+           "Group8 (threshold=2mil)", "Group1 (threshold=2mil)",
+           "Group7 (threshold=2mil)", "Group8 (threshold=2mil)",
+           "Group7 (threshold=2mil)", "Group1 (threshold=2mil)",
+           "unmatched (threshold=2mil)", "Group7 (threshold=2mil)",
+           "Group8 (threshold=2mil)", "Group7 (threshold=2mil)",
            # 3rd layer
-           "A (threshold=4mil)","C (threshold=4mil)",
-           "A (threshold=4mil)","A (threshold=4mil)",
-           "B (threshold=4mil)","C (threshold=4mil)",
-           "A (threshold=4mil)", "D (threshold=4mil)",
-           "unmatched (threshold=4mil) ", "unmatched (threshold=4mil)",
-           "D (threshold=4mil)", "B (threshold=4mil)",
-           # 4th layer
-           "A (threshold=5mil)","C (threshold=5mil)",
-           "A (threshold=5mil)","A (threshold=5mil)",
-           "B (threshold=5mil)","C (threshold=5mil)",
-           "A (threshold=5mil)", "D (threshold=5mil)",
-           "unmatched (threshold=5mil) ", "unmatched (threshold=5mil)",
-           "D (threshold=5mil)", "B (threshold=5mil)"
+           "Group1 (threshold=3mil)","Group8 (threshold=3mil)",
+           "Group8 (threshold=3mil)","Group9 (threshold=3mil)",
+           "Group9 (threshold=3mil)","Group8 (threshold=3mil)",
+           "Group1 (threshold=3mil)", "Group1 (threshold=3mil)",
+           "Group9 (threshold=3mil)", "Group1 (threshold=3mil)",
+           "Group8 (threshold=3mil)", "Group9 (threshold=3mil)",
+           #4th layer
+           "Group10 (threshold=4mil)","Group11 (threshold=4mil)",
+           "Group10 (threshold=4mil)","Group10 (threshold=4mil)",
+           "Group11 (threshold=4mil)","Group11 (threshold=4mil)",
+           "Group10 (threshold=4mil)", "Group11 (threshold=4mil)",
+           "Group10 (threshold=4mil)", "Group11 (threshold=4mil)",
+           "Group10 (threshold=4mil)", "unmatched12 (threshold=4mil)",
+           #5th layer
+           "Group12 (threshold=5mil)","Group12 (threshold=5mil)",
+           "Group12 (threshold=5mil)","Group12 (threshold=5mil)",
+           "Group11 (threshold=5mil)","unmatched5 (threshold=5mil)",
+           "Group12 (threshold=5mil)", "Group12 (threshold=5mil)",
+           "Group12 (threshold=5mil)", "Group12 (threshold=5mil)",
+           "unmatched11 (threshold=5mil)", "unmatched12 (threshold=5mil)",
+           #6th layer
+           "Group13 (threshold=7.5mil)","Group13 (threshold=7.5mil)",
+           "Group13 (threshold=7.5mil)","Group13 (threshold=7.5mil)",
+           "Group13 (threshold=7.5mil)","Group13 (threshold=7.5mil)",
+           "Group13 (threshold=7.5mil)", "Group13 (threshold=7.5mil)",
+           "Group13 (threshold=7.5mil)", "Group13 (threshold=7.5mil)",
+           "Group13 (threshold=7.5mil)", "Group13 (threshold=7.5mil)"
            ), 
   value=c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           # 1st layer
@@ -1183,6 +1230,8 @@ links <- data.frame(
           # 3rd layer
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           # 4th layer
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          # 5th layer
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
   )
 

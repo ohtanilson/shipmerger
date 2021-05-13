@@ -18,19 +18,17 @@ export expand_grid, carrier_struct_v1, carrier_mod,
 	   gen_X_interaction, gen_merger_cost,
        gen_subsidy, gen_utility_matrix, solve_equilibrium, gen_data,
        score_b, maxscore_mc,
-	   ship_merger_score_estimation
-	   #=extract_buyer_covariates_if_ii_is_buyer,
-	   extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk,
-	   extract_target_covariates_if_ii_is_buyer,
-	   extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk,
-	   extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk,
-	   gen_merger_cost_for_buyer_ii,
-	   gen_subsidy_indicator_for_buyer_ii,
-	   gen_utility_est,
+	   ship_merger_score_estimation,
 	   gen_utility_est_without_subsidy,
 	   gen_unmatched_utility_est,
-	   score_b_est_data
-	   =#
+	   gen_utility_est,
+	   gen_subsidy_indicator_for_buyer_ii,
+	   gen_merger_cost_for_buyer_ii,
+	   extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk,
+	   extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk,
+	   extract_target_covariates_if_ii_is_buyer,
+	   extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk,
+	   extract_buyer_covariates_if_ii_is_buyer
 
 
 function expand_grid(args...)
@@ -411,7 +409,8 @@ end
 function score_b(m::carrier_struct_v1, beta::Vector{Float64},
 	             data::DataFrame, num_agents::Int64,
 				 threshold_tonnage::Any, subsidy_amount::Any;
-				 subsidy_type::Any)
+				 subsidy_type::Any,
+				 compare_with_and_without_subsidy = "no")
     I = num_agents
     temp = [Combinatorics.combinations(1:I,2)...]
     index_list = Array{Int64,2}(undef, length(temp), 2)
@@ -489,14 +488,18 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64},
 				payoff_unobs_match2 = utility[k,Int.(findall(m.Bundle .== swapped_bundle_id2))[1]]
 				ineq[i, kk, hh] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
 			end
-			# compare utility with and without subsidy
-			if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
-				# the observed pairwise data satisfy the subsidy threshold
-			    #ineq[i, 1, length(h_index) + 1] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]]
-			end
-			if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
-				# the observed pairwise data satisfy the subsidy threshold
-				#ineq[i, 1, length(h_index) + 2] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
+			if compare_with_and_without_subsidy == "yes"
+				# compare utility with and without subsidy
+				if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
+					# the observed pairwise data satisfy the subsidy threshold
+				    ineq[i, 1, length(h_index) + 1] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]] # without subsidy
+					ineq[i, 1, length(h_index) + 2] = payoff_obs_match1 - utility[idx[1],1] # with subsidy
+				end
+				if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
+					# the observed pairwise data satisfy the subsidy threshold
+					ineq[i, 1, length(h_index) + 3] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
+					ineq[i, 1, length(h_index) + 4] = payoff_obs_match2 - utility[idx[2],1] # with subsidy
+				end
 			end
 		elseif IS_Buyer(m,idx[1],target_bundle_id[1]) && IS_Sell(m,idx[2],target_bundle_id[2])
 			#println("iter $i = Case 2: firm 1 is a buyer and firm 2 is a seller.")
@@ -518,11 +521,14 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64},
 				#payoff_unobs_match2 = utility[k,Int.(findall(m.Bundle .== swapped_bundle_id2))[1]] # unmatched firm k
 				ineq[i,kk,1] = payoff_obs_match1 - payoff_unobs_match1 #- payoff_unobs_match2
 			end
-			# compare utility with and without subsidy
-			if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
+			if compare_with_and_without_subsidy == "yes"
+			    # compare utility with and without subsidy
+			    if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
 				# the observed pairwise data satisfy the subsidy threshold
-			    #ineq[i, 1, 2] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]]
-			end
+			    ineq[i, 1, 2] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]] #without subsidy
+				ineq[i, 1, 3] = payoff_obs_match1 - utility[idx[1],1] # with subsidy
+			    end
+		    end
 		elseif IS_Sell(m,idx[1],target_bundle_id[1]) && IS_Buyer(m,idx[2],target_bundle_id[2])
 			#println("iter $i = Case 3: firm 1 is a seller and firm 2 is a buyer.")
 			#Second, I construct inequalities from an observed coalition:
@@ -543,10 +549,13 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64},
 				payoff_unobs_match2 = utility[idx[2],Int.(findall(m.Bundle .== swapped_bundle_id2))[1]] # drop firm k
 				ineq[i,kk,1] = payoff_obs_match2 - payoff_unobs_match2
 			end
-			# compare utility with and without subsidy
-			if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
-				# the observed pairwise data satisfy the subsidy threshold
-			    #ineq[i, 1, 2] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
+			if compare_with_and_without_subsidy == "yes"
+			    # compare utility with and without subsidy
+			    if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
+				    # the observed pairwise data satisfy the subsidy threshold
+			        ineq[i, 1, 2] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
+					ineq[i, 1, 3] = payoff_obs_match2 - utility[idx[2],1]
+			    end
 			end
 		elseif IS_Buyer(m,idx[1],target_bundle_id[1]) && unmatched_vec == TB_toy(m.N, target_bundle_id[2])
 			#println("iter $i = Case 4: firm 1 is a buyer and firm 2 is unmatched.")
@@ -571,10 +580,13 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64},
 				payoff_unobs_match2 = utility[b,Int.(findall(m.Bundle .== swapped_bundle_id2))[1]] # sell firm b
 				ineq[i,kk,1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
 			end
-			# compare utility with and without subsidy
-			if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
-				# the observed pairwise data satisfy the subsidy threshold
-			    #ineq[i, 1, 2] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]]
+			if compare_with_and_without_subsidy == "yes"
+			    # compare utility with and without subsidy
+			    if subsidy_index_mat[idx[1],target_bundle_id[1]] == 1
+				    # the observed pairwise data satisfy the subsidy threshold
+			        ineq[i, 1, 2] = utility[idx[1],1] - utility_without_subsidy[idx[1],target_bundle_id[1]]
+					ineq[i, 1, 3] = payoff_obs_match1 - utility[idx[1],1]
+			    end
 			end
 		elseif unmatched_vec == TB_toy(m.N, target_bundle_id[1]) && IS_Buyer(m,idx[2],target_bundle_id[2])
 			#println("iter $i = Case 5: firm 1 is unmatched and firm 2 is a buyer.")
@@ -599,11 +611,13 @@ function score_b(m::carrier_struct_v1, beta::Vector{Float64},
 				payoff_unobs_match2 = utility[idx[2],Int.(findall(m.Bundle .== swapped_bundle_id2))[1]] # drop firm k and add firm b
 				ineq[i,kk,1] = payoff_obs_match1 + payoff_obs_match2 - payoff_unobs_match1 - payoff_unobs_match2
 			end
-			# compare utility with and without subsidy
-			if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
-				# the observed pairwise data satisfy the subsidy threshold
-			    #ineq[i, 1, 2] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
-			end
+			#if compare_with_and_without_subsidy == "yes"
+			    # compare utility with and without subsidy
+			#    if subsidy_index_mat[idx[2],target_bundle_id[2]] == 1
+			#	    # the observed pairwise data satisfy the subsidy threshold
+			#        ineq[i, 1, 2] = utility[idx[2],1] - utility_without_subsidy[idx[2],target_bundle_id[2]]
+			#    end
+			#end
 	    elseif unmatched_vec == TB_toy(m.N, target_bundle_id[1]) && unmatched_vec == TB_toy(m.N, target_bundle_id[2])
 			#println("iter $i = Case 6: both picked firms are unmatched.")
 			# Fourth, I construct inequalities from IR conditions without subsidy
@@ -687,7 +701,242 @@ end
 # used in ship_merger_score_estimation
 #------------------------------------#
 
+function extract_buyer_covariates_if_ii_is_buyer(ii, data)
+	# pick individual own covariates
+	buyer_X_scale = Vector(data[ii,5:8])
+	buyer_X_scope = Vector(data[ii,11:14])
+	res = vcat(buyer_X_scale,buyer_X_scope)
+	return res
+end
 
+function extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, data)
+	# pick individual own covariates
+	# pick up group names
+	group_names = data[ii,4]
+	# pick up deviating member
+	subdata = @linq data |>
+	    where(:group .== group_names)
+	deviater_X_scale = Vector(subdata[kk,5:8])
+	deviater_X_scope = Vector(subdata[kk,11:14])
+	res = vcat(deviater_X_scale, deviater_X_scope)
+	return res
+end
+
+function extract_target_covariates_if_ii_is_buyer(ii, data; info_sum = temp_info_sum)
+	#global liner_sum, special_sum, tanker_sum, tramper_sum
+	liner_sum = info_sum["liner_sum"]
+	special_sum = info_sum["special_sum"]
+	tanker_sum = info_sum["tanker_sum"]
+	tramper_sum = info_sum["tramper_sum"]
+	# pick up group names
+	group_names = data[ii,4]
+	# pick individual own covariates
+	buyer_X_scale = Vector(data[ii,5:8])
+	buyer_total_sum = data.total[ii]
+	target_total_sum = data.group_total_tonnage[ii]
+	# construct scale covariates
+	target_liner_sum = zeros(0)
+	target_special_sum = zeros(0)
+	target_tramper_sum = zeros(0)
+	target_tanker_sum = zeros(0)
+	for iter = 1:size(liner_sum,1)
+		if liner_sum.group[iter] == group_names
+			target_liner_sum = liner_sum.liner_sum[iter]
+		end
+		if special_sum.group[iter] == group_names
+			target_special_sum = special_sum.special_sum[iter]
+		end
+		if tramper_sum.group[iter] == group_names
+			target_tramper_sum = tramper_sum.tramper_sum[iter]
+		end
+		if tanker_sum.group[iter] == group_names
+			target_tanker_sum = tanker_sum.tanker_sum[iter]
+		end
+	end
+	# construct scope covariates
+	target_liner_share = (target_liner_sum-buyer_X_scale[1])/(target_total_sum-buyer_total_sum)
+	target_special_share = (target_special_sum-buyer_X_scale[2])/(target_total_sum-buyer_total_sum)
+	target_tramper_share = (target_tramper_sum-buyer_X_scale[3])/(target_total_sum-buyer_total_sum)
+	target_tanker_share = (target_tanker_sum-buyer_X_scale[4])/(target_total_sum-buyer_total_sum)
+	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	return res
+end
+
+function extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, data; info_sum = temp_info_sum)
+	#global liner_sum, special_sum, tanker_sum, tramper_sum
+	liner_sum = info_sum["liner_sum"]
+	special_sum = info_sum["special_sum"]
+	tanker_sum = info_sum["tanker_sum"]
+	tramper_sum = info_sum["tramper_sum"]
+	# pick up group names
+	group_names = data[ii,4]
+	# pick up deviating member
+	subdata = @linq data |>
+	    where(:group .== group_names)
+	subdata.id[kk] == data.id[ii]
+	deviater_X_scale = Vector(subdata[kk,5:8])
+	deviater_total_sum = subdata[kk,9]
+	# pick individual own covariates
+	buyer_X_scale = Vector(data[ii,5:8])
+	buyer_total_sum = data.total[ii]
+	target_total_sum = data.group_total_tonnage[ii]
+	# construct scale covariates
+	target_liner_sum = zeros(0)
+	target_special_sum = zeros(0)
+	target_tramper_sum = zeros(0)
+	target_tanker_sum = zeros(0)
+	for iter = 1:size(liner_sum,1)
+		if liner_sum.group[iter] == group_names
+			target_liner_sum = liner_sum.liner_sum[iter]
+		end
+		if special_sum.group[iter] == group_names
+			target_special_sum = special_sum.special_sum[iter]
+		end
+		if tramper_sum.group[iter] == group_names
+			target_tramper_sum = tramper_sum.tramper_sum[iter]
+		end
+		if tanker_sum.group[iter] == group_names
+			target_tanker_sum = tanker_sum.tanker_sum[iter]
+		end
+	end
+	# construct scope covariates
+	target_liner_share = (target_liner_sum-buyer_X_scale[1]-deviater_X_scale[1])/
+	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
+	target_special_share = (target_special_sum-buyer_X_scale[2]-deviater_X_scale[2])/
+	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
+	target_tramper_share = (target_tramper_sum-buyer_X_scale[3]-deviater_X_scale[3])/
+	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
+	target_tanker_share = (target_tanker_sum-buyer_X_scale[4]-deviater_X_scale[4])/
+	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
+	# modification dropping deviator firm kk
+	target_liner_sum = target_liner_sum - deviater_X_scale[1]
+	target_special_sum = target_special_sum - deviater_X_scale[2]
+	target_tramper_sum = target_tramper_sum - deviater_X_scale[3]
+	target_tanker_sum = target_tanker_sum - deviater_X_scale[4]
+	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	return res
+end
+
+
+function extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(ii, kk, data;info_sum = temp_info_sum)
+	#global liner_sum, special_sum, tanker_sum, tramper_sum
+	liner_sum = info_sum["liner_sum"]
+	special_sum = info_sum["special_sum"]
+	tanker_sum = info_sum["tanker_sum"]
+	tramper_sum = info_sum["tramper_sum"]
+	group_names = data[ii,4]
+	# pick individual own covariates
+	buyer_X_scale = Vector(data[ii,5:8])
+	buyer_total_sum = data.total[ii]
+	target_total_sum = data.group_total_tonnage[ii]
+	# pick unmatched kk covariates
+	unmatched_X_scale = Vector(data[kk,5:8])
+	unmatched_total_sum = data.total[kk]
+	# construct scale covariates
+	target_liner_sum = zeros(0)
+	target_special_sum = zeros(0)
+	target_tramper_sum = zeros(0)
+	target_tanker_sum = zeros(0)
+	for iter = 1:size(liner_sum,1)
+		#liner_sum.group[iter] == group_names
+		if liner_sum.group[iter] == group_names
+			target_liner_sum = liner_sum.liner_sum[iter]
+		end
+		if special_sum.group[iter] == group_names
+			target_special_sum = special_sum.special_sum[iter]
+		end
+		if tramper_sum.group[iter] == group_names
+			target_tramper_sum = tramper_sum.tramper_sum[iter]
+		end
+		if tanker_sum.group[iter] == group_names
+			target_tanker_sum = tanker_sum.tanker_sum[iter]
+		end
+	end
+	# construct scope covariates
+	target_liner_share = (target_liner_sum-buyer_X_scale[1]+unmatched_X_scale[1])/
+	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	target_special_share = (target_special_sum-buyer_X_scale[2]+unmatched_X_scale[2])/
+	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	target_tramper_share = (target_tramper_sum-buyer_X_scale[3]+unmatched_X_scale[3])/
+	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	target_tanker_share = (target_tanker_sum-buyer_X_scale[4]+unmatched_X_scale[4])/
+	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	# modification adding unmatched kk
+	target_liner_sum = target_liner_sum + unmatched_X_scale[1]
+	target_special_sum = target_special_sum + unmatched_X_scale[2]
+	target_tramper_sum = target_tramper_sum + unmatched_X_scale[3]
+	target_tanker_sum = target_tanker_sum + unmatched_X_scale[4]
+	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+end
+
+function gen_merger_cost_for_buyer_ii(ii, buyer1_X, target1_X, data)
+	subdata = @linq data |>
+		where(:group .== data[ii,4])
+	# construct swapped matches
+	num_of_firms_in_coalition = size(subdata, 1)
+	total_tonnage = sum(buyer1_X[1:4]) + sum(target1_X[1:4])
+	merger_cost = num_of_firms_in_coalition/log(total_tonnage*100 + 1) # 1million ton = 1 translated into 1ton=1
+	#merger_cost = num_of_firms_in_coalition/total_tonnage
+	return merger_cost
+end
+
+function gen_subsidy_indicator_for_buyer_ii(buyer1_X, target1_X,
+	                                        subsidy_type;
+	                                        subsidy_threshold = 1,
+											subsidy_amount = 1)
+	total_tonnage = sum(buyer1_X[1:4]) + sum(target1_X[1:4])
+	subsidy_indicator = total_tonnage > subsidy_threshold
+	if subsidy_type == "shared"
+	    subsidy_effect = subsidy_amount*subsidy_indicator/total_tonnage
+	elseif subsidy_type == "to_buyer"
+		subsidy_effect = subsidy_amount*subsidy_indicator
+	end
+	return subsidy_effect
+end
+
+function gen_utility_est(ii, buyer1_X::Vector, target1_X::Vector, data,
+	                     beta, gamma, delta, subsidy_type)
+		#interaction_X_beta = beta.*log.(buyer1_X.*target1_X.+1)
+		buyer1_X_total = sum(buyer1_X[1:4])
+		target1_X_total = sum(target1_X[1:4])
+		#interaction_X_beta = 1.0*buyer1_X_total.*target1_X_total .+ beta.*buyer1_X.*target1_X
+		interaction_X_beta = vcat(1.0*buyer1_X_total.*target1_X_total, beta.*buyer1_X.*target1_X)
+		#interaction_X_beta = beta.*buyer1_X.*target1_X
+		merger_cost = gen_merger_cost_for_buyer_ii(ii, buyer1_X, target1_X, data)
+		subsidy = gen_subsidy_indicator_for_buyer_ii(buyer1_X, target1_X,
+		                                             subsidy_type,
+		                                             subsidy_amount = 1)
+		utility = sum(interaction_X_beta) - gamma*merger_cost + delta*subsidy
+	return utility
+end
+
+
+function gen_utility_est_without_subsidy(ii, buyer1_X::Vector,
+	                     target1_X::Vector, data,
+	                     beta, gamma, delta)
+		#interaction_X_beta = beta.*log.(buyer1_X.*target1_X.+1)
+		buyer1_X_total = sum(buyer1_X[1:4])
+		target1_X_total = sum(target1_X[1:4])
+		interaction_X_beta = 1.0*buyer1_X_total.*target1_X_total .+ beta.*buyer1_X.*target1_X
+		#interaction_X_beta = beta.*buyer1_X.*target1_X
+		merger_cost = gen_merger_cost_for_buyer_ii(ii, buyer1_X, target1_X, data)
+		utility = sum(interaction_X_beta) - gamma*merger_cost + 0
+	return utility
+end
+
+function gen_unmatched_utility_est(buyer1_X::Vector, beta)
+		#interaction_X_beta = beta.*log.(buyer1_X.+1)
+		buyer1_X_total = sum(buyer1_X[1:4])
+		#interaction_X_beta = 1.0*buyer1_X_total .+ beta.*buyer1_X
+		#interaction_X_beta = 1.0*buyer1_X_total.*buyer1_X_total .+ beta.*buyer1_X.*buyer1_X
+		interaction_X_beta = 1.0*buyer1_X_total.*0.01 .+ beta.*buyer1_X.*0.01 # specify unmatched = match with 0.01
+		#interaction_X_beta = beta.*buyer1_X
+		utility = sum(interaction_X_beta)
+	return utility
+end
 
 
 
