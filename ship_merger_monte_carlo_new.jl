@@ -20,11 +20,11 @@ temp_randomseed = 1
 # Identification plots
 #--------------------------#
 @time m = carrier_mod(randomseed = 3,#1
-                     ton_dist = Distributions.Uniform(20.0,50.0),
+                     ton_dist = Distributions.Uniform(20.0,80.0),
 					 N = 8,
 					 β_0 = 0.0,# coefficient of covariates
 					 δ_0 = 5.0,# coefficient of subsidy
-					 γ_0 = 20.0,# coefficient of additional merger cost
+					 γ_0 = 8.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 @show m.ton
 temp_threshold_tonnage = 1
@@ -48,12 +48,12 @@ m.Bundle[obsd_to_buyer.tarid]
 temp_threshold_tonnage = 1
 temp_subsidy_amount = 1
 temp_subsidy_type = "shared"
-@time m = carrier_mod(randomseed = 3,#1
-					 ton_dist = Distributions.Uniform(20.0,50.0),
+@time m = carrier_mod(randomseed = 5,#1
+					 ton_dist = Distributions.Uniform(20.0,80.0),
 					 N = 8,
 					 β_0 = 0.0,# coefficient of covariates
-					 δ_0 = 5.0,# coefficient of subsidy
-					 γ_0 = 20.0,# coefficient of additional merger cost
+					 δ_0 = 1.0,# coefficient of subsidy
+					 γ_0 = 4.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 utility, obsd = gen_data(m,
                 threshold_tonnage =　temp_threshold_tonnage,
@@ -63,21 +63,23 @@ m.Bundle[obsd.tarid]
 obsd.total_size_target + obsd.total_size_buyer
 total_unmatched = sum(obsd.tarid .== 1)
 total_num_group = length(unique(obsd.tarid[obsd.tarid .!= 1]))
-domain = [-10:1.0:40;]
+domain = [-10:2.0:40;]
 res_β_0 = zeros(length(domain))
 for i in 1:length(domain)
 	iter = domain[i]
 	res_β_0[i], ~ = score_b(m, [iter, m.δ_0, m.γ_0], obsd,
 	                m.N, temp_threshold_tonnage,
 					temp_subsidy_amount,
-					subsidy_type = temp_subsidy_type)
+					subsidy_type = temp_subsidy_type#,
+					#compare_with_and_without_subsidy = "yes"
+					)
 end
 Plots.plot(domain, res_β_0,
            label="score",
            xlabel="β where $(total_unmatched)/$(m.N) unmatched, $(total_num_group) group(s)",
            title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
-Plots.vline!([m.β_0], label="true where [β₀,δ₀,γ₀] = [$(m.β_0), $(m.δ_0), $(m.γ_0)]", linestyle = :dot)
-savefig("julia_merger_figure/plot_beta_$(temp_subsidy_type)_subsidy")
+Plots.vline!([m.β_0], label="true where [β₀,δ₀,γ₀] = [$(m.β_0), $(m.δ_0), $(m.γ_0)]", linestyle = :dot, legend = :bottomright)
+savefig("julia_merger_figure/plot_beta_$(temp_subsidy_type)_subsidy_large_firms")
 
 domain = [-10:1.0:40;]
 res_δ_0 = zeros(length(domain))
@@ -86,31 +88,35 @@ for i in 1:length(domain)
 	res_δ_0[i], ~ = score_b(m, [m.β_0, iter, m.γ_0], obsd,
 	                        m.N, temp_threshold_tonnage,
 						    temp_subsidy_amount,
-							subsidy_type = temp_subsidy_type)
+							subsidy_type = temp_subsidy_type#,
+							#compare_with_and_without_subsidy = "yes"
+							)
 end
 Plots.plot(domain, res_δ_0, label="score",
            xlabel="δ (subsidy sensitivity) where $(total_unmatched)/$(m.N) unmatched, $(total_num_group) group(s)",
            title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type)) ")
-Plots.vline!([m.δ_0], label="true where [β₀,δ₀,γ₀] = [$(m.β_0), $(m.δ_0), $(m.γ_0)]", linestyle = :dot)
-savefig("julia_merger_figure/plot_delta_$(temp_subsidy_type)_subsidy")
+Plots.vline!([m.δ_0], label="true where [β₀,δ₀,γ₀] = [$(m.β_0), $(m.δ_0), $(m.γ_0)]", linestyle = :dot, legend = :bottomright)
+savefig("julia_merger_figure/plot_delta_$(temp_subsidy_type)_subsidy_large_firms")
 
-domain = [-10:1.0:40;]
+domain = [-10:2.0:40;]
 res_γ_0 = zeros(length(domain))
 for i in 1:length(domain)
 	iter = domain[i]
 	res_γ_0[i], ~ = score_b(m, [m.β_0, m.δ_0, iter],
 	                        obsd, m.N, temp_threshold_tonnage,
 							temp_subsidy_amount,
-							subsidy_type = temp_subsidy_type)
+							subsidy_type = temp_subsidy_type#,
+							#compare_with_and_without_subsidy = "yes"
+							)
 end
 Plots.plot(domain, res_γ_0, label="score",
            xlabel = "γ (merger cost) where $(total_unmatched)/$(m.N) unmatched, $(total_num_group) group(s)",
            title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type)) ")
 Plots.vline!([m.γ_0], label="true where [β₀,δ₀,γ₀] = [$(m.β_0), $(m.δ_0), $(m.γ_0)]", linestyle = :dot)
-savefig("julia_merger_figure/plot_gamma_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/plot_gamma_$(temp_subsidy_type)_subsidy_large_firms")
 
-domain1 = [-10:1.0:30;]
-domain2 = [-10:1.0:30;]
+domain1 = [-10:2.0:30;]
+domain2 = [-10:2.0:30;]
 res_contor = zeros(length(domain1),length(domain2))
 for i in 1:length(domain1),j in 1:length(domain2)
 	res_contor[i,j], ~ = score_b(m, [domain1[i], m.δ_0, domain2[j]],
@@ -124,10 +130,10 @@ Plots.contour(domain1, domain2, res_contor', fill = true,
 			  title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
 Plots.hline!([m.γ_0], label="true γ", linestyle = :dash)
 Plots.vline!([m.β_0], label="true β", linestyle = :dash)
-savefig("julia_merger_figure/contour_beta_gamma_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/contour_beta_gamma_$(temp_subsidy_type)_subsidy_large_firms")
 
-domain1 = [-10:1.0:30;]
-domain2 = [-10:1.0:30;]
+domain1 = [-10:2.0:30;]
+domain2 = [-10:2.0:30;]
 res_contor2 = zeros(length(domain1),length(domain2))
 @time for i in 1:length(domain1),j in 1:length(domain2)
 	res_contor2[i,j], ~ = score_b(m, [m.β_0, domain1[i], domain2[j]],
@@ -141,10 +147,10 @@ Plots.contour(domain1, domain2, res_contor2', fill = true,
 			  title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
 Plots.hline!([m.δ_0], label="true δ", linestyle = :dash)
 Plots.vline!([m.γ_0], label="true γ", linestyle = :dash)
-savefig("julia_merger_figure/contour_gamma_delta_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/contour_gamma_delta_$(temp_subsidy_type)_subsidy_large_firms")
 
-domain1 = [-10:1.0:30;]
-domain2 = [-10:1.0:30;]
+domain1 = [-10:2.0:30;]
+domain2 = [-10:2.0:30;]
 res_contor3 = zeros(length(domain1),length(domain2))
 for i in 1:length(domain1),j in 1:length(domain2)
 	res_contor3[i,j], ~ = score_b(m, [domain1[i], domain2[j], m.γ_0],
@@ -158,7 +164,7 @@ Plots.contour(domain1, domain2, res_contor3', fill = true,
 			  title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
 Plots.vline!([m.β_0], label="true β", linestyle = :dash)
 Plots.hline!([m.δ_0], label="true δ", linestyle = :dash)
-savefig("julia_merger_figure/contour_beta_delta_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/contour_beta_delta_$(temp_subsidy_type)_subsidy_large_firms")
 
 #--------------------------#
 # (2) s_to_buyer
@@ -171,7 +177,7 @@ utility, obsd = gen_data(m,
 m.Bundle[obsd.tarid]
 total_unmatched = sum(obsd.tarid .== 1)
 total_num_group = length(unique(obsd.tarid[obsd.tarid .!= 1]))
-domain = [-10:5.0:40;]
+domain = [-20:5.0:40;]
 res_β_0 = zeros(length(domain))
 for i in 1:length(domain)
 	iter = domain[i]
@@ -185,7 +191,7 @@ Plots.plot(domain, res_β_0,
            xlabel="β where $(total_unmatched)/$(m.N) unmatched, $(total_num_group) group(s)",
            title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
 Plots.vline!([m.β_0], label="true where [β₀,δ₀,γ₀] = [$(m.β_0), $(m.δ_0), $(m.γ_0)]", linestyle = :dot)
-savefig("julia_merger_figure/plot_beta_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/plot_beta_$(temp_subsidy_type)_subsidy_large_firms")
 
 domain = [-10:1.0:40;]
 res_δ_0 = zeros(length(domain))
@@ -200,9 +206,9 @@ Plots.plot(domain, res_δ_0, label="score",
            xlabel="δ (subsidy sensitivity) where $(total_unmatched)/$(m.N) unmatched, $(total_num_group) group(s)",
            title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type)) ")
 Plots.vline!([m.δ_0], label="true where [β₀,δ₀,γ₀] = [$(m.β_0), $(m.δ_0), $(m.γ_0)]", linestyle = :dot)
-savefig("julia_merger_figure/plot_delta_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/plot_delta_$(temp_subsidy_type)_subsidy_large_firms")
 
-domain = [-10:1.0:40;]
+domain = [-10:2.0:40;]
 res_γ_0 = zeros(length(domain))
 for i in 1:length(domain)
 	iter = domain[i]
@@ -215,10 +221,10 @@ Plots.plot(domain, res_γ_0, label="score",
            xlabel = "γ (merger cost) where $(total_unmatched)/$(m.N) unmatched, $(total_num_group) group(s)",
            title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type)) ")
 Plots.vline!([m.γ_0], label="true where [β₀,δ₀,γ₀] = [$(m.β_0), $(m.δ_0), $(m.γ_0)]", linestyle = :dot)
-savefig("julia_merger_figure/plot_gamma_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/plot_gamma_$(temp_subsidy_type)_subsidy_large_firms")
 
-domain1 = [-10:1.0:40;]
-domain2 = [-10:1.0:40;]
+domain1 = [-10:2.0:30;]
+domain2 = [-10:2.0:30;]
 res_contor = zeros(length(domain1),length(domain2))
 for i in 1:length(domain1),j in 1:length(domain2)
 	res_contor[i,j], ~ = score_b(m, [domain1[i], m.δ_0, domain2[j]],
@@ -232,10 +238,10 @@ Plots.contour(domain1, domain2, res_contor', fill = true,
 			  title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
 Plots.hline!([m.γ_0], label="true γ", linestyle = :dash)
 Plots.vline!([m.β_0], label="true β", linestyle = :dash)
-savefig("julia_merger_figure/contour_beta_gamma_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/contour_beta_gamma_$(temp_subsidy_type)_subsidy_large_firms")
 
-domain1 = [-10:1.0:40;]
-domain2 = [-10:1.0:40;]
+domain1 = [-10:2.0:30;]
+domain2 = [-10:2.0:30;]
 res_contor2 = zeros(length(domain1),length(domain2))
 for i in 1:length(domain1),j in 1:length(domain2)
 	res_contor2[i,j], ~ = score_b(m, [m.β_0, domain1[i], domain2[j]],
@@ -249,10 +255,10 @@ Plots.contour(domain1, domain2, res_contor2', fill = true,
 			  title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
 Plots.hline!([m.δ_0], label="true δ", linestyle = :dash)
 Plots.vline!([m.γ_0], label="true γ", linestyle = :dash)
-savefig("julia_merger_figure/contour_gamma_delta_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/contour_gamma_delta_$(temp_subsidy_type)_subsidy_large_firms")
 
-domain1 = [-10:1.0:40;]
-domain2 = [-10:1.0:40;]
+domain1 = [-10:2.0:30;]
+domain2 = [-10:2.0:30;]
 res_contor3 = zeros(length(domain1),length(domain2))
 for i in 1:length(domain1),j in 1:length(domain2)
 	res_contor3[i,j], ~ = score_b(m, [domain1[i], domain2[j], m.γ_0],
@@ -266,7 +272,7 @@ Plots.contour(domain1, domain2, res_contor3', fill = true,
 			  title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
 Plots.vline!([m.β_0], label="true β", linestyle = :dash)
 Plots.hline!([m.δ_0], label="true δ", linestyle = :dash)
-savefig("julia_merger_figure/contour_beta_delta_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/contour_beta_delta_$(temp_subsidy_type)_subsidy_large_firms")
 
 #--------------------------#
 # (3) density of estimates
@@ -317,7 +323,9 @@ function maxscore_mc_temp(num_agents::Int64;
 		   end
 		   solved_case_index = vcat(solved_case_index, i)
 		   function score_bthis(beta::Vector{Float64}, obsdat::DataFrame)
-			   score, ~, ~ = score_b(m, beta, obsdat, num_agents, threshold_tonnage, subsidy_amount, subsidy_type = subsidy_type)
+			   score, ~, ~ = score_b(m, beta, obsdat, num_agents,
+			                        threshold_tonnage, subsidy_amount,
+									subsidy_type = subsidy_type)
 			   res = -1.0*score + 100000.0 # need to be Float64 for bboptimize
 			   #println("score:$(res) \n" )
 			   return res
@@ -351,33 +359,25 @@ function maxscore_mc_temp(num_agents::Int64;
    return myests, res_abs_mean_err, res_sqrt, mynum_correct_ineq, truenum_correct_ineq, num_all_ineq, subsidy_used_or_not_index, all_unmatched_or_not_index
 end
 
-
-@time m = carrier_mod(randomseed = 1,
-					 N = 8,
-					 β_0 = 0.0,# coefficient of covariates
-					 δ_0 = 1.0,# coefficient of subsidy
-					 γ_0 = 4.0,# coefficient of additional merger cost
-					 ton_dim= 2)
-
 temp_simulate_num = 1000
 #----------------------------------------------#
 # plot subsidy (to buyer)
 #----------------------------------------------#
-you_want_run = "not_run"
+you_want_run = "run"
 if you_want_run == "run"
     @time res_theta, ~, ~, ~, ~, ~, subsidy_used_or_not_index, all_unmatched_or_not_index = maxscore_mc_temp(8,num_its = temp_simulate_num,
                                                                                                                threshold_tonnage = 1,
 																											   subsidy_amount = 1,
 																											   subsidy_type = "to_buyer")
-	open("julia_merger_result/res_theta_to_buyer.txt", "w") do io
+	open("julia_merger_result/res_theta_to_buyer_large_firms.txt", "w") do io
 		DelimitedFiles.writedlm(io, res_theta,",")
 	end
-	open("julia_merger_result/subsidy_used_or_not_index_to_buyer.txt", "w") do io
+	open("julia_merger_result/subsidy_used_or_not_index_to_buyer_large_firms.txt", "w") do io
 		DelimitedFiles.writedlm(io, subsidy_used_or_not_index,",")
 	end
 end
-res_theta = readdlm("julia_merger_result/res_theta_to_buyer.txt",',',Float64)
-subsidy_used_or_not_index = vec(readdlm("julia_merger_result/subsidy_used_or_not_index_to_buyer.txt",',',Float64))
+res_theta = readdlm("julia_merger_result/res_theta_to_buyer_large_firms.txt",',',Float64)
+subsidy_used_or_not_index = vec(readdlm("julia_merger_result/subsidy_used_or_not_index_to_buyer_large_firms.txt",',',Float64))
 #res_theta_solved = res_theta[res_theta.!=0]
 res_theta_solved = copy(res_theta)
 for i = 1:size(res_theta)[1], j = 1:size(res_theta)[2]
@@ -399,7 +399,7 @@ Plots.histogram!(res_theta_solved[subsidy_used_or_not_index.>0,1],
 				alpha = 0.3)
 Plots.vline!([m.β_0], label="true β", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_beta_to_buyer")
+savefig("julia_merger_figure/histogram_beta_to_buyer_large_firms")
 
 Plots.histogram(res_theta_solved[subsidy_used_or_not_index.<1,2],
                 bins = 60,
@@ -415,7 +415,7 @@ Plots.histogram!(res_theta_solved[subsidy_used_or_not_index.>0,2],
 				alpha = 0.3)
 Plots.vline!([m.δ_0], label="true δ", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_delta_to_buyer")
+savefig("julia_merger_figure/histogram_delta_to_buyer_large_firms")
 
 Plots.histogram(res_theta_solved[subsidy_used_or_not_index.<1,3],
                 bins = 60,
@@ -431,7 +431,7 @@ Plots.histogram!(res_theta_solved[subsidy_used_or_not_index.>0,3],
 				alpha = 0.3)
 Plots.vline!([m.γ_0], label="true γ", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_gamma_to_buyer")
+savefig("julia_merger_figure/histogram_gamma_to_buyer_large_firms")
 # Create Table
 nanmedian(x) = median(filter(!isnan,x))
 nanmean(x) = mean(filter(!isnan,x))
@@ -454,16 +454,16 @@ if you_want_run == "run"
 	                                                                                                                      threshold_tonnage = 100,
 																														  subsidy_amount = 10,
 																														  subsidy_type = "shared")
-	open("julia_merger_result/res_theta_shared.txt", "w") do io
+	open("julia_merger_result/res_theta_shared_large_firms.txt", "w") do io
 		DelimitedFiles.writedlm(io, res_theta,",")
 	end
-	open("julia_merger_result/subsidy_used_or_not_index_shared.txt", "w") do io
+	open("julia_merger_result/subsidy_used_or_not_index_shared_large_firms.txt", "w") do io
 		DelimitedFiles.writedlm(io, subsidy_used_or_not_index,",")
 	end
 end
 
-res_theta = readdlm("julia_merger_result/res_theta_shared.txt",',',Float64)
-subsidy_used_or_not_index = vec(readdlm("julia_merger_result/subsidy_used_or_not_index_shared.txt",',',Float64))
+res_theta = readdlm("julia_merger_result/res_theta_shared_large_firms.txt",',',Float64)
+subsidy_used_or_not_index = vec(readdlm("julia_merger_result/subsidy_used_or_not_index_shared_large_firms.txt",',',Float64))
 res_theta_solved = copy(res_theta)
 for i = 1:size(res_theta)[1], j = 1:size(res_theta)[2]
 	if res_theta[i,j] == 0.0
@@ -486,7 +486,7 @@ Plots.histogram!(res_theta_solved[subsidy_used_or_not_index.>0,1],
 				alpha = 0.3)
 Plots.vline!([m.β_0], label="true β", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_beta_shared")
+savefig("julia_merger_figure/histogram_beta_shared_large_firms")
 
 Plots.histogram(res_theta_solved[:,2],
                 bins = 60,
@@ -502,7 +502,7 @@ Plots.histogram!(res_theta_solved[subsidy_used_or_not_index.>0,2],
 				alpha = 0.3)
 Plots.vline!([m.δ_0], label="true δ", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_delta_shared")
+savefig("julia_merger_figure/histogram_delta_shared_large_firms")
 
 Plots.histogram(res_theta_solved[:,3],
                 bins = 60,
@@ -518,7 +518,7 @@ Plots.histogram!(res_theta_solved[subsidy_used_or_not_index.>0,3],
 				alpha = 0.3)
 Plots.vline!([m.γ_0], label="true γ", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_gamma_shared")
+savefig("julia_merger_figure/histogram_gamma_shared_large_firms")
 
 median_bias_beta_with_subsidy_shared = nanmedian(res_theta_solved[subsidy_used_or_not_index.<1,1].-m.β_0)
 median_bias_beta_without_subsidy_shared = nanmedian(res_theta_solved[subsidy_used_or_not_index.>0,1].-m.β_0)
@@ -532,7 +532,7 @@ RMSE_gamma_without_subsidy_shared = RMSE(res_theta_solved[subsidy_used_or_not_in
 #----------------------------------------------#
 # create monte carlo table
 #----------------------------------------------#
-LaTeXTabulars.latex_tabular("julia_merger_table/monte_carlo_results_bias_RMSE.tex",
+LaTeXTabulars.latex_tabular("julia_merger_table/monte_carlo_results_bias_RMSE_large_firms.tex",
 			  Tabular("@{\\extracolsep{5pt}}ccccc"),
 			  [Rule(:top),
 			   ["Num of firms", "subsidy type", "parameter",
@@ -586,17 +586,17 @@ if you_want_run == "run"
 						 δ_0_temp = 1.0,
 						 γ_0_temp = 15.0,
 						 search_range_temp = (-10.0,40.0))
-	open("julia_merger_result/res_theta_no_merger_$temp_subsidy_type.txt", "w") do io
+	open("julia_merger_result/res_theta_no_merger_$(temp_subsidy_type)_large_firms.txt", "w") do io
 		DelimitedFiles.writedlm(io, res_theta,",")
 	end
-	open("julia_merger_result/all_unmatched_or_not_index_no_merger_$temp_subsidy_type.txt", "w") do io
+	open("julia_merger_result/all_unmatched_or_not_index_no_merger_$(temp_subsidy_type)_large_firms.txt", "w") do io
 		DelimitedFiles.writedlm(io, all_unmatched_or_not_index,",")
 	end
 end
 
 
-res_theta = readdlm("julia_merger_result/res_theta_no_merger_$temp_subsidy_type.txt",',',Float64)
-all_unmatched_or_not_index = vec(readdlm("julia_merger_result/all_unmatched_or_not_index_no_merger_$temp_subsidy_type.txt",',',Float64))
+res_theta = readdlm("julia_merger_result/res_theta_no_merger_$(temp_subsidy_type)_large_firms.txt",',',Float64)
+all_unmatched_or_not_index = vec(readdlm("julia_merger_result/all_unmatched_or_not_index_no_merger_$(temp_subsidy_type)_large_firms.txt",',',Float64))
 res_theta_solved = copy(res_theta)
 for i = 1:size(res_theta)[1], j = 1:size(res_theta)[2]
 	if res_theta[i,j] == 0.0
@@ -619,7 +619,7 @@ Plots.histogram!(res_theta_solved[all_unmatched_or_not_index.>0,1],
 				alpha = 0.3)
 Plots.vline!([m.β_0], label="true β", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_beta_no_merger_$temp_subsidy_type")
+savefig("julia_merger_figure/histogram_beta_no_merger_$(temp_subsidy_type)_large_firms")
 
 Plots.histogram(res_theta_solved[all_unmatched_or_not_index.<1,3],
                 bins = 60,
@@ -635,7 +635,7 @@ Plots.histogram!(res_theta_solved[all_unmatched_or_not_index.>0,3],
 				alpha = 0.3)
 Plots.vline!([m.γ_0], label="true γ", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_gamma_no_merger_$temp_subsidy_type")
+savefig("julia_merger_figure/histogram_gamma_no_merger_$(temp_subsidy_type)_large_firms")
 
 #-----------------------#
 # plot to_buyer
@@ -653,17 +653,17 @@ if you_want_run == "run"
 						 δ_0_temp = 1.0,
 						 γ_0_temp = 15.0,
 						 search_range_temp = (-10.0,40.0))
-	open("julia_merger_result/res_theta_no_merger_$temp_subsidy_type.txt", "w") do io
+	open("julia_merger_result/res_theta_no_merger_$(temp_subsidy_type)_large_firms.txt", "w") do io
 		DelimitedFiles.writedlm(io, res_theta,",")
 	end
-	open("julia_merger_result/all_unmatched_or_not_index_no_merger_$temp_subsidy_type.txt", "w") do io
+	open("julia_merger_result/all_unmatched_or_not_index_no_merger_$(temp_subsidy_type)_large_firms.txt", "w") do io
 		DelimitedFiles.writedlm(io, all_unmatched_or_not_index,",")
 	end
 end
 
 
-res_theta = readdlm("julia_merger_result/res_theta_no_merger_$temp_subsidy_type.txt",',',Float64)
-all_unmatched_or_not_index = vec(readdlm("julia_merger_result/all_unmatched_or_not_index_no_merger_$temp_subsidy_type.txt",',',Float64))
+res_theta = readdlm("julia_merger_result/res_theta_no_merger_$(temp_subsidy_type)_large_firms.txt",',',Float64)
+all_unmatched_or_not_index = vec(readdlm("julia_merger_result/all_unmatched_or_not_index_no_merger_$(temp_subsidy_type)_large_firms.txt",',',Float64))
 res_theta_solved = copy(res_theta)
 for i = 1:size(res_theta)[1], j = 1:size(res_theta)[2]
 	if res_theta[i,j] == 0.0
@@ -686,7 +686,7 @@ Plots.histogram!(res_theta_solved[all_unmatched_or_not_index.>0,1],
 				alpha = 0.3)
 Plots.vline!([m.β_0], label="true β", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_beta_no_merger_$temp_subsidy_type")
+savefig("julia_merger_figure/histogram_beta_no_merger_$(temp_subsidy_type)_large_firms")
 
 Plots.histogram(res_theta_solved[all_unmatched_or_not_index.<1,3],
                 bins = 60,
@@ -702,7 +702,7 @@ Plots.histogram!(res_theta_solved[all_unmatched_or_not_index.>0,3],
 				alpha = 0.3)
 Plots.vline!([m.γ_0], label="true γ", linestyle = :dash,
              color = "black")
-savefig("julia_merger_figure/histogram_gamma_no_merger_$temp_subsidy_type")
+savefig("julia_merger_figure/histogram_gamma_no_merger_$(temp_subsidy_type)_large_firms")
 
 #--------------------------#
 # plot score function (no-merger market)
@@ -723,8 +723,8 @@ obsd.total_size_target + obsd.total_size_buyer
 total_unmatched = sum(obsd.tarid .== 1)
 total_num_group = length(unique(obsd.tarid[obsd.tarid .!= 1]))
 
-domain1 = [-20:2.0:30;]
-domain2 = [-20:2.0:30;]
+domain1 = [-10:2.0:30;]
+domain2 = [-10:2.0:30;]
 res_contor = zeros(length(domain1),length(domain2))
 for i in 1:length(domain1),j in 1:length(domain2)
 	res_contor[i,j], ~ = score_b(m, [domain1[i], m.δ_0, domain2[j]],
@@ -738,7 +738,7 @@ Plots.contour(domain1, domain2, res_contor', fill = true,
 			  title = "Objective value: (threshold, amount, type)=($(temp_threshold_tonnage),$(temp_subsidy_amount),$(temp_subsidy_type))")
 Plots.hline!([m.γ_0], label="true γ", linestyle = :dash)
 Plots.vline!([m.β_0], label="true β", linestyle = :dash)
-savefig("julia_merger_figure/contour_beta_gamma_no_merger_$(temp_subsidy_type)_subsidy")
+savefig("julia_merger_figure/contour_beta_gamma_no_merger_$(temp_subsidy_type)_subsidy_large_firms")
 
 
 #--------------------------#
@@ -764,8 +764,8 @@ seed_list = [4,4,4,5,4,6] # to show illustrative bounds
 	obsd.total_size_target + obsd.total_size_buyer
 	total_unmatched = sum(obsd.tarid .== 1)
 	total_num_group = length(unique(obsd.tarid[obsd.tarid .!= 1]))
-	domain1 = [-20:2.0:30;]
-	domain2 = [-20:2.0:30;]
+	domain1 = [-10:2.0:30;]
+	domain2 = [-10:2.0:30;]
 	res_contor = zeros(length(domain1),length(domain2))
 	for i in 1:length(domain1),j in 1:length(domain2)
 		res_contor[i,j], ~ = score_b(m, [domain1[i], m.δ_0, domain2[j]],
@@ -780,5 +780,5 @@ seed_list = [4,4,4,5,4,6] # to show illustrative bounds
 	Plots.hline!([m.γ_0], label="true γ", linestyle = :dash)
 	Plots.vline!([m.β_0], label="true β", linestyle = :dash)
 	N_iter = Int(N_iter)
-	savefig("julia_merger_figure/contour_beta_gamma_N_$(N_iter)_$(temp_subsidy_type)_subsidy")
+	savefig("julia_merger_figure/contour_beta_gamma_N_$(N_iter)_$(temp_subsidy_type)_subsidy_large_firms")
 end

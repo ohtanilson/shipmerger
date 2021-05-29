@@ -932,8 +932,8 @@ you_want_run = "not_run"
 if you_want_run == "run"
 	temp_subsidy_type = "shared"
 	@time point_estimate(temp_subsidy_type,
-	                     num_steps_DE_temp = 50,
-	                     num_its_temp = 20,
+	                     num_steps_DE_temp = 100,#50,
+	                     num_its_temp = 50,#20,
 						 #num_its_temp = 2,
 						 size_of_fullsample = 106,
 						 temp_temp_calibrated_delta = 5)
@@ -946,7 +946,7 @@ if you_want_run == "run"
 	@time construct_CI(temp_subsidy_type,
 	                   num_its_bootstrap = 200,
 	                   #num_its_bootstrap = 2,
-	                   num_steps_DE_temp = 50,
+	                   num_steps_DE_temp = 100,
 					   size_of_subsample_temp = 30,
 					   temp_temp_calibrated_delta = 5)
 	#34558.137605 seconds (162.34 G allocations: 15.437 TiB, 5.96% gc time)
@@ -958,20 +958,22 @@ you_want_run = "not_run"
 if you_want_run == "run"
 	temp_subsidy_type = "to_buyer"
 	@time point_estimate(temp_subsidy_type,
-	                     num_steps_DE_temp = 50,
+	                     num_steps_DE_temp = 100,
 	                     #num_its_temp = 2,
-						 num_its_temp = 100,
+						 num_its_temp = 50,
 						 size_of_fullsample = 106)
 	#@time point_estimate(num_steps_DE_temp = 100, num_its_temp = 1)
 	#246.815583 seconds (1.28 G allocations: 124.312 GiB, 5.89% gc time)
 	#@time point_estimate(num_steps_DE_temp = 100,  num_its_temp = 10)
 	#3812.250026 seconds (20.37 G allocations: 2.009 TiB, 6.69% gc time)
+	#DE100*iter50: 288975.892965 seconds (254.48 G allocations: 18.570 TiB, 3.70% gc time, 0.00% compilation time)
 	@time construct_CI(temp_subsidy_type,
 	                   num_its_bootstrap = 200,
 	                   #num_its_bootstrap = 2,
-	                   num_steps_DE_temp = 50,
+	                   num_steps_DE_temp = 100,
 					   size_of_subsample_temp = 30)
 	#34558.137605 seconds (162.34 G allocations: 15.437 TiB, 5.96% gc time)
+	#200boot*100DE: 328593.725486 seconds (290.70 G allocations: 21.262 TiB, 4.26% gc time, 0.00% compilation time)
 end
 #--------------------#
 # read output (shared subsidy)
@@ -1169,8 +1171,8 @@ if you_want_run == "run"
     generate_score_table_model_1234(temp_subsidy_type = "shared",
 	                                     size_of_subsample_temp = 30#60
 										 )
-    #generate_score_table_model_1234(temp_subsidy_type = "to_buyer",
-	#                                     size_of_subsample_temp = 60)
+    generate_score_table_model_1234(temp_subsidy_type = "to_buyer",
+	                                    size_of_subsample_temp = 30)
 end
 
 #-----------------------------------------------------#
@@ -1456,8 +1458,8 @@ if you_want_run == "run"
 							data = data,
 	    					variable_list = variable_list,
 		                    size_of_fullsample = 106,
-		                    num_steps_DE_temp = 50,
-		                    num_its_temp = 20,#100,
+		                    num_steps_DE_temp = 100,
+		                    num_its_temp = 50,
 							calibrated_delta_list = temp_calibrated_delta_list,
 							variable = temp_target_variable,
 							file_name_variable = temp_file_name,
@@ -1471,6 +1473,8 @@ if you_want_run == "run"
 	#44417.409025 seconds (285.45 G allocations: 20.823 TiB, 32.66% gc time, 0.00% compilation time)
 	#1000*8models
 	#6474.324370 seconds (112.92 G allocations: 8.237 TiB, 30.34% gc time)
+	#100DE*50step*8models
+	#76386.576026 seconds (502.18 G allocations: 36.632 TiB, 34.90% gc time, 0.00% compilation time)
 end
 
 if you_want_run == "run"
@@ -1480,8 +1484,8 @@ if you_want_run == "run"
 		construct_CI_two_variables(temp_subsidy_type;
 							  data = data,
     	    				  variable_list = variable_list,
-			                  num_its_bootstrap = 100,
-			                  num_steps_DE_temp = 50,
+			                  num_its_bootstrap = 200,
+			                  num_steps_DE_temp = 100,
 			                  size_of_subsample_temp = 30,
 							  calibrated_delta_list = temp_calibrated_delta_list,
 							  variable = temp_target_variable,
@@ -1496,6 +1500,68 @@ if you_want_run == "run"
 	# 200boot*50DE on 210430
 	#52134.231030 seconds (323.61 G allocations: 23.661 TiB, 20.94% gc time, 0.00% compilation time)
 	#20015.040089 seconds (325.65 G allocations: 23.805 TiB, 27.57% gc time, 0.00% compilation time)
+	#100DE*50step*8models
+	#107468.343673 seconds (573.67 G allocations: 41.936 TiB, 17.23% gc time, 0.00% compilation time)
+end
+temp_subsidy_type = "to_buyer"
+variable_list = ["β₁","β₂","β₃","β₄","β₅","β₆","β₇","β₈","γ","δ"]
+file_name_variable_list = ["x1","x2","x3","x4","x5","x6","x7","x8"]
+you_want_run = "not_run"
+Threads.nthreads()
+JULIA_NUM_THREADS=8
+temp_calibrated_delta_list = [5]
+if you_want_run == "run"
+	@time Threads.@threads for ii = 1:length(file_name_variable_list)
+		temp_file_name = file_name_variable_list[ii]
+		temp_target_variable = variable_list[ii]
+	    @time point_estimate_two_variables(temp_subsidy_type;
+							data = data,
+	    					variable_list = variable_list,
+		                    size_of_fullsample = 106,
+		                    num_steps_DE_temp = 100,
+		                    num_its_temp = 50,
+							calibrated_delta_list = temp_calibrated_delta_list,
+							variable = temp_target_variable,
+							file_name_variable = temp_file_name,
+							info_sum = temp_info_sum)
+	end
+	#300*8model
+	#3343.760520 seconds (34.51 G allocations: 3.277 TiB, 67.25% gc time)
+	#5000*8model
+	#87096.960875 seconds (320.63 G allocations: 30.447 TiB, 33.96% gc time)
+	#2500*8models
+	#44417.409025 seconds (285.45 G allocations: 20.823 TiB, 32.66% gc time, 0.00% compilation time)
+	#1000*8models
+	#6474.324370 seconds (112.92 G allocations: 8.237 TiB, 30.34% gc time)
+	#100DE*50step*8models
+	#76386.576026 seconds (502.18 G allocations: 36.632 TiB, 34.90% gc time, 0.00% compilation time)
+end
+
+if you_want_run == "run"
+	@time Threads.@threads for ii = 1:length(file_name_variable_list)
+		temp_file_name = file_name_variable_list[ii]
+		temp_target_variable = variable_list[ii]
+		construct_CI_two_variables(temp_subsidy_type;
+							  data = data,
+    	    				  variable_list = variable_list,
+			                  num_its_bootstrap = 200,
+			                  num_steps_DE_temp = 100,
+			                  size_of_subsample_temp = 30,
+							  calibrated_delta_list = temp_calibrated_delta_list,
+							  variable = temp_target_variable,
+							  file_name_variable = temp_file_name,
+  							  info_sum = temp_info_sum)
+	end
+	#500*8model
+	#668.661895 seconds (13.49 G allocations: 1.288 TiB, 35.19% gc time)
+	#10000*8
+	#13125.682549 seconds (180.28 G allocations: 17.204 TiB, 23.98% gc time)
+	#140238.952268 seconds (576.93 G allocations: 41.820 TiB, 24.50% gc time, 0.00% compilation time)
+	# 200boot*50DE on 210430
+	#52134.231030 seconds (323.61 G allocations: 23.661 TiB, 20.94% gc time, 0.00% compilation time)
+	#20015.040089 seconds (325.65 G allocations: 23.805 TiB, 27.57% gc time, 0.00% compilation time)
+	#100DE*50step*8models
+	#107468.343673 seconds (573.67 G allocations: 41.936 TiB, 17.23% gc time, 0.00% compilation time)
 end
 
 # check behavior
@@ -1693,7 +1759,7 @@ relative_coefficients = round.([final_ests_point_all[1,1]/abs(final_ests_point_a
 			   final_ests_point_all[5,1]/abs(final_ests_point_all[5,2]),
 			   final_ests_point_all[6,1]/abs(final_ests_point_all[6,2]),
 			   final_ests_point_all[7,1]/abs(final_ests_point_all[7,2]),
-			   final_ests_point_all[8,1]/abs(final_ests_point_all[8,2])],digits = 2)
+			   final_ests_point_all[8,1]/abs(final_ests_point_all[8,2])],digits = 3)
 LaTeXTabulars.latex_tabular("julia_merger_table/ratio_score_results_two_variables_$(temp_subsidy_type)_subsidy.tex",
 			  Tabular("@{\\extracolsep{5pt}}lcccccccc"),
 			  [Rule(:top),
@@ -1711,7 +1777,191 @@ LaTeXTabulars.latex_tabular("julia_merger_table/ratio_score_results_two_variable
 			   round.(relative_coefficients./minimum(abs.(relative_coefficients)),digits = 2)),
 			   ["", "", "", "", "", "", "", "",""],
 			   Rule(:bottom)])
+for ii = 1:length(file_name_variable_list)
+	temp_subsidy_type = "to_buyer"
+	@show temp_file_name = file_name_variable_list[ii]
+	myests_point_all[ii,:,:] = readdlm("julia_merger_result/myests_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+	num_correct_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_correct_ineq_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+	num_total_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_total_ineq_subsample_size_106_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+	accuracy_all[ii,:] = num_correct_ineq_all[ii,:,1]./num_total_ineq_all[ii,:,1]
+	final_ests_point_all[ii,:] = round.(myests_point_all[ii, findmax(accuracy_all[ii,:])[2], :],
+	                                    digits=2)
+	myests_CI_all[ii,:,:] = readdlm("julia_merger_result/myests_subsample_size_$(size_of_subsample_temp)_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+end
+maximum(num_correct_ineq_all[:,:,1],dims = 2)
+final_ests_point_all
+myests_CI_all[1,:,2]
+# CI
+#beta = theta[1:8]
+#gamma = theta[9] # coefficient on merger cost
+#delta = theta[10] # coefficient on subsidy indicator
+CI_all_table = zeros(model_all_length,2,2)
+for ii = 1:length(file_name_variable_list)
+	CI_all_table[ii,:,:] = round.(hcat(
+		Statistics.quantile(myests_CI_all[ii,:,1], [0.025,0.975]),
+		Statistics.quantile(-myests_CI_all[ii,:,2], [0.025,0.975])
+		),digits=1)
+end
+CI_all_table[1,:,:]
+maximum(num_correct_ineq_all[1,:,:])
+total_ineq_all = Int64(num_total_ineq_all[8,findmax(accuracy_all[8,:])[2]])
+LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(temp_subsidy_type)_subsidy.tex",
+			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
+			  [Rule(:top),
+			   ["","","", "", "", "", "", "", "", ""],
+			   ["","",
+			   "Point Est", "Point", "Point", "Point", "Point", "Point", "Point", "Point"],
+			   ["","",
+			   "[95\\% CI]", "[95\\% CI]", "[95\\% CI]", "[95\\% CI]",
+			    "[95\\% CI]", "[95\\% CI]", "[95\\% CI]", "[95\\% CI]"],
+			   Rule(:mid),
+			   ["Economies of scale", "", "", "", "", "", "", ""],
+			   #beta_0
+			   ["", "", "", "", "", "", "", "", ""],
+			   ["total\$_{b}\$ \$\\times\$ total\$_{t}\$", L"\beta_0",
+			   "+1", "+1", "+1", "+1", "+1", "+1", "+1", "+1"],
+			   ["" , "" , "(S)", "(S)", "(S)", "(S)",
+			    "(S)", "(S)", "(S)", "(S)"],
+			   #beta_1
+			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_1",
+				final_ests_point_all[1,1], "", "", "",
+				 "", "", "", ""],
+			   ["" , "" ,
+			   "[$(CI_all_table[1,1,1]), $(CI_all_table[1,2,1])]",
+			   "", "", "",
+			   "", "", "", ""],
+			   #beta_2
+			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_2",
+				"", final_ests_point_all[2,1], "", "",
+				"", "", "", ""],
+			   ["" , "" ,
+			   "", "[$(CI_all_table[2,1,1]), $(CI_all_table[2,2,1])]", "", "",
+			   "", "", "", ""],
+			   #beta_3
+			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_3",
+			   "", "", final_ests_point_all[3,1], "",
+			   "", "", "", ""],
+			   ["" , "" ,
+			   "", "", "[$(CI_all_table[3,1,1]), $(CI_all_table[3,2,1])]", "",
+			   "", "", "", ""],
+			   # beta_4
+			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_4",
+			   "", "", "", final_ests_point_all[4,1],
+			   "", "", "", ""],
+			   ["" , "" ,
+			   "", "", "", "[$(CI_all_table[4,1,1]), $(CI_all_table[4,2,1])]",
+			   "", "", "", ""],
+			   #beta_5
+			   ["Economies of scope", "", "", "", "", "", "", "", "", ""],
+			   ["", "", "", "", "", "", "", "", "", ""],
+			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_5",
+			   "", "", "", "",
+			   final_ests_point_all[5,1], "", "", ""],
+			   ["" , "" ,
+			   "", "", "", "",
+			   "[$(CI_all_table[5,1,1]), $(CI_all_table[5,2,1])]", "", "", ""],
+			   #beta_6
+			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_6",
+			   "", "", "", "",
+			   "", final_ests_point_all[6,1], "", ""],
+			   ["" , "" ,
+			   "", "", "", "",
+			   "", "[$(CI_all_table[6,1,1]), $(CI_all_table[6,2,1])]", "", ""],
+			   #beta_7
+			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_7",
+			   "", "", "", "",
+			   "", "", final_ests_point_all[7,1], ""],
+			   ["" , "" ,
+			   "", "", "", "",
+			   "", "", "[$(CI_all_table[7,1,1]), $(CI_all_table[7,2,1])]", ""],
+			   #beta_8
+			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_8",
+			   "", "", "", "",
+			   "", "", "", final_ests_point_all[8,1]],
+			   ["" , "" ,
+			   "", "", "", "",
+			   "", "", "", "[$(CI_all_table[8,1,1]), $(CI_all_table[8,2,1])]"],
+			   #gamma merger cost (note the sign is reverse)
+			   ["", "", "", "", "", "", "", "", "", ""],
+			   ["", "", "", "", "", "", "", "", "", ""],
+			   ["merger cost", "-\$\\gamma\$",
+			   -final_ests_point_all[1,2], -final_ests_point_all[2,2],
+			   -final_ests_point_all[3,2], -final_ests_point_all[4,2],
+			   -final_ests_point_all[5,2], -final_ests_point_all[6,2],
+			   -final_ests_point_all[7,2], -final_ests_point_all[8,2]],
+			   ["" , "" ,
+			   "[$(CI_all_table[1,1,2]), $(CI_all_table[1,2,2])]",
+			   "[$(CI_all_table[2,1,2]), $(CI_all_table[2,2,2])]",
+			   "[$(CI_all_table[3,1,2]), $(CI_all_table[3,2,2])]",
+			   "[$(CI_all_table[4,1,2]), $(CI_all_table[4,2,2])]",
+			   "[$(CI_all_table[5,1,2]), $(CI_all_table[5,2,2])]",
+			   "[$(CI_all_table[6,1,2]), $(CI_all_table[6,2,2])]",
+			   "[$(CI_all_table[7,1,2]), $(CI_all_table[7,2,2])]",
+			   "[$(CI_all_table[8,1,2]), $(CI_all_table[8,2,2])]"],
+			   #delta subsidy sensitivity
+			   ["subsidy sensitivity", L"\delta",
+			   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1]],
+			   ["", "", "", "", "", "", "", "", "", ""],
+			   Rule(),           # a nice \hline to make it ugly
+			   ["\$\\sharp\$ Inequalities (Point)" , "" ,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all],
+				#=["\\Correct Ineq" , "" ,
+ 			   Int(num_correct_ineq_all[1,findmax(accuracy_all[1,:])[2]]),
+ 			   Int(num_correct_ineq_all[2,findmax(accuracy_all[2,:])[2]]),
+ 			   Int(num_correct_ineq_all[3,findmax(accuracy_all[3,:])[2]]),
+ 			   Int(num_correct_ineq_all[4,findmax(accuracy_all[4,:])[2]]),
+ 			   Int(num_correct_ineq_all[5,findmax(accuracy_all[5,:])[2]]),
+ 			   Int(num_correct_ineq_all[6,findmax(accuracy_all[6,:])[2]]),
+ 			   Int(num_correct_ineq_all[7,findmax(accuracy_all[7,:])[2]]),
+ 			   Int(num_correct_ineq_all[8,findmax(accuracy_all[8,:])[2]])],
+			   =#
+			   ["\\% Inequalities" , "" ,
+			   round(accuracy_all[1,findmax(accuracy_all[1,:])[2]],digits=4),
+			   round(accuracy_all[2,findmax(accuracy_all[2,:])[2]],digits=4),
+			   round(accuracy_all[3,findmax(accuracy_all[3,:])[2]],digits=4),
+			   round(accuracy_all[4,findmax(accuracy_all[4,:])[2]],digits=4),
+			   round(accuracy_all[5,findmax(accuracy_all[5,:])[2]],digits=4),
+			   round(accuracy_all[6,findmax(accuracy_all[6,:])[2]],digits=4),
+			   round(accuracy_all[7,findmax(accuracy_all[7,:])[2]],digits=4),
+			   round(accuracy_all[8,findmax(accuracy_all[8,:])[2]],digits=4)],
+			   Rule(:bottom)])
 
+relative_coefficients = round.([final_ests_point_all[1,1]/abs(final_ests_point_all[1,2]),
+			   final_ests_point_all[2,1]/abs(final_ests_point_all[2,2]),
+			   final_ests_point_all[3,1]/abs(final_ests_point_all[3,2]),
+			   final_ests_point_all[4,1]/abs(final_ests_point_all[4,2]),
+			   final_ests_point_all[5,1]/abs(final_ests_point_all[5,2]),
+			   final_ests_point_all[6,1]/abs(final_ests_point_all[6,2]),
+			   final_ests_point_all[7,1]/abs(final_ests_point_all[7,2]),
+			   final_ests_point_all[8,1]/abs(final_ests_point_all[8,2])],digits = 3)
+LaTeXTabulars.latex_tabular("julia_merger_table/ratio_score_results_two_variables_$(temp_subsidy_type)_subsidy.tex",
+			  Tabular("@{\\extracolsep{5pt}}lcccccccc"),
+			  [Rule(:top),
+			   ["","\$\\beta_1/|\\gamma|\$","\$\\beta_2/|\\gamma|\$",
+			    "\$\\beta_3/|\\gamma|\$", "\$\\beta_4/|\\gamma|\$",
+				"\$\\beta_5/|\\gamma|\$", "\$\\beta_6/|\\gamma|\$",
+				"\$\\beta_7/|\\gamma|\$", "\$\\beta_8/|\\gamma|\$"],
+			   Rule(:mid),
+			   ["", "", "", "", "", "", "", "",""],
+			   vcat("",
+			   relative_coefficients),
+			   ["", "", "", "", "", "", "", "",""],
+			   #delta subsidy sensitivity
+			   vcat("relative level",
+			   round.(relative_coefficients./minimum(abs.(relative_coefficients)),digits = 2)),
+			   ["", "", "", "", "", "", "", "",""],
+			   Rule(:bottom)])
 
 #-----------------------#
 # estimate only main firm
@@ -1743,6 +1993,32 @@ if you_want_run == "run"
 	#228.085250 seconds (4.92 G allocations: 364.622 GiB, 32.77% gc time)
 	#50*1000*8model
 	#35169.052760 seconds (49.28 G allocations: 3.564 TiB, 10.58% gc time)
+	#200step*1000iter*8model
+	#7607.351116 seconds (148.67 G allocations: 10.799 TiB, 30.05% gc time, 0.00% compilation time)
+end
+temp_subsidy_type = "to_buyer"
+if you_want_run == "run"
+	# choose only main firms
+	@time Threads.@threads for ii = 1:length(file_name_variable_list)
+		temp_file_name = file_name_variable_list[ii]
+		temp_target_variable = variable_list[ii]
+	    @time point_estimate_two_variables(temp_subsidy_type;
+		                    data = data,
+		                    variable_list = variable_list,
+		                    size_of_fullsample = 0,
+							num_steps_DE_temp = 200,#50,
+		                    num_its_temp = 200,#1000,
+							calibrated_delta_list = temp_calibrated_delta_list,
+							variable = temp_target_variable,
+							file_name_variable = temp_file_name,
+							info_sum = temp_info_sum)
+	end
+	#300*8model
+	#228.085250 seconds (4.92 G allocations: 364.622 GiB, 32.77% gc time)
+	#50*1000*8model
+	#35169.052760 seconds (49.28 G allocations: 3.564 TiB, 10.58% gc time)
+	#200step*1000iter*8model
+	#7607.351116 seconds (148.67 G allocations: 10.799 TiB, 30.05% gc time, 0.00% compilation time)
 end
 
 # check behavior
@@ -1771,7 +2047,7 @@ accuracy_all = zeros(model_all_length,
 final_ests_point_all = zeros(model_all_length,
                          size(final_ests_point_scale_X_only)[1])
 for ii = 1:length(file_name_variable_list)
-	temp_subsidy_type = "shared"
+	temp_subsidy_type = "to_buyer"
 	@show temp_file_name = file_name_variable_list[ii]
 	myests_point_all[ii,:,:] = readdlm("julia_merger_result/myests_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
 	num_correct_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
@@ -1922,3 +2198,542 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(te
 			   round(accuracy_all[7,findmax(accuracy_all[7,:])[2]],digits=4),
 			   round(accuracy_all[8,findmax(accuracy_all[8,:])[2]],digits=4)],
 			   Rule(:bottom)])
+
+
+			   # check behavior
+			   temp_subsidy_type = "shared"
+			   file_name_variable = "x1"
+			   size_of_subsample_temp = 0
+			   myests_point_scale_X_only = readdlm("julia_merger_result/myests_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+			   num_correct_ineq_scale_X_only = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+			   num_total_ineq_scale_X_only = readdlm("julia_merger_result/num_total_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+			   accuracy_scale_X_only = vec(num_correct_ineq_scale_X_only./num_total_ineq_scale_X_only)
+			   final_ests_point_scale_X_only = round.(myests_point_scale_X_only[findmax(accuracy_scale_X_only)[2],:],digits=2)
+			   myests_CI_scale_X_only = readdlm("julia_merger_result/myests_subsample_size_$(size_of_subsample_temp)_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+
+			   model_all_length = length(file_name_variable_list)
+			   myests_point_all = zeros(model_all_length,
+			                            size(myests_point_scale_X_only)[1],
+			   						 size(myests_point_scale_X_only)[2])
+			   num_correct_ineq_all = zeros(model_all_length,
+			                            size(num_correct_ineq_scale_X_only)[1],
+			   						 size(num_correct_ineq_scale_X_only)[2])
+			   num_total_ineq_all = zeros(model_all_length,
+			                            size(num_total_ineq_scale_X_only)[1],
+			   						 size(num_total_ineq_scale_X_only)[2])
+			   accuracy_all = zeros(model_all_length,
+			                            size(accuracy_scale_X_only)[1])
+			   final_ests_point_all = zeros(model_all_length,
+			                            size(final_ests_point_scale_X_only)[1])
+			   for ii = 1:length(file_name_variable_list)
+			   	temp_subsidy_type = "shared"
+			   	@show temp_file_name = file_name_variable_list[ii]
+			   	myests_point_all[ii,:,:] = readdlm("julia_merger_result/myests_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+			   	num_correct_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+			   	num_total_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_total_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+			   	accuracy_all[ii,:] = num_correct_ineq_all[ii,:,1]./num_total_ineq_all[ii,:,1]
+			   	final_ests_point_all[ii,:] = round.(myests_point_all[ii, findmax(num_correct_ineq_all[ii,:,1])[2], :],
+			   	                                    digits=1)
+			   end
+
+			   CI_all_table = zeros(model_all_length,2,2)
+			   for ii = 1:length(file_name_variable_list)
+			   	temp_myests_point_all = myests_point_all[ii,num_correct_ineq_all[ii,:,1].==Int(findmax(num_correct_ineq_all[ii,:,1])[1]),:]
+			   	CI_all_table[ii,:,:] = round.(hcat(
+			   		Statistics.quantile(temp_myests_point_all[:,1], [0.0,1.0]),
+			   		Statistics.quantile(-temp_myests_point_all[:,2], [0.0,1.0])
+			   		),digits=1)
+			   end
+
+			   total_ineq_all = Int64(num_total_ineq_all[8,findmax(accuracy_all[8,:])[2]])
+			   LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(temp_subsidy_type)_subsidy_main_firms_only.tex",
+			   			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
+			   			  [Rule(:top),
+			   			   ["","","", "", "", "", "", "", "", ""],
+			   			   #["","",
+			   			   #"Point Est", "Point", "Point", "Point", "Point", "Point", "Point", "Point"],
+			   			   ["","",
+			   			   "[LB, UB]", "[LB, UB]", "[LB, UB]", "[LB, UB]",
+			   			    "[LB, UB]", "[LB, UB]", "[LB, UB]", "[LB, UB]"],
+			   			   Rule(:mid),
+			   			   ["Economies of scale", "", "", "", "", "", "", ""],
+			   			   #beta_0
+			   			   ["", "", "", "", "", "", "", "", ""],
+			   			   ["total\$_{b}\$ \$\\times\$ total\$_{t}\$", L"\beta_0",
+			   			   "+1", "+1", "+1", "+1", "+1", "+1", "+1", "+1"],
+			   			   ["" , "" , "(S)", "(S)", "(S)", "(S)",
+			   			    "(S)", "(S)", "(S)", "(S)"],
+			   			   #beta_1
+			   			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_1",
+			   			   #final_ests_point_all[1,1], "", "", "",
+			   			   # "", "", "", ""],
+			   			   #["" , "" ,
+			   			   "[$(CI_all_table[1,1,1]), $(CI_all_table[1,2,1])]",
+			   			   "", "", "",
+			   			   "", "", "", ""],
+			   			   #beta_2
+			   			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_2",
+			   				#"", final_ests_point_all[2,1], "", "",
+			   				#"", "", "", ""],
+			   			   #["" , "" ,
+			   			   "", "[$(CI_all_table[2,1,1]), $(CI_all_table[2,2,1])]", "", "",
+			   			   "", "", "", ""],
+			   			   #beta_3
+			   			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_3",
+			   			   #"", "", final_ests_point_all[3,1], "",
+			   			   #"", "", "", ""],
+			   			   #["" , "" ,
+			   			   "", "", "[$(CI_all_table[3,1,1]), $(CI_all_table[3,2,1])]", "",
+			   			   "", "", "", ""],
+			   			   # beta_4
+			   			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_4",
+			   			   #"", "", "", final_ests_point_all[4,1],
+			   			   #"", "", "", ""],
+			   			   #["" , "" ,
+			   			   "", "", "", "[$(CI_all_table[4,1,1]), $(CI_all_table[4,2,1])]",
+			   			   "", "", "", ""],
+			   			   #beta_5
+			   			   ["Economies of scope", "", "", "", "", "", "", "", "", ""],
+			   			   ["", "", "", "", "", "", "", "", "", ""],
+			   			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_5",
+			   			   #"", "", "", "",
+			   			   #final_ests_point_all[5,1], "", "", ""],
+			   			   #["" , "" ,
+			   			   "", "", "", "",
+			   			   "[$(CI_all_table[5,1,1]), $(CI_all_table[5,2,1])]", "", "", ""],
+			   			   #beta_6
+			   			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_6",
+			   			   #"", "", "", "",
+			   			   #"", final_ests_point_all[6,1], "", ""],
+			   			   #["" , "" ,
+			   			   "", "", "", "",
+			   			   "", "[$(CI_all_table[6,1,1]), $(CI_all_table[6,2,1])]", "", ""],
+			   			   #beta_7
+			   			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_7",
+			   			   #"", "", "", "",
+			   			   #"", "", final_ests_point_all[7,1], ""],
+			   			   #["" , "" ,
+			   			   "", "", "", "",
+			   			   "", "", "[$(CI_all_table[7,1,1]), $(CI_all_table[7,2,1])]", ""],
+			   			   #beta_8
+			   			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_8",
+			   			   #"", "", "", "",
+			   			   #"", "", "", final_ests_point_all[8,1]],
+			   			   #["" , "" ,
+			   			   "", "", "", "",
+			   			   "", "", "", "[$(CI_all_table[8,1,1]), $(CI_all_table[8,2,1])]"],
+			   			   #gamma merger cost (note the sign is reverse)
+			   			   ["", "", "", "", "", "", "", "", "", ""],
+			   			   ["", "", "", "", "", "", "", "", "", ""],
+			   			   ["merger cost", "-\$\\gamma\$",
+			   			   #-final_ests_point_all[1,2], -final_ests_point_all[2,2],
+			   			   #-final_ests_point_all[3,2], -final_ests_point_all[4,2],
+			   			   #-final_ests_point_all[5,2], -final_ests_point_all[6,2],
+			   			   #-final_ests_point_all[7,2], -final_ests_point_all[8,2]],
+			   			   #["" , "" ,
+			   			   "[$(CI_all_table[1,1,2]), $(CI_all_table[1,2,2])]",
+			   			   "[$(CI_all_table[2,1,2]), $(CI_all_table[2,2,2])]",
+			   			   "[$(CI_all_table[3,1,2]), $(CI_all_table[3,2,2])]",
+			   			   "[$(CI_all_table[4,1,2]), $(CI_all_table[4,2,2])]",
+			   			   "[$(CI_all_table[5,1,2]), $(CI_all_table[5,2,2])]",
+			   			   "[$(CI_all_table[6,1,2]), $(CI_all_table[6,2,2])]",
+			   			   "[$(CI_all_table[7,1,2]), $(CI_all_table[7,2,2])]",
+			   			   "[$(CI_all_table[8,1,2]), $(CI_all_table[8,2,2])]"],
+			   			   #delta subsidy sensitivity
+			   			   ["subsidy sensitivity", L"\delta",
+			   			   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
+			   			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1]],
+			   			   ["", "", "", "", "", "", "", "", "", ""],
+			   			   Rule(),           # a nice \hline to make it ugly
+			   			   ["\$\\sharp\$ Inequalities (Point)" , "" ,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all],
+			   				#=["\\Correct Ineq" , "" ,
+			    			   Int(num_correct_ineq_all[1,findmax(accuracy_all[1,:])[2]]),
+			    			   Int(num_correct_ineq_all[2,findmax(accuracy_all[2,:])[2]]),
+			    			   Int(num_correct_ineq_all[3,findmax(accuracy_all[3,:])[2]]),
+			    			   Int(num_correct_ineq_all[4,findmax(accuracy_all[4,:])[2]]),
+			    			   Int(num_correct_ineq_all[5,findmax(accuracy_all[5,:])[2]]),
+			    			   Int(num_correct_ineq_all[6,findmax(accuracy_all[6,:])[2]]),
+			    			   Int(num_correct_ineq_all[7,findmax(accuracy_all[7,:])[2]]),
+			    			   Int(num_correct_ineq_all[8,findmax(accuracy_all[8,:])[2]])],
+			   			   =#
+			   			   ["\\% Inequalities" , "" ,
+			   			   round(accuracy_all[1,findmax(accuracy_all[1,:])[2]],digits=4),
+			   			   round(accuracy_all[2,findmax(accuracy_all[2,:])[2]],digits=4),
+			   			   round(accuracy_all[3,findmax(accuracy_all[3,:])[2]],digits=4),
+			   			   round(accuracy_all[4,findmax(accuracy_all[4,:])[2]],digits=4),
+			   			   round(accuracy_all[5,findmax(accuracy_all[5,:])[2]],digits=4),
+			   			   round(accuracy_all[6,findmax(accuracy_all[6,:])[2]],digits=4),
+			   			   round(accuracy_all[7,findmax(accuracy_all[7,:])[2]],digits=4),
+			   			   round(accuracy_all[8,findmax(accuracy_all[8,:])[2]],digits=4)],
+			   			   Rule(:bottom)])
+
+
+
+
+# check behavior
+temp_subsidy_type = "to_buyer"
+file_name_variable = "x1"
+size_of_subsample_temp = 0
+myests_point_scale_X_only = readdlm("julia_merger_result/myests_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+num_correct_ineq_scale_X_only = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+num_total_ineq_scale_X_only = readdlm("julia_merger_result/num_total_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+accuracy_scale_X_only = vec(num_correct_ineq_scale_X_only./num_total_ineq_scale_X_only)
+final_ests_point_scale_X_only = round.(myests_point_scale_X_only[findmax(accuracy_scale_X_only)[2],:],digits=2)
+myests_CI_scale_X_only = readdlm("julia_merger_result/myests_subsample_size_$(size_of_subsample_temp)_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+
+model_all_length = length(file_name_variable_list)
+myests_point_all = zeros(model_all_length,
+                         size(myests_point_scale_X_only)[1],
+						 size(myests_point_scale_X_only)[2])
+num_correct_ineq_all = zeros(model_all_length,
+                         size(num_correct_ineq_scale_X_only)[1],
+						 size(num_correct_ineq_scale_X_only)[2])
+num_total_ineq_all = zeros(model_all_length,
+                         size(num_total_ineq_scale_X_only)[1],
+						 size(num_total_ineq_scale_X_only)[2])
+accuracy_all = zeros(model_all_length,
+                         size(accuracy_scale_X_only)[1])
+final_ests_point_all = zeros(model_all_length,
+                         size(final_ests_point_scale_X_only)[1])
+for ii = 1:length(file_name_variable_list)
+	temp_subsidy_type = "to_buyer"
+	@show temp_file_name = file_name_variable_list[ii]
+	myests_point_all[ii,:,:] = readdlm("julia_merger_result/myests_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+	num_correct_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+	num_total_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_total_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+	accuracy_all[ii,:] = num_correct_ineq_all[ii,:,1]./num_total_ineq_all[ii,:,1]
+	final_ests_point_all[ii,:] = round.(myests_point_all[ii, findmax(num_correct_ineq_all[ii,:,1])[2], :],
+	                                    digits=1)
+end
+
+CI_all_table = zeros(model_all_length,2,2)
+for ii = 1:length(file_name_variable_list)
+	temp_myests_point_all = myests_point_all[ii,num_correct_ineq_all[ii,:,1].==Int(findmax(num_correct_ineq_all[ii,:,1])[1]),:]
+	CI_all_table[ii,:,:] = round.(hcat(
+		Statistics.quantile(temp_myests_point_all[:,1], [0.0,1.0]),
+		Statistics.quantile(-temp_myests_point_all[:,2], [0.0,1.0])
+		),digits=1)
+end
+
+total_ineq_all = Int64(num_total_ineq_all[8,findmax(accuracy_all[8,:])[2]])
+LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(temp_subsidy_type)_subsidy_main_firms_only.tex",
+			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
+			  [Rule(:top),
+			   ["","","", "", "", "", "", "", "", ""],
+			   #["","",
+			   #"Point Est", "Point", "Point", "Point", "Point", "Point", "Point", "Point"],
+			   ["","",
+			   "[LB, UB]", "[LB, UB]", "[LB, UB]", "[LB, UB]",
+			    "[LB, UB]", "[LB, UB]", "[LB, UB]", "[LB, UB]"],
+			   Rule(:mid),
+			   ["Economies of scale", "", "", "", "", "", "", ""],
+			   #beta_0
+			   ["", "", "", "", "", "", "", "", ""],
+			   ["total\$_{b}\$ \$\\times\$ total\$_{t}\$", L"\beta_0",
+			   "+1", "+1", "+1", "+1", "+1", "+1", "+1", "+1"],
+			   ["" , "" , "(S)", "(S)", "(S)", "(S)",
+			    "(S)", "(S)", "(S)", "(S)"],
+			   #beta_1
+			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_1",
+			   #final_ests_point_all[1,1], "", "", "",
+			   # "", "", "", ""],
+			   #["" , "" ,
+			   "[$(CI_all_table[1,1,1]), $(CI_all_table[1,2,1])]",
+			   "", "", "",
+			   "", "", "", ""],
+			   #beta_2
+			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_2",
+				#"", final_ests_point_all[2,1], "", "",
+				#"", "", "", ""],
+			   #["" , "" ,
+			   "", "[$(CI_all_table[2,1,1]), $(CI_all_table[2,2,1])]", "", "",
+			   "", "", "", ""],
+			   #beta_3
+			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_3",
+			   #"", "", final_ests_point_all[3,1], "",
+			   #"", "", "", ""],
+			   #["" , "" ,
+			   "", "", "[$(CI_all_table[3,1,1]), $(CI_all_table[3,2,1])]", "",
+			   "", "", "", ""],
+			   # beta_4
+			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_4",
+			   #"", "", "", final_ests_point_all[4,1],
+			   #"", "", "", ""],
+			   #["" , "" ,
+			   "", "", "", "[$(CI_all_table[4,1,1]), $(CI_all_table[4,2,1])]",
+			   "", "", "", ""],
+			   #beta_5
+			   ["Economies of scope", "", "", "", "", "", "", "", "", ""],
+			   ["", "", "", "", "", "", "", "", "", ""],
+			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_5",
+			   #"", "", "", "",
+			   #final_ests_point_all[5,1], "", "", ""],
+			   #["" , "" ,
+			   "", "", "", "",
+			   "[$(CI_all_table[5,1,1]), $(CI_all_table[5,2,1])]", "", "", ""],
+			   #beta_6
+			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_6",
+			   #"", "", "", "",
+			   #"", final_ests_point_all[6,1], "", ""],
+			   #["" , "" ,
+			   "", "", "", "",
+			   "", "[$(CI_all_table[6,1,1]), $(CI_all_table[6,2,1])]", "", ""],
+			   #beta_7
+			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_7",
+			   #"", "", "", "",
+			   #"", "", final_ests_point_all[7,1], ""],
+			   #["" , "" ,
+			   "", "", "", "",
+			   "", "", "[$(CI_all_table[7,1,1]), $(CI_all_table[7,2,1])]", ""],
+			   #beta_8
+			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_8",
+			   #"", "", "", "",
+			   #"", "", "", final_ests_point_all[8,1]],
+			   #["" , "" ,
+			   "", "", "", "",
+			   "", "", "", "[$(CI_all_table[8,1,1]), $(CI_all_table[8,2,1])]"],
+			   #gamma merger cost (note the sign is reverse)
+			   ["", "", "", "", "", "", "", "", "", ""],
+			   ["", "", "", "", "", "", "", "", "", ""],
+			   ["merger cost", "-\$\\gamma\$",
+			   #-final_ests_point_all[1,2], -final_ests_point_all[2,2],
+			   #-final_ests_point_all[3,2], -final_ests_point_all[4,2],
+			   #-final_ests_point_all[5,2], -final_ests_point_all[6,2],
+			   #-final_ests_point_all[7,2], -final_ests_point_all[8,2]],
+			   #["" , "" ,
+			   "[$(CI_all_table[1,1,2]), $(CI_all_table[1,2,2])]",
+			   "[$(CI_all_table[2,1,2]), $(CI_all_table[2,2,2])]",
+			   "[$(CI_all_table[3,1,2]), $(CI_all_table[3,2,2])]",
+			   "[$(CI_all_table[4,1,2]), $(CI_all_table[4,2,2])]",
+			   "[$(CI_all_table[5,1,2]), $(CI_all_table[5,2,2])]",
+			   "[$(CI_all_table[6,1,2]), $(CI_all_table[6,2,2])]",
+			   "[$(CI_all_table[7,1,2]), $(CI_all_table[7,2,2])]",
+			   "[$(CI_all_table[8,1,2]), $(CI_all_table[8,2,2])]"],
+			   #delta subsidy sensitivity
+			   ["subsidy sensitivity", L"\delta",
+			   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1]],
+			   ["", "", "", "", "", "", "", "", "", ""],
+			   Rule(),           # a nice \hline to make it ugly
+			   ["\$\\sharp\$ Inequalities (Point)" , "" ,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all,
+				total_ineq_all],
+				#=["\\Correct Ineq" , "" ,
+ 			   Int(num_correct_ineq_all[1,findmax(accuracy_all[1,:])[2]]),
+ 			   Int(num_correct_ineq_all[2,findmax(accuracy_all[2,:])[2]]),
+ 			   Int(num_correct_ineq_all[3,findmax(accuracy_all[3,:])[2]]),
+ 			   Int(num_correct_ineq_all[4,findmax(accuracy_all[4,:])[2]]),
+ 			   Int(num_correct_ineq_all[5,findmax(accuracy_all[5,:])[2]]),
+ 			   Int(num_correct_ineq_all[6,findmax(accuracy_all[6,:])[2]]),
+ 			   Int(num_correct_ineq_all[7,findmax(accuracy_all[7,:])[2]]),
+ 			   Int(num_correct_ineq_all[8,findmax(accuracy_all[8,:])[2]])],
+			   =#
+			   ["\\% Inequalities" , "" ,
+			   round(accuracy_all[1,findmax(accuracy_all[1,:])[2]],digits=4),
+			   round(accuracy_all[2,findmax(accuracy_all[2,:])[2]],digits=4),
+			   round(accuracy_all[3,findmax(accuracy_all[3,:])[2]],digits=4),
+			   round(accuracy_all[4,findmax(accuracy_all[4,:])[2]],digits=4),
+			   round(accuracy_all[5,findmax(accuracy_all[5,:])[2]],digits=4),
+			   round(accuracy_all[6,findmax(accuracy_all[6,:])[2]],digits=4),
+			   round(accuracy_all[7,findmax(accuracy_all[7,:])[2]],digits=4),
+			   round(accuracy_all[8,findmax(accuracy_all[8,:])[2]],digits=4)],
+			   Rule(:bottom)])
+
+
+			   # check behavior
+			   temp_subsidy_type = "shared"
+			   file_name_variable = "x1"
+			   size_of_subsample_temp = 0
+			   myests_point_scale_X_only = readdlm("julia_merger_result/myests_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+			   num_correct_ineq_scale_X_only = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+			   num_total_ineq_scale_X_only = readdlm("julia_merger_result/num_total_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+			   accuracy_scale_X_only = vec(num_correct_ineq_scale_X_only./num_total_ineq_scale_X_only)
+			   final_ests_point_scale_X_only = round.(myests_point_scale_X_only[findmax(accuracy_scale_X_only)[2],:],digits=2)
+			   myests_CI_scale_X_only = readdlm("julia_merger_result/myests_subsample_size_$(size_of_subsample_temp)_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
+
+			   model_all_length = length(file_name_variable_list)
+			   myests_point_all = zeros(model_all_length,
+			                            size(myests_point_scale_X_only)[1],
+			   						 size(myests_point_scale_X_only)[2])
+			   num_correct_ineq_all = zeros(model_all_length,
+			                            size(num_correct_ineq_scale_X_only)[1],
+			   						 size(num_correct_ineq_scale_X_only)[2])
+			   num_total_ineq_all = zeros(model_all_length,
+			                            size(num_total_ineq_scale_X_only)[1],
+			   						 size(num_total_ineq_scale_X_only)[2])
+			   accuracy_all = zeros(model_all_length,
+			                            size(accuracy_scale_X_only)[1])
+			   final_ests_point_all = zeros(model_all_length,
+			                            size(final_ests_point_scale_X_only)[1])
+			   for ii = 1:length(file_name_variable_list)
+			   	temp_subsidy_type = "shared"
+			   	@show temp_file_name = file_name_variable_list[ii]
+			   	myests_point_all[ii,:,:] = readdlm("julia_merger_result/myests_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+			   	num_correct_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+			   	num_total_ineq_all[ii,:,:] = readdlm("julia_merger_result/num_total_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(temp_file_name)_merger_cost.txt",',',Float64)
+			   	accuracy_all[ii,:] = num_correct_ineq_all[ii,:,1]./num_total_ineq_all[ii,:,1]
+			   	final_ests_point_all[ii,:] = round.(myests_point_all[ii, findmax(num_correct_ineq_all[ii,:,1])[2], :],
+			   	                                    digits=1)
+			   end
+
+			   CI_all_table = zeros(model_all_length,2,2)
+			   for ii = 1:length(file_name_variable_list)
+			   	temp_myests_point_all = myests_point_all[ii,num_correct_ineq_all[ii,:,1].==Int(findmax(num_correct_ineq_all[ii,:,1])[1]),:]
+			   	CI_all_table[ii,:,:] = round.(hcat(
+			   		Statistics.quantile(temp_myests_point_all[:,1], [0.0,1.0]),
+			   		Statistics.quantile(-temp_myests_point_all[:,2], [0.0,1.0])
+			   		),digits=1)
+			   end
+
+			   total_ineq_all = Int64(num_total_ineq_all[8,findmax(accuracy_all[8,:])[2]])
+			   LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(temp_subsidy_type)_subsidy_main_firms_only.tex",
+			   			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
+			   			  [Rule(:top),
+			   			   ["","","", "", "", "", "", "", "", ""],
+			   			   #["","",
+			   			   #"Point Est", "Point", "Point", "Point", "Point", "Point", "Point", "Point"],
+			   			   ["","",
+			   			   "[LB, UB]", "[LB, UB]", "[LB, UB]", "[LB, UB]",
+			   			    "[LB, UB]", "[LB, UB]", "[LB, UB]", "[LB, UB]"],
+			   			   Rule(:mid),
+			   			   ["Economies of scale", "", "", "", "", "", "", ""],
+			   			   #beta_0
+			   			   ["", "", "", "", "", "", "", "", ""],
+			   			   ["total\$_{b}\$ \$\\times\$ total\$_{t}\$", L"\beta_0",
+			   			   "+1", "+1", "+1", "+1", "+1", "+1", "+1", "+1"],
+			   			   ["" , "" , "(S)", "(S)", "(S)", "(S)",
+			   			    "(S)", "(S)", "(S)", "(S)"],
+			   			   #beta_1
+			   			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_1",
+			   			   #final_ests_point_all[1,1], "", "", "",
+			   			   # "", "", "", ""],
+			   			   #["" , "" ,
+			   			   "[$(CI_all_table[1,1,1]), $(CI_all_table[1,2,1])]",
+			   			   "", "", "",
+			   			   "", "", "", ""],
+			   			   #beta_2
+			   			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_2",
+			   				#"", final_ests_point_all[2,1], "", "",
+			   				#"", "", "", ""],
+			   			   #["" , "" ,
+			   			   "", "[$(CI_all_table[2,1,1]), $(CI_all_table[2,2,1])]", "", "",
+			   			   "", "", "", ""],
+			   			   #beta_3
+			   			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_3",
+			   			   #"", "", final_ests_point_all[3,1], "",
+			   			   #"", "", "", ""],
+			   			   #["" , "" ,
+			   			   "", "", "[$(CI_all_table[3,1,1]), $(CI_all_table[3,2,1])]", "",
+			   			   "", "", "", ""],
+			   			   # beta_4
+			   			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_4",
+			   			   #"", "", "", final_ests_point_all[4,1],
+			   			   #"", "", "", ""],
+			   			   #["" , "" ,
+			   			   "", "", "", "[$(CI_all_table[4,1,1]), $(CI_all_table[4,2,1])]",
+			   			   "", "", "", ""],
+			   			   #beta_5
+			   			   ["Economies of scope", "", "", "", "", "", "", "", "", ""],
+			   			   ["", "", "", "", "", "", "", "", "", ""],
+			   			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_5",
+			   			   #"", "", "", "",
+			   			   #final_ests_point_all[5,1], "", "", ""],
+			   			   #["" , "" ,
+			   			   "", "", "", "",
+			   			   "[$(CI_all_table[5,1,1]), $(CI_all_table[5,2,1])]", "", "", ""],
+			   			   #beta_6
+			   			   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_6",
+			   			   #"", "", "", "",
+			   			   #"", final_ests_point_all[6,1], "", ""],
+			   			   #["" , "" ,
+			   			   "", "", "", "",
+			   			   "", "[$(CI_all_table[6,1,1]), $(CI_all_table[6,2,1])]", "", ""],
+			   			   #beta_7
+			   			   ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_7",
+			   			   #"", "", "", "",
+			   			   #"", "", final_ests_point_all[7,1], ""],
+			   			   #["" , "" ,
+			   			   "", "", "", "",
+			   			   "", "", "[$(CI_all_table[7,1,1]), $(CI_all_table[7,2,1])]", ""],
+			   			   #beta_8
+			   			   ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_8",
+			   			   #"", "", "", "",
+			   			   #"", "", "", final_ests_point_all[8,1]],
+			   			   #["" , "" ,
+			   			   "", "", "", "",
+			   			   "", "", "", "[$(CI_all_table[8,1,1]), $(CI_all_table[8,2,1])]"],
+			   			   #gamma merger cost (note the sign is reverse)
+			   			   ["", "", "", "", "", "", "", "", "", ""],
+			   			   ["", "", "", "", "", "", "", "", "", ""],
+			   			   ["merger cost", "-\$\\gamma\$",
+			   			   #-final_ests_point_all[1,2], -final_ests_point_all[2,2],
+			   			   #-final_ests_point_all[3,2], -final_ests_point_all[4,2],
+			   			   #-final_ests_point_all[5,2], -final_ests_point_all[6,2],
+			   			   #-final_ests_point_all[7,2], -final_ests_point_all[8,2]],
+			   			   #["" , "" ,
+			   			   "[$(CI_all_table[1,1,2]), $(CI_all_table[1,2,2])]",
+			   			   "[$(CI_all_table[2,1,2]), $(CI_all_table[2,2,2])]",
+			   			   "[$(CI_all_table[3,1,2]), $(CI_all_table[3,2,2])]",
+			   			   "[$(CI_all_table[4,1,2]), $(CI_all_table[4,2,2])]",
+			   			   "[$(CI_all_table[5,1,2]), $(CI_all_table[5,2,2])]",
+			   			   "[$(CI_all_table[6,1,2]), $(CI_all_table[6,2,2])]",
+			   			   "[$(CI_all_table[7,1,2]), $(CI_all_table[7,2,2])]",
+			   			   "[$(CI_all_table[8,1,2]), $(CI_all_table[8,2,2])]"],
+			   			   #delta subsidy sensitivity
+			   			   ["subsidy sensitivity", L"\delta",
+			   			   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
+			   			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1],
+			   			   temp_calibrated_delta_list[1], temp_calibrated_delta_list[1]],
+			   			   ["", "", "", "", "", "", "", "", "", ""],
+			   			   Rule(),           # a nice \hline to make it ugly
+			   			   ["\$\\sharp\$ Inequalities (Point)" , "" ,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all,
+			   				total_ineq_all],
+			   				#=["\\Correct Ineq" , "" ,
+			    			   Int(num_correct_ineq_all[1,findmax(accuracy_all[1,:])[2]]),
+			    			   Int(num_correct_ineq_all[2,findmax(accuracy_all[2,:])[2]]),
+			    			   Int(num_correct_ineq_all[3,findmax(accuracy_all[3,:])[2]]),
+			    			   Int(num_correct_ineq_all[4,findmax(accuracy_all[4,:])[2]]),
+			    			   Int(num_correct_ineq_all[5,findmax(accuracy_all[5,:])[2]]),
+			    			   Int(num_correct_ineq_all[6,findmax(accuracy_all[6,:])[2]]),
+			    			   Int(num_correct_ineq_all[7,findmax(accuracy_all[7,:])[2]]),
+			    			   Int(num_correct_ineq_all[8,findmax(accuracy_all[8,:])[2]])],
+			   			   =#
+			   			   ["\\% Inequalities" , "" ,
+			   			   round(accuracy_all[1,findmax(accuracy_all[1,:])[2]],digits=4),
+			   			   round(accuracy_all[2,findmax(accuracy_all[2,:])[2]],digits=4),
+			   			   round(accuracy_all[3,findmax(accuracy_all[3,:])[2]],digits=4),
+			   			   round(accuracy_all[4,findmax(accuracy_all[4,:])[2]],digits=4),
+			   			   round(accuracy_all[5,findmax(accuracy_all[5,:])[2]],digits=4),
+			   			   round(accuracy_all[6,findmax(accuracy_all[6,:])[2]],digits=4),
+			   			   round(accuracy_all[7,findmax(accuracy_all[7,:])[2]],digits=4),
+			   			   round(accuracy_all[8,findmax(accuracy_all[8,:])[2]],digits=4)],
+			   			   Rule(:bottom)])

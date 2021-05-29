@@ -227,7 +227,7 @@ for i in 1:length(domain1), j in 1:length(domain2)
 		model_list[i,j,:] = vcat(zeros(m.N))
 	end
 end
-obsd.total_size_buyer
+
 
 model_list_ordered = zeros(length(domain1),length(domain2), m.N)
 for i in 1:length(domain1), j in 1:length(domain2)
