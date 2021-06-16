@@ -335,7 +335,7 @@ datGroup2$group <- factor(datGroup2$group,
                 "Japan Lines", "Kawasaki Kisen Kaisha",
                 "Yamashita-Shinnihon Kisen", "Showa Line", "unmatched"))
 x <- ggplot(datGroup2, aes(x = total/10000, fill = firm_type)) + 
-  geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
+  geom_histogram(position="dodge", alpha=0.8, binwidth = 10, colour = "black") +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("total tonnage size (10000 DW ton)") +
@@ -366,7 +366,7 @@ datGroup6 <- dplyr::select(datGroup2, liner, tramper,
                        special, tanker, firm_type, group)
 datGroup6 <- reshape2::melt(datGroup6)
 x <- ggplot(datGroup6, aes(x = value/10000, fill = variable)) + 
-  geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
+  geom_histogram(position="dodge", alpha=0.8, binwidth = 10, colour = "black") +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("total tonnage size (10000 DW ton)") +
@@ -390,7 +390,7 @@ datGroup7 <- datGroup6 %>%
   dplyr::mutate(group_sum = sum(value)) %>% 
   dplyr::ungroup()
 x <- ggplot(datGroup7, aes(x = "", y = value/10000, fill = variable)) + 
-  geom_bar(width = 1, stat = "identity") +
+  geom_bar(width = 1, stat = "identity", colour = "black") +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ylab("total tonnage size (10000 DW ton)") +
