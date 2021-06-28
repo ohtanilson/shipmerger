@@ -49,16 +49,32 @@ library(entropy)
 # search()
 ```
 
-## Trend of world's shipping tonnage
+# Overview
 
-* Gross Tonnage of Japanese Merchant Vessels from http://www.mlit.go.jp/hakusyo/transport/index1_.htm
+This file generates the following figures and tables.
 
-* Gross Tonnage of top6 countries from http://www.mlit.go.jp/hakusyo/transport/shouwGroup41/ind060101/frame.html and Loyd statistics (missing 1961-1963 now)
+- Figures 2, 3, 4, 5, and 9.
+- Tables 2, 3, 4, and 5.
+
+All raw data must be located in ../input folder. All outputs will be located in ../figuretable folder or ../output folder.
+
+Note that Table 1 does not contain the information about data and
+Figures 6, 7, and 8 are generated in ship_merger_score_estimation.jl. 
+
+
+
+# Figures
+
+## (Figure 1) The trend of the world's shipping gross tonnage (1000 tons).
 
 ```{r,echo=FALSE,results = 'hide', out.width="50%"}
-data_totaltons <- readr::read_csv("../input/data_totaltons.csv")
-d <- data_totaltons %>%
-  dplyr::select(-year_j,-Number, -shipping_quantity_world,
+data_totaltons <- 
+  readr::read_csv("../input/data_totaltons.csv")
+d <- 
+  data_totaltons %>%
+  dplyr::select(-year_j,
+                -Number, 
+                -shipping_quantity_world,
                 -shipping_quantity_japan) %>%
   dplyr::rename(Japan = grosstons_japan,
                 UK = grosstons_UK,
@@ -74,13 +90,15 @@ d <- data_totaltons %>%
 #   # pipe the above data frame into the knitr::kable function
 #   knitr::kable()
 #theme_set(theme_minimal())
-x <- ggplot(d, aes(x = year, y = value)) + 
+x <- 
+  ggplot(d, aes(x = year, y = value)) + 
   geom_line(aes(color = variable), alpha = 0.6) +
   geom_point(aes(shape = variable, color = variable)) +
   theme_minimal() + 
   ggtitle("World's shipping tonnage") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("year") + ylab("shipping tonnage (1000 tons)") +
+  xlab("year") + 
+  ylab("shipping tonnage (1000 tons)") +
   expand_limits(y=0) + 
   geom_vline(xintercept = 1964, linetype = "longdash") + 
   labs(shape = "Country", color = "Country")
@@ -97,155 +115,52 @@ ggsave(filename = figure_name,
 \begin{center}
 \includegraphics[height = 0.37\textheight]{../figuretable/shippingtonnage.png}
 \end{center}
-\caption{\textbf{The trend of world's shipping gross tonnage (1000 tons)}: \textit{Source}: \cite{syuuyaku} which borrows the data of Statistical Tables in Lloyd's Statistics. The data contains ships whose tonnage sizes are at least 100 ton and includes fishing vessel. The dotted vertical line divides the periods before and after mergers of my interest.}
+\caption{\textbf{The trend of world's shipping gross tonnage (1000 tons)}}
 \label{fg:shippingtonnage}
 \end{figure}
 
-```{r}
-# g <- ggplot(d, aes(x = year, y = value)) + 
-#   geom_line(aes(color = variable), size = 1, alpha = 0.6) + 
-#   facet_wrap(~variable) +
-#   theme_minimal() + 
-#   ggtitle("World's shipping tonnage") +
-#   theme(plot.title = element_text(hjust = 0.5)) +
-#   xlab("year") + ylab("shipping tonnage (1000 tons)") + expand_limits(y=0)
-# g
-```
-
-## Trend of world's freight movement tonnage
-
-* shipping_quantity_japan is from book3 
-  + Ministry of Transport Shipping Bureau (missing 1961-1965 now)
-  + http://www.mlit.go.jp/hakusyo/transport/index1_.htm
-  
-```{r }
-# d <- data %>%
-#   dplyr::select(year, shipping_quantity_world,
-#                 shipping_quantity_japan ) %>%
-#   tidyr::gather(key = "variable", value = "value", -year)
-# theme_set(theme_minimal())
-# x <- ggplot(d, aes(x = year, y = value)) + 
-#   geom_line(aes(color = variable), size = 1, alpha = 0.7) +
-#   theme_minimal() + 
-#   ggtitle("World's freight movement tonnage") +
-#   theme(plot.title = element_text(hjust = 0.5)) +
-#   xlab("year") + ylab("freight movement tonnage (1000 tons)") +
-#   geom_vline(xintercept = 1964, linetype = "longdash")
-# #ggplot2::ggsave("freightmovementtonnage.png")
-# 
-# figure_name <- "figuretable/freightmovementtonnage.png"
-# ggsave(filename = figure_name,
-#        plot = x,
-#        device = "png",
-#        width = 10,
-#        height = 7)
-```
 
 
-## Trends of the number of shipping firms in Japan
-
-```{r }
-data_number_of_firms <- 
-  readr::read_csv("../input/number_of_firms.csv")
-d <- data_number_of_firms %>%
-  dplyr::select(year, number_matched, unmatched ) %>%
-  tidyr::gather(key = "variable", value = "value", -year)
-theme_set(theme_minimal())
-x <- ggplot(d, aes(x = year, y = value)) + 
-  geom_line(aes(color = variable), size = 1, alpha = 0.7) +
-  theme_minimal() + 
-  ggtitle("the number of shipping firms in Japan: (Missing after 1966)") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("year") + ylab("the number of firms")
-#ggplot2::ggsave("number_of_firms.png")
-figure_name <- "../figuretable/number_of_firms.png"
-ggsave(filename = figure_name,
-       plot = x,
-       device = "png",
-       width = 10,
-       height = 7)
-```
-
-<!-- \begin{figure}[!ht] -->
-<!-- \begin{center} -->
-<!-- \includegraphics[height = 0.37\textheight]{figuretable/number_of_firms.png} -->
-<!-- \end{center} -->
-<!-- \caption{\textbf{aa}.aaa.} -->
-<!-- \label{fg:number_of_firms} -->
-<!-- \end{figure} -->
-
-
-
-## planned shipbuilding
-
-The payment of planned shipbuilding is needed for calculation of the estimated amount of financial support.
-* https://www.mlit.go.jp/hakusyo/transport/shouwGroup39/ind060103/001.html#tabII-(I)-12
-
-
-```{r }
-data_totaltons <- readr::read_csv("../input/data_totaltons.csv")
-d <- data_totaltons %>%
-  dplyr::select(year, shipping_quantity_world, shipping_quantity_japan ) %>%
-  tidyr::gather(key = "variable", value = "value", -year)
-theme_set(theme_minimal())
-x <- ggplot(d, aes(x = year, y = value)) + 
-  geom_line(aes(color = variable), size = 1, alpha = 0.7) +
-  theme_minimal() + 
-  ggtitle("World's freight movement tonnage") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("year") + ylab("freight movement tonnage (1000 tons)")
-
-#ggplot2::ggsave("freightmovementtonnage.png")
-figure_name <- "../figuretable/freightmovementtonnage.png"
-ggsave(filename = figure_name,
-       plot = x,
-       device = "png",
-       width = 10,
-       height = 7)
-```
-
-<!-- \begin{figure}[!ht] -->
-<!-- \begin{center} -->
-<!-- \includegraphics[height = 0.37\textheight]{figuretable/freightmovementtonnage.png} -->
-<!-- \end{center} -->
-<!-- \caption{\textbf{aa}.aaa.} -->
-<!-- \label{fg:freightmovementtonnage} -->
-<!-- \end{figure} -->
-
-Note that `r d %>% count()` is the dimension
-
-# Descriptive data
-
-## descriptive summary
-```{r}
-# data <- readr::read_csv("200318firmdata.csv")
-# data <- data[,-3:-4]
-# summary(data)
-```
+# Load main data
 
 ```{r}
-#data <- readr::read_csv("200429firmdata.csv")
-data <- readr::read_csv("../input/210205firmdata_processed.csv")
-data <- data[,c(-3,-4,-6:-11,-16,-18)] # pick up D/W
-total_ton <- data[,4]+data[,5]+data[,6]+data[,7]
-colnames(data)[3:7] = c("type","liner","special","tramper","tanker")
-```
-
-```{r}
-carrier_type_tonnage_table <- data %>% 
-  dplyr::select(type, liner, special, tramper, tanker)
-data_hist <- reshape2::melt(carrier_type_tonnage_table, "type") %>% 
+data <- 
+  readr::read_csv("../input/210205firmdata_processed.csv")
+data <- 
+  data[,c(-3,-4,-6:-11,-16,-18)] # pick up D/W
+total_ton <- 
+  data[,4]+data[,5]+data[,6]+data[,7]
+colnames(data)[3:7] = 
+  c("type",
+    "liner",
+    "special",
+    "tramper",
+    "tanker")
+carrier_type_tonnage_table <- 
+  data %>% 
+  dplyr::select(type, 
+                liner,
+                special, 
+                tramper, 
+                tanker)
+data_hist <- 
+  reshape2::melt(carrier_type_tonnage_table,
+                 "type") %>% 
   dplyr::filter(value >= 0.1) 
 #colnames(data)=c("type","liner","special","tramper","tanker")
-x <- ggplot(data_hist, aes(x = value, fill = variable)) + 
+x <- 
+  ggplot(data_hist, aes(x = value, fill = variable)) + 
   geom_histogram(position="dodge", alpha=0.8) +
   #ggtitle("histogram of tonnage sizes") +
   #theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("tonnage size") + ylab("count") + 
+  xlab("tonnage size") + 
+  ylab("count") + 
   labs("carrier type") +
-  xlim(0,650000) + labs(fill="carrier type")
+  xlim(0,650000) +
+  labs(fill="carrier type")
 g1 <- x
-figure_name <- "../figuretable/carrier_type_tonnage.png"
+figure_name <- 
+  "../figuretable/carrier_type_tonnage.png"
 ggsave(filename = figure_name,
        plot = x,
        device = "png",
@@ -261,29 +176,43 @@ ggsave(filename = figure_name,
 <!-- \label{fg:carrier_type_tonnage} -->
 <!-- \end{figure} -->
 
+# Type-based histogram
 
-# type-based histogram
+
 
 ```{r}
-total_tonnage_table <- data %>% 
-  dplyr::select(type, liner, special, tramper, tanker) %>% 
+total_tonnage_table <-
+  data %>% 
+  dplyr::select(type,
+                liner,
+                special,
+                tramper,
+                tanker) %>% 
   dplyr::filter(is.na(type)!= 1) %>% 
-  dplyr::mutate(total = liner + special + tramper + tanker) %>% 
-  dplyr::mutate(firm_type = recode(type, 
-                                  "合併会社"="main",
-                                 "系列会社"="affiliate",
-                                 "専属会社"="wholly-controlled",
-                                 "グループ外"="unmatched"
-                                 ))
-x <- ggplot(total_tonnage_table, aes(x = total, fill = firm_type)) + 
+  dplyr::mutate(total = 
+                  liner + special + tramper + tanker) %>% 
+  dplyr::mutate(firm_type = 
+                  recode(type, 
+                         "合併会社"="main",
+                         "系列会社"="affiliate",
+                         "専属会社"="wholly-controlled",
+                         "グループ外"="unmatched"
+                         ))
+x <- 
+  ggplot(total_tonnage_table,
+         aes(x = total, fill = firm_type)) + 
   geom_histogram(position="dodge", alpha=0.8) +
   #ggtitle("histogram of tonnage sizes") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("total tonnage size") + ylab("count") + 
-  xlim(0,650000) + labs(col="firm type") +labs(fill = "firm type")
+  xlab("total tonnage size") +
+  ylab("count") + 
+  xlim(0,650000) +
+  labs(col="firm type") +
+  labs(fill = "firm type")
 g2 <- x
 #ggplot2::ggsave("total_tonnage.png")
-figure_name <- "../figuretable/total_tonnage.png"
+figure_name <-
+  "../figuretable/total_tonnage.png"
 ggsave(filename = figure_name,
        plot = x,
        device = "png",
@@ -300,23 +229,18 @@ ggsave(filename = figure_name,
 <!-- \end{figure} -->
 
 ```{r}
-#gridExtra::grid.arrange(g1, g2, nrow = 2)
-```
+bank_names = 
+  c("Fuji","Kogin","Chogin","Yasuda","Daiichi","Mitsui",
+    "MitsuiShintaku","Sumitomo","SumitomoShintaku","Mitsubishi",
+    "Kangin","MitsubishiShintaku","Kobe","Daiwa","Sanwa","Tokai",
+    "YasudaShintaku","others")
+colnames(data) = 
+  c("id", "name", "type",
+    "liner","special","tramper","tanker",
+    "group",bank_names)
 
-## Groupby histogram
-
-```{r, echo=FALSE, results = 'hide', out.width="50%"}
-library(cowplot)
-
-bank_names = c("Fuji","Kogin","Chogin","Yasuda","Daiichi","Mitsui",
-               "MitsuiShintaku","Sumitomo","SumitomoShintaku","Mitsubishi",
-               "Kangin","MitsubishiShintaku","Kobe","Daiwa","Sanwa","Tokai",
-               "YasudaShintaku","others")
-colnames(data)=c("id", "name", "type",
-                 "liner","special","tramper","tanker",
-                 "group",bank_names)
-
-datGroup2 <- data %>% 
+datGroup2 <- 
+  data %>% 
   dplyr::filter(is.na(type)!= 1) %>% 
   dplyr::mutate(special = ifelse(is.na(special) == 1,
                                  0, special)) %>%
@@ -330,20 +254,101 @@ datGroup2 <- data %>%
                                  "グループ外"="unmatched"
                                  )) %>% 
   dplyr::filter(group != "nodata")
-datGroup2$group <- factor(datGroup2$group, 
-     levels = c("Nippon Yusen", "Mitsui O.S.K. Lines",
-                "Japan Lines", "Kawasaki Kisen Kaisha",
-                "Yamashita-Shinnihon Kisen", "Showa Line", "unmatched"))
-x <- ggplot(datGroup2, aes(x = total/10000, fill = firm_type)) + 
-  geom_histogram(position="dodge", alpha=0.8, binwidth = 10, colour = "black") +
+datGroup2$group <- 
+  factor(datGroup2$group, 
+     levels = c("Nippon Yusen",
+                "Mitsui O.S.K. Lines",
+                "Japan Lines", 
+                "Kawasaki Kisen Kaisha",
+                "Yamashita-Shinnihon Kisen", 
+                "Showa Line",
+                "unmatched"))
+```
+
+
+## (Figure 2) Configuration of tonnage size for each carrier type
+
+```{r, echo=FALSE, results = 'hide', out.width="50%"}
+datGroup6 <- 
+  datGroup2 %>% 
+  dplyr::select(liner,
+                tramper,
+                special,
+                tanker,
+                firm_type,
+                group)
+datGroup6 <- 
+  reshape2::melt(datGroup6)
+datGroup7 <- 
+  datGroup6 %>% 
+  dplyr::group_by(group,
+                  variable) %>% 
+  dplyr::summarise(value = sum(value)) %>% 
+  dplyr::group_by(group) %>% 
+  dplyr::mutate(group_sum = sum(value)) %>% 
+  dplyr::ungroup()
+x <-
+  ggplot(datGroup7,
+            aes(x = "", y = value/10000, fill = variable)) + 
+  geom_bar(width = 1, stat = "identity", colour = "black") +
+  #ggtitle("Histogram of tonnage size for each merger group") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("total tonnage size (10000 DW ton)") +
+  xlab("") +
+  labs(fill = "carrier type") +
+  geom_hline(yintercept = 100, linetype = "longdash") + 
+  facet_wrap(vars(group), ncol = 4) + 
+  theme(legend.position = c(0.9, 0.2)) +
+  geom_text(aes(x = "", y = value/10000,
+                label = scales::percent(value/group_sum)),
+                #position=position_fill(vjust=0.5),
+                position=position_stack(0.5),
+                size = unit(3.0,"cm"))
+figure_name <- 
+  "../figuretable/carrier_composition_eachgroup.png"
+ggsave(filename = figure_name,
+       plot = x,
+       device = "png",
+       width = 10,
+       height = 7)
+```
+
+
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[height = 0.37\textheight]{../figuretable/carrier_composition_eachgroup.png}
+\end{center}
+\caption{\textbf{Configuration of tonnage size for each carrier type}. Observation unit: group-level total tonnage size for each carrier type after mergers. The dotted horizontal line indicates the subsidy threshold.}
+\label{fg:carrier_composition_eachgroup}
+\end{figure}
+
+## (Figure 3) Distribution of tonnage size for each firm type.
+
+
+```{r, echo=FALSE, results = 'hide', out.width="50%"}
+library(cowplot)
+datGroup2_matched <- 
+  datGroup2 %>% 
+  dplyr::filter(group != "unmatched")
+x <- 
+  ggplot(datGroup2_matched, 
+         aes(x = total/10000, fill = firm_type)) + 
+  geom_histogram(position="dodge", 
+                 alpha=0.8, binwidth = 6, colour = "black") +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("total tonnage size (10000 DW ton)") +
-  xlim(0,70) + ylim(0,7) + labs(fill = "firm type") +
-  facet_wrap(vars(group), ncol = 4) + theme(legend.position = c(0.9, 0.2))
+  ylab("count (firm level)") +
+  xlim(0,105) +
+  ylim(0,7) + 
+  labs(fill = "firm type") +
+  facet_wrap(vars(group), ncol = 4) +
+  theme(legend.position = c(0.9, 0.2))
 g3 <- x 
 #ggplot2::ggsave("type_dist_eachgroup.png")
-figure_name <- "../figuretable/type_dist_eachgroup.png"
+figure_name <-
+  "../figuretable/type_dist_eachgroup.png"
 ggsave(filename = figure_name,
        plot = x,
        device = "png",
@@ -360,55 +365,43 @@ ggsave(filename = figure_name,
 \end{figure}
 
 
+## (Figure 4) Distribution of tonnage size for each carrier type.
+
+
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 library(reshape2)
-datGroup6 <- dplyr::select(datGroup2, liner, tramper,
-                       special, tanker, firm_type, group)
-datGroup6 <- reshape2::melt(datGroup6)
-x <- ggplot(datGroup6, aes(x = value/10000, fill = variable)) + 
-  geom_histogram(position="dodge", alpha=0.8, binwidth = 10, colour = "black") +
+datGroup6 <- 
+  datGroup2 %>% 
+  dplyr::select(liner,
+                tramper,
+                special,
+                tanker,
+                firm_type,
+                group)
+datGroup6 <- 
+  reshape2::melt(datGroup6)
+x <- 
+  ggplot(datGroup6, 
+         aes(x = value/10000, fill = variable)) + 
+  geom_histogram(position="dodge", alpha=0.8,
+                 binwidth = 8, colour = "black") +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("total tonnage size (10000 DW ton)") +
-  xlim(0,70) + ylim(0,7) + labs(fill = "carrier type") +
-  facet_wrap(vars(group), ncol = 4) + theme(legend.position = c(0.9, 0.2))
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
-#ggplot2::ggsave("carrier_dist_eachgroup.png")
-figure_name <- "../figuretable/carrier_dist_eachgroup.png"
+  ylab("count (firm-type level)") +
+  xlim(0,70) +
+  ylim(0,7) + 
+  labs(fill = "carrier type") +
+  facet_wrap(vars(group), ncol = 4) +
+  theme(legend.position = c(0.9, 0.2))
+figure_name <- 
+  "../figuretable/carrier_dist_eachgroup.png"
 ggsave(filename = figure_name,
        plot = x,
        device = "png",
        width = 10,
        height = 7)
 
-datGroup7 <- datGroup6 %>% 
-  dplyr::group_by(group, variable) %>% 
-  dplyr::summarise(value = sum(value)) %>% 
-  dplyr::group_by(group) %>% 
-  dplyr::mutate(group_sum = sum(value)) %>% 
-  dplyr::ungroup()
-x <- ggplot(datGroup7, aes(x = "", y = value/10000, fill = variable)) + 
-  geom_bar(width = 1, stat = "identity", colour = "black") +
-  #ggtitle("Histogram of tonnage size for each merger group") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ylab("total tonnage size (10000 DW ton)") +
-  xlab("") +
-  labs(fill = "carrier type") +
-  geom_hline(yintercept = 100, linetype = "longdash") + 
-  facet_wrap(vars(group), ncol = 4) + theme(legend.position = c(0.9, 0.2)) +
-  geom_text(aes(x = "", y = value/10000,
-                label = scales::percent(value/group_sum)),
-                #position=position_fill(vjust=0.5),
-                position=position_stack(0.5),
-                size = unit(2.0,"cm"))
-figure_name <- "../figuretable/carrier_composition_eachgroup.png"
-ggsave(filename = figure_name,
-       plot = x,
-       device = "png",
-       width = 10,
-       height = 7)
 ```
 
 \begin{figure}[!ht]
@@ -419,17 +412,12 @@ ggsave(filename = figure_name,
 \label{fg:carrier_dist_eachgroup}
 \end{figure}
 
-\begin{figure}[!ht]
-\begin{center}
-\includegraphics[height = 0.37\textheight]{../figuretable/carrier_composition_eachgroup.png}
-\end{center}
-\caption{\textbf{Configuration of tonnage size for each carrier type}. Observation unit: group-level total tonnage size for each carrier type after mergers. The dotted horizontal line indicates the subsidy threshold.}
-\label{fg:carrier_composition_eachgroup}
-\end{figure}
+
 
 
 ```{r}
-table_discretize<- datGroup2 %>% 
+table_discretize <-
+  datGroup2 %>% 
   dplyr::mutate(discretized_liner = dplyr::case_when(
     liner/10000 < 10 ~ "< 10",
     liner/10000 >= 10 & liner/10000 < 20  ~ "10 to 20",
@@ -437,74 +425,85 @@ table_discretize<- datGroup2 %>%
     liner/10000 > 50 ~ "50 <",
   ))
 
-g4_liner <- ggplot(datGroup2, aes(x = liner/10000, fill = group)) + 
+g4_liner <- 
+  ggplot(datGroup2,
+         aes(x = liner/10000, fill = group)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("tonnage size (10000 DW ton)") +
-  xlim(0,55) + labs(col="group") +
+  xlim(0,55) + 
+  labs(col="group") +
   theme(legend.position = "none")
-g4_liner <- ggplot(table_discretize, aes(x = discretized_liner, 
+g4_liner <- 
+  ggplot(table_discretize, aes(x = discretized_liner, 
                                          fill = group)) + 
   geom_bar(position="dodge", alpha=0.8) +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("tonnage size (10000 DW ton)") +
-  xlim(0,55) + labs(col="group") +
+  xlim(0,55) + 
+  labs(col="group") +
   theme(legend.position = "none")
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
+
 ```
 
 ```{r}
-g4_tramper <- ggplot(datGroup2, aes(x = tramper/10000, fill = group)) + 
+g4_tramper <- 
+  ggplot(datGroup2, aes(x = tramper/10000, fill = group)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   ggtitle("Tramper") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("tonnage size (10000 DW ton)") +
-  xlim(0,55) + labs(col="group") +
+  xlim(0,55) + 
+  labs(col="group") +
   theme(legend.position = "none")
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
+
 ```
 
 ```{r}
-g4_special <- ggplot(datGroup2, aes(x = special/10000, fill = group)) + 
+g4_special <- 
+  ggplot(datGroup2, aes(x = special/10000, fill = group)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) +
   ggtitle("Special") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("tonnage size (10000 DW ton)") +
-  xlim(0,55) + labs(col="group") +
+  xlim(0,55) + 
+  labs(col="group") +
   theme(legend.position = "none")
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
+
 ```
 
 ```{r}
-g4_tanker <- ggplot(datGroup2, aes(x = tanker/10000, fill = group)) + 
+g4_tanker <- 
+  ggplot(datGroup2, aes(x = tanker/10000, fill = group)) + 
   geom_histogram(position="dodge", alpha=0.8, binwidth = 10) 
-legend <- cowplot::get_legend(g4_tanker)
-g4_tanker <- g4_tanker +
+legend <-
+  cowplot::get_legend(g4_tanker)
+g4_tanker <- 
+  g4_tanker +
   ggtitle("Tanker") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("tonnage size (10000 DW ton)") +
-  xlim(0,55) + labs(col="group") +
+  xlim(0,55) +
+  labs(col="group") +
   theme(legend.position = "none")
-#   + ylab("count") + 
-#  xlim(0,650000) + labs(col="firm type")
-#ggplot2::ggsave("total_tonnage.png")
+
 ```
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 if(0){
-x <- gridExtra::grid.arrange(g4_liner, g4_tramper, legend,
-                        g4_special, g4_tanker,
-                        ncol=3, nrow =2)
+x <- 
+  gridExtra::grid.arrange(g4_liner, 
+                          g4_tramper,
+                          legend,
+                          g4_special,
+                          g4_tanker,
+                          ncol = 3,
+                          nrow = 2)
 #ggplot2::ggsave("carrier_dist_total_eachgroup.png",temp_g)
-figure_name <- "../figuretable/carrier_dist_total_eachgroup.png"
+figure_name <-
+  "../figuretable/carrier_dist_total_eachgroup.png"
 ggsave(filename = figure_name,
        plot = x,
        device = "png",
@@ -522,46 +521,59 @@ ggsave(filename = figure_name,
 <!-- \label{fg:carrier_dist_total_eachgroup} -->
 <!-- \end{figure} -->
 
-## pie charts
+## (Figure 5) Pie charts
 
 ```{r}
-g5_liner <- ggplot(datGroup2, aes(x ="", y = liner/10000, fill = group)) + 
+g5_liner <- 
+  ggplot(datGroup2, aes(x ="", y = liner/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  ylab("share of tonnage size") + xlab("") +
+  ylab("share of tonnage size") +
+  xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-g5_tramper <- ggplot(datGroup2, aes(x ="", y = tramper/10000, fill = group)) + 
+g5_tramper <- 
+  ggplot(datGroup2, aes(x ="", y = tramper/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Tramper") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  ylab("share of tonnage size") + xlab("") +
+  ylab("share of tonnage size") +
+  xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-g5_special <- ggplot(datGroup2, aes(x ="", y = special/10000, fill = group)) + 
+g5_special <-
+  ggplot(datGroup2, aes(x ="", y = special/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Special") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  ylab("share of tonnage size") + xlab("") +
+  ylab("share of tonnage size") +
+  xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
-g5_tanker <- ggplot(datGroup2, aes(x ="", y = tanker/10000, fill = group)) + 
+g5_tanker <-
+  ggplot(datGroup2, aes(x ="", y = tanker/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Tanker") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  ylab("share of tonnage size") + xlab("") +
+  ylab("share of tonnage size") + 
+  xlab("") +
   coord_polar("y", start=0)
-legend <- cowplot::get_legend(g5_tanker)
-g5_tanker <- g5_tanker + theme(legend.position = "none")
+legend <- 
+  cowplot::get_legend(g5_tanker)
+g5_tanker <-
+  g5_tanker +
+  theme(legend.position = "none")
 ```
 
 ```{r}
-g6_liner <- ggplot(datGroup2, aes(x ="", y = liner/10000, fill = group)) + 
+g6_liner <- 
+  ggplot(datGroup2, aes(x ="", y = liner/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   ggtitle("Liner") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  ylab("share of tonnage size") + xlab("") +
+  ylab("share of tonnage size") +
+  xlab("") +
   coord_polar("y", start=0) +
   theme(legend.position = "none")
 
@@ -571,11 +583,17 @@ g6_liner <- ggplot(datGroup2, aes(x ="", y = liner/10000, fill = group)) +
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 if(0){
-x <- gridExtra::grid.arrange(g5_liner, g5_tramper, legend,
-                        g5_special, g5_tanker,
-                        ncol=3, nrow =2)
+x <- 
+  gridExtra::grid.arrange(g5_liner, 
+                          g5_tramper,
+                          legend,
+                          g5_special,
+                          g5_tanker,
+                          ncol = 3,
+                          nrow = 2)
 #ggplot2::ggsave("carrier_share_eachgroup.png",temp_g)
-figure_name <- "../figuretable/carrier_share_eachgroup.png"
+figure_name <-
+  "../figuretable/carrier_share_eachgroup.png"
 ggsave(filename = figure_name,
        plot = x,
        device = "png",
@@ -593,11 +611,13 @@ ggsave(filename = figure_name,
 \label{fg:carrier_share_eachgroup}
 \end{figure}
 
+# Descriptive summary
 
-## Regression
+## (Table 3) Summary statistics for independent variables.
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
-datGroup2 <- datGroup2 %>% 
+datGroup2 <- 
+  datGroup2 %>% 
   dplyr::mutate(HHI = (liner/total)^2+(special/total)^2+
                   (tramper/total)^2+(tanker/total)^2) %>% 
   dplyr::mutate(share_liner = liner/total) %>% 
@@ -606,7 +626,8 @@ datGroup2 <- datGroup2 %>%
   dplyr::mutate(share_tanker = tanker/total) %>% 
   dplyr::filter(total > 0)
 # construct summary statistics table
-temp <- datGroup2 %>%
+temp <- 
+  datGroup2 %>%
   dplyr::mutate(tonnage_size = total/1000000,
                 tonnage_size_liner = liner/1000000,
                 tonnage_size_special = special/1000000,
@@ -617,7 +638,10 @@ temp <- datGroup2 %>%
                 tonnage_size_special,
                 tonnage_size_tramper,
                 tonnage_size_tanker, 
-                share_liner, share_special, share_tramper, share_tanker,
+                share_liner, 
+                share_special, 
+                share_tramper,
+                share_tanker,
                 HHI) %>% 
   dplyr::rename(type_HHI = HHI) %>% 
   tidyr::gather("variable", "value") %>%
@@ -673,119 +697,11 @@ x <- Hmisc::latex(
   collabel.just = rep("r", dim(temp)[2]),
   rgroupTexCmd = "itshape",
   n.rgroup = c(5,5),
-  rgroup = c("measure of economies of scale (million D/W)", 
-             "measure of economies of scope")
+  rgroup = c("Size variables (million D/W)", 
+             "Specialization variables (percentage share)")
 )
 
-# construct data for preliminary regression
-buyer_id = datGroup2$id
-target_id = datGroup2$id
-id_new <- expand.grid(buyer_id, target_id)
-colnames(id_new) <- c("buyer_id","target_id")
-datGroup3 <- id_new %>% 
-  dplyr::full_join(datGroup2, by = c("buyer_id" = "id")) %>%
-  dplyr::full_join(datGroup2, by = c("target_id" = "id")) %>% 
-  dplyr::filter(buyer_id != target_id) %>% 
-  #dplyr::select(group.x,group.y) %>% 
-  #dplyr::filter(is.na(type)!= 1) %>% 
-  dplyr::mutate(match = ifelse(group.x == group.y, 1, 0)) %>% 
-  dplyr::mutate(Fuji_xy = ifelse(Fuji.x == Fuji.y, 1, 0)) %>% 
-  dplyr::mutate(Kogin_xy = ifelse(Kogin.x == Kogin.y, 1, 0)) %>% 
-  dplyr::mutate(Chogin_xy = ifelse(Chogin.x == Chogin.y, 1, 0)) %>% 
-  dplyr::mutate(Yasuda_xy = ifelse(Yasuda.x == Yasuda.y, 1, 0)) %>% 
-  dplyr::mutate(Daiichi_xy = ifelse(Daiichi.x == Daiichi.y, 1, 0)) %>% 
-  dplyr::mutate(Mitsui_xy = ifelse(Mitsui.x == Mitsui.y, 1, 0)) %>% 
-  dplyr::mutate(MitsuiShintaku_xy = ifelse(MitsuiShintaku.x == MitsuiShintaku.y, 1, 0)) %>% 
-  dplyr::mutate(Sumitomo_xy = 
-                  ifelse(Sumitomo.x == Sumitomo.y, 1, 0)) %>% 
-  dplyr::mutate(SumitomoShintaku_xy =
-                  ifelse(SumitomoShintaku.x == SumitomoShintaku.y, 1, 0)) %>% 
-  dplyr::mutate(Mitsubishi_xy =
-                  ifelse(Mitsubishi.x == Mitsubishi.y, 1, 0)) %>% 
-  dplyr::mutate(Kangin = ifelse(Kangin.x == Kangin.y, 1, 0)) %>% 
-  dplyr::mutate(MitsubishiShintaku_xy = ifelse(MitsubishiShintaku.x == MitsubishiShintaku.y, 1, 0)) %>% 
-  dplyr::mutate(Kobe_xy = ifelse(Kobe.x == Kobe.y, 1, 0)) %>% 
-  dplyr::mutate(Daiwa_xy = ifelse(Daiwa.x == Daiwa.y, 1, 0)) %>% 
-  dplyr::mutate(Sanwa_xy = ifelse(Sanwa.x == Sanwa.y, 1, 0)) %>%
-  dplyr::mutate(Tokai_xy = ifelse(Tokai.x == Tokai.y, 1, 0)) %>% 
-  dplyr::mutate(YasudaShintaku_xy = ifelse(YasudaShintaku.x == YasudaShintaku.y, 1, 0)) %>%
-  dplyr::mutate(others_xy = ifelse(others.x == others.y, 1, 0)) 
-datGroup3 <- datGroup3 %>% 
-  replace(is.na(.), 0) %>%
-  dplyr::mutate(bank_coverage = Fuji_xy + Kogin_xy +
-                  Chogin_xy + Yasuda_xy + Daiichi_xy + Mitsui_xy +
-                  MitsuiShintaku_xy + Sumitomo_xy + SumitomoShintaku_xy +
-                  Mitsubishi_xy + Kangin + MitsubishiShintaku_xy + Kobe_xy +
-                  Daiwa_xy + Sanwa_xy + Tokai_xy +
-                  YasudaShintaku_xy + others_xy) %>% 
-  dplyr::mutate(bank_coverage_ratio = bank_coverage/19) %>% 
-  dplyr::mutate(same_type = ifelse(firm_type.x == firm_type.y, 1, 0))
-
-res1 <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
-                 log(special.x*special.y+1)  + log(tanker.x*tanker.y+1)+
-                 log(total.x*total.y+1) ,
-               data = datGroup3, family = "binomial")
-res2 <- glm(match ~ bank_coverage_ratio + log(HHI.x*HHI.y+1) 
-                    + log(share_liner.x*share_liner.y+1)
-                    + log(share_special.x*share_special.y+1) 
-                    + log(share_tramper.x*share_tramper.y+1)
-                    + log(share_tanker.x*share_tanker.y+1),
-               data = datGroup3, family = "binomial")
-res3 <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
-                 log(special.x*special.y+1)  + log(tanker.x*tanker.y+1) +
-                 log(total.x*total.y+1) + bank_coverage_ratio 
-                 + log(HHI.x*HHI.y+1)+
-                 + log(share_liner.x*share_liner.y+1)
-                 + log(share_special.x*share_special.y+1) 
-                 + log(share_tramper.x*share_tramper.y+1)
-                 + log(share_tanker.x*share_tanker.y+1),
-               data = datGroup3, family = "binomial")
-res4 <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
-                 log(special.x*special.y+1)  + log(tanker.x*tanker.y+1) +
-                 log(total.x*total.y+1) + bank_coverage_ratio + log(HHI.x*HHI.y+1) 
-                 + log(share_liner.x*share_liner.y+1)
-                 + log(share_special.x*share_special.y+1) 
-                 + log(share_tramper.x*share_tramper.y+1)
-                 + log(share_tanker.x*share_tanker.y+1)
-                 + same_type,
-               data = datGroup3, family = "binomial")
-res_LPM <- glm(match ~ log(liner.x*liner.y+1) + log(tramper.x*tramper.y+1) +
-                 log(special.x*special.y+1)  + log(tanker.x*tanker.y+1) +
-                 log(total.x*total.y+1) + bank_coverage_ratio + log(HHI.x*HHI.y+1)+
-                 + log(share_liner.x*share_liner.y+1)
-                 + log(share_special.x*share_special.y+1) 
-                 + log(share_tramper.x*share_tramper.y+1)
-                 + log(share_tanker.x*share_tanker.y+1)
-                 + same_type,
-                 data = datGroup3)
-table_name <-
-  "../figuretable/regression_matching.tex"
-x <- stargazer(res1,res2,res3,res4,res_LPM,
-          header = FALSE,
-          float = FALSE,
-          type = "latex",
-          digits = 3,
-          dep.var.labels = c("1(match)"),
-          covariate.labels = c("log(liner$_{b}$ *liner$_{t}$+1)",
-                               "log(tramper$_{b}$ *tramper$_{t}$+1)",
-                               "log(special$_{b}$ *special$_{t}$+1)",
-                               "log(tanker$_{b}$ *tanker$_{t}$+1)",
-                               "log(total$_{b}$ *total$_{t}$+1)",
-                               "bank coverage similarity ratio","log(HHI$_{b}$ *HHI$_{t}$+1)",
-                               "log(share of liner$_{b}$ *share of liner$_{t}$+1)",
-                               "log(share of special$_{b}$ *share of special$_{t}$+1)",
-                               "log(share of tramper$_{b}$ *share of tramper$_{t}$+1)",
-                               "log(share of tanker$_{b}$ *share of tanker$_{t}$+1)", 
-                               "same type","Intercept"),
-          add.lines = list(c("Model", "Logit", "Logit",
-                             "Logit","Logit","OLS"
-                             )),
-          omit.stat = c("f", "ll"),
-          model.names = FALSE,
-          out = table_name
-          )
 ```
-
 
 \begin{table}[!ht]
 \scriptsize
@@ -795,6 +711,183 @@ x <- stargazer(res1,res2,res3,res4,res_LPM,
 \input{../figuretable/shipping_market_stats_table.tex}
 \end{center}
 \end{table}
+
+
+## (Table 4) Regression
+
+```{r, echo=FALSE, results = 'hide', out.width="50%"}
+
+# construct data for preliminary regression
+buyer_id <- 
+  datGroup2$id
+target_id <-
+  datGroup2$id
+id_new <- 
+  expand.grid(buyer_id,
+              target_id)
+colnames(id_new) <-
+  c("buyer_id",
+    "target_id")
+datGroup3 <- id_new %>% 
+  dplyr::full_join(datGroup2,
+                   by = c("buyer_id" = "id")) %>%
+  dplyr::full_join(datGroup2,
+                   by = c("target_id" = "id")) %>% 
+  dplyr::filter(buyer_id != target_id) %>% 
+  #dplyr::select(group.x,group.y) %>% 
+  #dplyr::filter(is.na(type)!= 1) %>% 
+  dplyr::mutate(match = 
+                  ifelse(group.x == group.y, 1, 0)) %>% 
+  dplyr::mutate(Fuji_xy =
+                  ifelse(Fuji.x == Fuji.y, 1, 0)) %>% 
+  dplyr::mutate(Kogin_xy =
+                  ifelse(Kogin.x == Kogin.y, 1, 0)) %>% 
+  dplyr::mutate(Chogin_xy =
+                  ifelse(Chogin.x == Chogin.y, 1, 0)) %>% 
+  dplyr::mutate(Yasuda_xy =
+                  ifelse(Yasuda.x == Yasuda.y, 1, 0)) %>% 
+  dplyr::mutate(Daiichi_xy = 
+                  ifelse(Daiichi.x == Daiichi.y, 1, 0)) %>% 
+  dplyr::mutate(Mitsui_xy = 
+                  ifelse(Mitsui.x == Mitsui.y, 1, 0)) %>% 
+  dplyr::mutate(MitsuiShintaku_xy =
+                  ifelse(MitsuiShintaku.x == MitsuiShintaku.y, 1, 0)) %>% 
+  dplyr::mutate(Sumitomo_xy = 
+                  ifelse(Sumitomo.x == Sumitomo.y, 1, 0)) %>% 
+  dplyr::mutate(SumitomoShintaku_xy =
+                  ifelse(SumitomoShintaku.x == SumitomoShintaku.y, 1, 0)) %>% 
+  dplyr::mutate(Mitsubishi_xy =
+                  ifelse(Mitsubishi.x == Mitsubishi.y, 1, 0)) %>% 
+  dplyr::mutate(Kangin = 
+                  ifelse(Kangin.x == Kangin.y, 1, 0)) %>% 
+  dplyr::mutate(MitsubishiShintaku_xy = 
+                  ifelse(MitsubishiShintaku.x == MitsubishiShintaku.y, 1, 0)) %>% 
+  dplyr::mutate(Kobe_xy = 
+                  ifelse(Kobe.x == Kobe.y, 1, 0)) %>% 
+  dplyr::mutate(Daiwa_xy = 
+                  ifelse(Daiwa.x == Daiwa.y, 1, 0)) %>% 
+  dplyr::mutate(Sanwa_xy = 
+                  ifelse(Sanwa.x == Sanwa.y, 1, 0)) %>%
+  dplyr::mutate(Tokai_xy = 
+                  ifelse(Tokai.x == Tokai.y, 1, 0)) %>% 
+  dplyr::mutate(YasudaShintaku_xy = 
+                  ifelse(YasudaShintaku.x == YasudaShintaku.y, 1, 0)) %>%
+  dplyr::mutate(others_xy = 
+                  ifelse(others.x == others.y, 1, 0)) 
+datGroup3 <- 
+  datGroup3 %>% 
+  replace(is.na(.), 0) %>%
+  dplyr::mutate(bank_coverage = 
+                  Fuji_xy + Kogin_xy +
+                  Chogin_xy + Yasuda_xy + 
+                  Daiichi_xy + Mitsui_xy +
+                  MitsuiShintaku_xy + Sumitomo_xy +
+                  SumitomoShintaku_xy +
+                  Mitsubishi_xy + Kangin + 
+                  MitsubishiShintaku_xy + Kobe_xy +
+                  Daiwa_xy + Sanwa_xy + Tokai_xy +
+                  YasudaShintaku_xy + others_xy) %>% 
+  dplyr::mutate(bank_coverage_ratio = bank_coverage/19) %>% 
+  dplyr::mutate(same_type = 
+                  ifelse(firm_type.x == firm_type.y, 1, 0))
+
+res1 <- 
+  glm(match ~ 
+        log(liner.x*liner.y+1) +
+        log(tramper.x*tramper.y+1) +
+        log(special.x*special.y+1) +
+        log(tanker.x*tanker.y+1) +
+        log(total.x*total.y+1),
+      data = datGroup3, 
+      family = "binomial")
+res2 <-
+  glm(match ~ bank_coverage_ratio +
+        log(HHI.x*HHI.y+1) + 
+        log(share_liner.x*share_liner.y+1) +
+        log(share_special.x*share_special.y+1) +
+        log(share_tramper.x*share_tramper.y+1) +
+        log(share_tanker.x*share_tanker.y+1),
+      data = datGroup3,
+      family = "binomial")
+res3 <- 
+  glm(match ~ log(liner.x*liner.y+1) +
+        log(tramper.x*tramper.y+1) +
+        log(special.x*special.y+1) + 
+        log(tanker.x*tanker.y+1) +
+        log(total.x*total.y+1) +
+        bank_coverage_ratio + 
+        log(HHI.x*HHI.y+1) +
+        log(share_liner.x*share_liner.y+1) +
+        log(share_special.x*share_special.y+1) + 
+        log(share_tramper.x*share_tramper.y+1) +
+        log(share_tanker.x*share_tanker.y+1),
+      data = datGroup3,
+      family = "binomial")
+res4 <-
+  glm(match ~ log(liner.x*liner.y+1) +
+        log(tramper.x*tramper.y+1) +
+        log(special.x*special.y+1) +
+        log(tanker.x*tanker.y+1) +
+        log(total.x*total.y+1) +
+        bank_coverage_ratio +
+        log(HHI.x*HHI.y+1) + 
+        log(share_liner.x*share_liner.y+1) +
+        log(share_special.x*share_special.y+1) + 
+        log(share_tramper.x*share_tramper.y+1) +
+        log(share_tanker.x*share_tanker.y+1) +
+        same_type,
+      data = datGroup3, 
+      family = "binomial")
+res_LPM <- 
+  glm(match ~ log(liner.x*liner.y+1) +
+        log(tramper.x*tramper.y+1) +
+        log(special.x*special.y+1) + 
+        log(tanker.x*tanker.y+1) +
+        log(total.x*total.y+1) +
+        bank_coverage_ratio +
+        log(HHI.x*HHI.y+1) +
+        log(share_liner.x*share_liner.y+1) +
+        log(share_special.x*share_special.y+1) + 
+        log(share_tramper.x*share_tramper.y+1) +
+        log(share_tanker.x*share_tanker.y+1) +
+        same_type,
+      data = datGroup3)
+table_name <-
+  "../figuretable/regression_matching.tex"
+x <-
+  stargazer(res1,
+            res2,
+            res3,
+            res4,
+            res_LPM,
+            header = FALSE,
+            float = FALSE,
+            type = "latex",
+            digits = 3,
+            dep.var.labels = c("1(match)"),
+            covariate.labels = c("log(liner$_{b}$ *liner$_{t}$+1)",
+                               "log(tramper$_{b}$ *tramper$_{t}$+1)",
+                               "log(special$_{b}$ *special$_{t}$+1)",
+                               "log(tanker$_{b}$ *tanker$_{t}$+1)",
+                               "log(total$_{b}$ *total$_{t}$+1)",
+                               "bank coverage similarity ratio",
+                               "log(HHI$_{b}$ *HHI$_{t}$+1)",
+                               "log(share of liner$_{b}$ *share of liner$_{t}$+1)",
+                               "log(share of special$_{b}$ *share of special$_{t}$+1)",
+                               "log(share of tramper$_{b}$ *share of tramper$_{t}$+1)",
+                               "log(share of tanker$_{b}$ *share of tanker$_{t}$+1)", 
+                               "same type","Intercept"),
+            add.lines = list(c("Model",
+                               "Logit", 
+                               "Logit",
+                               "Logit",
+                               "Logit",
+                               "OLS")),
+          omit.stat = c("f", "ll"),
+          model.names = FALSE,
+          out = table_name
+          )
+```
 
 
 
@@ -808,33 +901,46 @@ x <- stargazer(res1,res2,res3,res4,res_LPM,
 \end{table}
 
 
+## (Table 2) Summary of total tonnage size for each group
+
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
-datGroup2 <- datGroup2[,-c(9:26)]
-datGroup3 <- datGroup2 %>% 
+datGroup2 <-
+  datGroup2[,-c(9:26)]
+datGroup3 <-
+  datGroup2 %>% 
   dplyr::mutate(type = recode(type, 
                                  "合併会社"="(1) main",
                                  "系列会社"="(2) affiliate",
                                  "専属会社"="(3) wholly-controlled",
                                  "グループ外"="unmatched"
                                  )) %>% 
-  dplyr::select(-name,-firm_type) %>% 
-  dplyr::select(id, type, group, everything()) %>% 
+  dplyr::select(-name,
+                -firm_type) %>% 
+  dplyr::select(id, 
+                type,
+                group, 
+                everything()) %>% 
   dplyr::group_by(group) %>% 
   dplyr::mutate(group_id = cur_group_id()) %>% 
   dplyr::mutate(group_total_tonnage = sum(total)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(group_id)
-write.csv(x=datGroup3, file="../output/data_for_maximum_rank_estimation.csv")
+# write.csv(x=datGroup3, 
+#           file="../output/data_for_maximum_rank_estimation.csv")
 
-datGroup3_table <- datGroup3 %>% 
+datGroup3_table <- 
+  datGroup3 %>% 
   dplyr::filter(total > 0) %>% 
-  dplyr::group_by(group, type) %>% 
+  dplyr::group_by(group, 
+                  type) %>% 
   dplyr::summarise(total_tonnage = sum(total),
                    num_of_firms = dplyr::n())
-total_tonnage <- datGroup3_table %>% 
+total_tonnage <-
+  datGroup3_table %>% 
   dplyr::group_by(group) %>% 
   dplyr::summarise(total_tonnage_group = sum(total_tonnage))
-datGroup3_table <- cbind(datGroup3_table,
+datGroup3_table <- 
+  cbind(datGroup3_table,
       c(total_tonnage$total_tonnage_group[1], "", "",
         total_tonnage$total_tonnage_group[2], "", "",
         total_tonnage$total_tonnage_group[3], "", "",
@@ -842,13 +948,19 @@ datGroup3_table <- cbind(datGroup3_table,
         total_tonnage$total_tonnage_group[5], "", "",
         total_tonnage$total_tonnage_group[6], "", "",
         total_tonnage$total_tonnage_group[7]))
-colnames(datGroup3_table) <- c("group","firm type", "total tonnage",
-                           "number of firms", "total tonnage in a group")
-datGroup3_table <- datGroup3_table[,-1]
-datGroup3_table <- rbind(datGroup3_table,
-                     c("",sum(datGroup3_table[,2]),
-                       sum(datGroup3_table[,3]),
-                       sum(datGroup3_table[,2])))
+colnames(datGroup3_table) <-
+  c("group",
+    "firm type", 
+    "total tonnage",
+    "number of firms",
+    "total tonnage in a group")
+datGroup3_table <- 
+  datGroup3_table[,-1]
+datGroup3_table <-
+  rbind(datGroup3_table,
+        c("",sum(datGroup3_table[,2]),
+          sum(datGroup3_table[,3]),
+          sum(datGroup3_table[,2])))
 table_name <-
   "../figuretable/total_tonnage_size_group_table.tex"
 x <- Hmisc::latex(
@@ -889,7 +1001,8 @@ x <- Hmisc::latex(
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 denom = 1e6
-datGroup3_for_maximum_rank_estimation <- datGroup3 %>% 
+datGroup3_for_maximum_rank_estimation <- 
+  datGroup3 %>% 
   dplyr::mutate(liner = liner/denom,
                 special = special/denom,
                 tramper = tramper/denom,
@@ -903,7 +1016,11 @@ write.csv(x=datGroup3_for_maximum_rank_estimation,
 
 
 
-# Sankey diagram based on estimated parameters
+# Sankey diagram based on estimated parameters 
+
+## (Figure 9) Merger simulation across different subsidy threshold and amount.
+
+Sankey diagrams need to be exported from a clipboard. For the draft, I added information of x-axis (subsidy threshold and amount) manually to the figures generated here. The data input of simulated merger configurations is computed on ship_merger_counterfactual.jl.
 
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
@@ -912,30 +1029,37 @@ library(networkD3)
 library(dplyr)
  
 # A connection data frame is a list of flows with intensity for each flow
-links <- data.frame(
-  source=c("group_A","group_A", "group_B", "group_C", "group_C", "group_E"), 
-  target=c("group_C","group_D", "group_E", "group_F", "group_G", "group_H"), 
-  value=c(2, 1, 2, 3, 1, 3)
+links <- 
+  data.frame(
+    source=c("group_A", "group_A", "group_B",
+             "group_C", "group_C", "group_E"), 
+    target=c("group_C", "group_D", "group_E",
+             "group_F", "group_G", "group_H"), 
+    value=c(2, 1, 2, 3, 1, 3)
   )
  
 # From these flows we need to create a node data frame: it lists every entities involved in the flow
-nodes <- data.frame(
-  name=c(as.character(links$source), 
-  as.character(links$target)) %>% unique()
-)
+nodes <-
+  data.frame(
+    name=c(as.character(links$source), 
+           as.character(links$target)) %>% unique()
+    )
  
 # With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
-links$IDsource <- match(links$source, nodes$name)-1 
-links$IDtarget <- match(links$target, nodes$name)-1
+links$IDsource <- 
+  match(links$source, nodes$name)-1 
+links$IDtarget <- 
+  match(links$target, nodes$name)-1
  
 # Make the Network
-p <- networkD3::sankeyNetwork(Links = links,
-                              Nodes = nodes,
-                              Source = "IDsource",
-                              Target = "IDtarget",
-                              Value = "value",
-                              NodeID = "name", 
-                              sinksRight=FALSE)
+p <- 
+  networkD3::sankeyNetwork(Links = links,
+                           Nodes = nodes,
+                           Source = "IDsource",
+                           Target = "IDtarget",
+                           Value = "value",
+                           NodeID = "name", 
+                           sinksRight=FALSE)
 # save the widget
 # library(htmlwidgets)
 # saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankeyBasiGroup12.html"))
@@ -945,31 +1069,46 @@ p <- networkD3::sankeyNetwork(Links = links,
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 # A connection data frame is a list of flows with intensity for each flow
-links <- data.frame(
-  source=c("Nippon Yusen (id 1)","Mitsubishi Kaiun (id 2)",
-           "Osaka Syosen (id 3-9)", "Mitsui Senpaku (id 4-10)",
-           "Nitto Syosen (id 5-13)", "Daido Kaiun (id 6-14)",
-           "Kawasaki Kisen (id 7-15)", "Iino Kaiun (id 8-16)",
-           "Yamashita Kisen (id 9-17)", "Shin-nihon Kisen (id 10-18)",
-           "Nihon Yusosen (id 11-23)", "Nissan Kisen (id 12-24)"), 
-  target=c("Nippon Yusen ","Nippon Yusen ", 
-           "Mitsui O.S.K. Line", "Mitsui O.S.K. Line",
-           "Japan Lines", "Japan Lines",
-           "Kawasaki Kisen Kaisha", "Kawasaki Kisen Kaisha",
-           "Yamashita-Shinnihon Kisen", "Yamashita-Shinnihon Kisen",
+links <- 
+  data.frame(
+  source=c("Nippon Yusen (id 1)",
+           "Mitsubishi Kaiun (id 2)",
+           "Osaka Syosen (id 3-9)", 
+           "Mitsui Senpaku (id 4-10)",
+           "Nitto Syosen (id 5-13)",
+           "Daido Kaiun (id 6-14)",
+           "Kawasaki Kisen (id 7-15)",
+           "Iino Kaiun (id 8-16)",
+           "Yamashita Kisen (id 9-17)",
+           "Shin-nihon Kisen (id 10-18)",
+           "Nihon Yusosen (id 11-23)", 
+           "Nissan Kisen (id 12-24)"), 
+  target=c("Nippon Yusen ",
+           "Nippon Yusen ", 
+           "Mitsui O.S.K. Line",
+           "Mitsui O.S.K. Line",
+           "Japan Lines",
+           "Japan Lines",
+           "Kawasaki Kisen Kaisha", 
+           "Kawasaki Kisen Kaisha",
+           "Yamashita-Shinnihon Kisen",
+           "Yamashita-Shinnihon Kisen",
            "Showa Line", "Showa Line"), 
   value=c(1, 1, 1, 1, 1, 1)
   )
  
 # From these flows we need to create a node data frame: it lists every entities involved in the flow
-nodes <- data.frame(
+nodes <-
+  data.frame(
   name=c(as.character(links$source), 
   as.character(links$target)) %>% unique()
 )
  
 # With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
-links$IDsource <- match(links$source, nodes$name)-1 
-links$IDtarget <- match(links$target, nodes$name)-1
+links$IDsource <-
+  match(links$source, nodes$name)-1 
+links$IDtarget <-
+  match(links$target, nodes$name)-1
 
 
 my_color <- 'd3.scaleOrdinal() .domain(["Nippon Yusen (id 1)","Mitsubishi Kaiun (id 2)",
@@ -981,14 +1120,15 @@ my_color <- 'd3.scaleOrdinal() .domain(["Nippon Yusen (id 1)","Mitsubishi Kaiun 
 
 
 # Make the Network
-p <- networkD3::sankeyNetwork(Links = links,
-                              Nodes = nodes,
-                              Source = "IDsource",
-                              Target = "IDtarget",
-                              Value = "value",
-                              NodeID = "name",
-                              colourScale=my_color,
-                              sinksRight=FALSE)
+p <- 
+  networkD3::sankeyNetwork(Links = links,
+                           Nodes = nodes,
+                           Source = "IDsource",
+                           Target = "IDtarget",
+                           Value = "value",
+                           NodeID = "name",
+                           colourScale = my_color,
+                           sinksRight = FALSE)
 p
 # save the widget
 # library(htmlwidgets)
@@ -997,8 +1137,9 @@ p
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 # A connection data frame is a list of flows with intensity for each flow
-links <- data.frame(
-  source=c("Nippon Yusen (id 1)","Mitsubishi Kaiun (id 2)",
+links <- 
+  data.frame(
+  source = c("Nippon Yusen (id 1)","Mitsubishi Kaiun (id 2)",
            "Osaka Syosen (id 3-9)", "Mitsui Senpaku (id 4-10)",
            "Nitto Syosen (id 5-13)", "Daido Kaiun (id 6-14)",
            "Kawasaki Kisen (id 7-15)", "Iino Kaiun (id 8-16)",
@@ -1046,7 +1187,7 @@ links <- data.frame(
            "Group7 (amount=2.0)", "Group5 (amount=2.0)",
            "Group1 (amount=2.0)", "Group3 (amount=2.0)",
            "Group8 (amount=2.0)", "Group5 (amount=2.0)"), 
-  target=c(# 1st layer
+  target = c(# 1st layer
            "Group1 (amount=0.1)", "Group1 (amount=0.1)", 
            "Group1 (amount=0.1)", "Group1 (amount=0.1)",
            "Group1 (amount=0.1)", "Group1 (amount=0.1)",
@@ -1096,7 +1237,7 @@ links <- data.frame(
            "Group1 (amount=3.0)", "Group3 (amount=3.0)",
            "Group8 (amount=3.0)", "Group5 (amount=3.0)"
            ), 
-  value=c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  value = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           # 1st layer
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           # 2nd layer
@@ -1112,32 +1253,37 @@ links <- data.frame(
   )
 
 # From these flows we need to create a node data frame: it lists every entities involved in the flow
-nodes <- data.frame(
-  name=c(as.character(links$source), 
+nodes <- 
+  data.frame(
+  name = c(as.character(links$source), 
   as.character(links$target)) %>% unique()
 )
  
 # With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
-links$IDsource <- match(links$source, nodes$name)-1 
-links$IDtarget <- match(links$target, nodes$name)-1
+links$IDsource <-
+  match(links$source, nodes$name)-1 
+links$IDtarget <-
+  match(links$target, nodes$name)-1
  
 # Make the Network
-p <- networkD3::sankeyNetwork(Links = links,
-                              Nodes = nodes,
-                              Source = "IDsource",
-                              Target = "IDtarget",
-                              Value = "value",
-                              NodeID = "name", 
-                              colourScale=my_color,
-                              sinksRight=FALSE)
+p <- 
+  networkD3::sankeyNetwork(Links = links,
+                           Nodes = nodes,
+                           Source = "IDsource",
+                           Target = "IDtarget",
+                           Value = "value",
+                           NodeID = "name", 
+                           colourScale = my_color,
+                           sinksRight = FALSE)
 p
 
 ```
 
 ```{r, echo=FALSE, results = 'hide', out.width="50%"}
 # A connection data frame is a list of flows with intensity for each flow
-links <- data.frame(
-  source=c("Nippon Yusen (id 1)","Mitsubishi Kaiun (id 2)",
+links <-
+  data.frame(
+  source = c("Nippon Yusen (id 1)","Mitsubishi Kaiun (id 2)",
            "Osaka Syosen (id 3-9)", "Mitsui Senpaku (id 4-10)",
            "Nitto Syosen (id 5-13)", "Daido Kaiun (id 6-14)",
            "Kawasaki Kisen (id 7-15)", "Iino Kaiun (id 8-16)",
@@ -1179,7 +1325,7 @@ links <- data.frame(
            "Group12 (threshold=5mil)", "Group12 (threshold=5mil)",
            "unmatched11 (threshold=5mil)", "unmatched12 (threshold=5mil)"
            ), 
-  target=c(# 1st layer
+  target = c(# 1st layer
            "Group1 (threshold=1mil)", "Group4 (threshold=1mil)", 
            "Group3 (threshold=1mil)", "Group1 (threshold=1mil)",
            "Group2 (threshold=1mil)", "Group3 (threshold=1mil)",
@@ -1222,7 +1368,7 @@ links <- data.frame(
            "Group13 (threshold=7.5mil)", "Group13 (threshold=7.5mil)",
            "Group13 (threshold=7.5mil)", "Group13 (threshold=7.5mil)"
            ), 
-  value=c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  value = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           # 1st layer
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           # 2nd layer
@@ -1236,24 +1382,28 @@ links <- data.frame(
   )
 
 # From these flows we need to create a node data frame: it lists every entities involved in the flow
-nodes <- data.frame(
+nodes <- 
+  data.frame(
   name=c(as.character(links$source), 
   as.character(links$target)) %>% unique()
 )
  
 # With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
-links$IDsource <- match(links$source, nodes$name)-1 
-links$IDtarget <- match(links$target, nodes$name)-1
+links$IDsource <-
+  match(links$source, nodes$name)-1 
+links$IDtarget <-
+  match(links$target, nodes$name)-1
  
 # Make the Network
-p <- networkD3::sankeyNetwork(Links = links,
-                              Nodes = nodes,
-                              Source = "IDsource",
-                              Target = "IDtarget",
-                              Value = "value",
-                              NodeID = "name", 
-                              colourScale=my_color,
-                              sinksRight=FALSE)
+p <- 
+  networkD3::sankeyNetwork(Links = links,
+                           Nodes = nodes,
+                           Source = "IDsource",
+                           Target = "IDtarget",
+                           Value = "value",
+                           NodeID = "name", 
+                           colourScale = my_color,
+                           sinksRight = FALSE)
 p
 ```
 
