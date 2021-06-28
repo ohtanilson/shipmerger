@@ -1,15 +1,21 @@
 rm(list = ls())
-# Overview
+# Overview ----
 
-# This file generates the following figures and tables.
+# This file generates the following figures and tables after cleaning raw data.
 # 
 # - Figures 2, 3, 4, 5, and 9.
 # - Tables 2, 3, 4, and 5.
 # 
-# All raw data must be located in input folder. All outputs will be located in figuretable folder or output folder.
+# All raw data must be located in input folder. 
+# All outputs will be located in figuretable folder or output folder. 
 # 
 # Note that Table 1 does not contain the information about data and
 # Figures 6, 7, and 8 are generated in ship_merger_score_estimation.jl.
+#
+# Raw data includes firm names in Japanese character. 
+# Some of acquired small firms cannot be translated into English because I could not find how the names were pronounced correctly even in Japanese.
+# Thus, id column in output/data_for_maximum_rank_estimation.csv corresponds with firm identity.
+# For additional replications, please refer to output/data_for_maximum_rank_estimation.csv like my main estimation part in Julia.
 
 library(tidyr)
 library(dplyr)
@@ -68,7 +74,7 @@ ggplot2::ggsave(filename = figure_name,
 # Load main data ----
 
 data <- 
-  readr::read_csv("input/210205firmdata_processed.csv")
+  readr::read_csv("input/210627firmdata_processed.csv")
 data <- 
   data[,c(-3,-4,-6:-11,-16,-18)] # pick up D/W
 total_ton <- 
@@ -125,10 +131,10 @@ total_tonnage_table <-
                   liner + special + tramper + tanker) %>% 
   dplyr::mutate(firm_type = 
                   recode(type, 
-                         "合併会社"="main",
-                         "系列会社"="affiliate",
-                         "専属会社"="wholly-controlled",
-                         "グループ外"="unmatched"
+                         "合併会社" = "main",
+                         "系列会社" = "affiliate",
+                         "専属会社" = "wholly-controlled",
+                         "グループ外" = "unmatched"
                   ))
 x <- 
   ggplot(total_tonnage_table,
@@ -165,10 +171,10 @@ total_tonnage_table <-
                   liner + special + tramper + tanker) %>% 
   dplyr::mutate(firm_type = 
                   recode(type, 
-                         "合併会社"="main",
-                         "系列会社"="affiliate",
-                         "専属会社"="wholly-controlled",
-                         "グループ外"="unmatched"
+                         "合併会社" = "main",
+                         "系列会社" = "affiliate",
+                         "専属会社" = "wholly-controlled",
+                         "グループ外" = "unmatched"
                   ))
 x <- 
   ggplot(total_tonnage_table,
@@ -204,7 +210,7 @@ colnames(data) =
     "liner","special","tramper","tanker",
     "group",bank_names)
 
-datGroup2 <- 
+data_english <- 
   data %>% 
   dplyr::filter(is.na(type)!= 1) %>% 
   dplyr::mutate(special = ifelse(is.na(special) == 1,
@@ -213,14 +219,14 @@ datGroup2 <-
                                  0, tramper)) %>%
   dplyr::mutate(total = liner + special + tramper + tanker) %>% 
   dplyr::mutate(firm_type = recode(type, 
-                                   "合併会社"="main",
-                                   "系列会社"="affiliate",
-                                   "専属会社"="wholly-controlled",
-                                   "グループ外"="unmatched"
+                                   "合併会社" = "main",
+                                   "系列会社" = "affiliate",
+                                   "専属会社" = "wholly-controlled",
+                                   "グループ外" = "unmatched"
   )) %>% 
   dplyr::filter(group != "nodata")
-datGroup2$group <- 
-  factor(datGroup2$group, 
+data_english$group <- 
+  factor(data_english$group, 
          levels = c("Nippon Yusen",
                     "Mitsui O.S.K. Lines",
                     "Japan Lines", 
@@ -235,18 +241,18 @@ datGroup2$group <-
 
 ## (Figure 2) Configuration of tonnage size for each carrier type ----
 
-datGroup6 <- 
-  datGroup2 %>% 
+data_english_extracted <- 
+  data_english %>% 
   dplyr::select(liner,
                 tramper,
                 special,
                 tanker,
                 firm_type,
                 group)
-datGroup6 <- 
-  reshape2::melt(datGroup6)
-datGroup7 <- 
-  datGroup6 %>% 
+data_english_extracted <- 
+  reshape2::melt(data_english_extracted)
+temp <- 
+  data_english_extracted %>% 
   dplyr::group_by(group,
                   variable) %>% 
   dplyr::summarise(value = sum(value)) %>% 
@@ -254,7 +260,7 @@ datGroup7 <-
   dplyr::mutate(group_sum = sum(value)) %>% 
   dplyr::ungroup()
 x <-
-  ggplot(datGroup7,
+  ggplot(temp,
          aes(x = "", y = value/10000, fill = variable)) + 
   geom_bar(width = 1, stat = "identity", colour = "black") +
   #ggtitle("Histogram of tonnage size for each merger group") +
@@ -281,11 +287,11 @@ ggsave(filename = figure_name,
 
 ## (Figure 3) Distribution of tonnage size for each firm type. ----
 
-datGroup2_matched <- 
-  datGroup2 %>% 
+data_english_matched <- 
+  data_english %>% 
   dplyr::filter(group != "unmatched")
 x <- 
-  ggplot(datGroup2_matched, 
+  ggplot(data_english_matched, 
          aes(x = total/10000, fill = firm_type)) + 
   geom_histogram(position="dodge", 
                  alpha=0.8, binwidth = 6, colour = "black") +
@@ -311,18 +317,18 @@ ggsave(filename = figure_name,
 
 ## (Figure 4) Distribution of tonnage size for each carrier type. ----
 
-datGroup6 <- 
-  datGroup2 %>% 
+data_english_extracted <- 
+  data_english %>% 
   dplyr::select(liner,
                 tramper,
                 special,
                 tanker,
                 firm_type,
                 group)
-datGroup6 <- 
-  reshape2::melt(datGroup6)
+data_english_extracted <- 
+  reshape2::melt(data_english_extracted)
 x <- 
-  ggplot(datGroup6, 
+  ggplot(data_english_extracted, 
          aes(x = value/10000, fill = variable)) + 
   geom_histogram(position="dodge", alpha=0.8,
                  binwidth = 8, colour = "black") +
@@ -348,7 +354,7 @@ ggsave(filename = figure_name,
 ## (Figure 5) Pie charts ----
 
 g5_liner <- 
-  ggplot(datGroup2, aes(x ="", y = liner/10000, fill = group)) + 
+  ggplot(data_english, aes(x ="", y = liner/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   theme_classic() +
   ggtitle("Liner") +
@@ -358,7 +364,7 @@ g5_liner <-
   coord_polar("y", start=0) +
   theme(legend.position = "none")
 g5_tramper <- 
-  ggplot(datGroup2, aes(x ="", y = tramper/10000, fill = group)) + 
+  ggplot(data_english, aes(x ="", y = tramper/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   theme_classic() +
   ggtitle("Tramper") +
@@ -368,7 +374,7 @@ g5_tramper <-
   coord_polar("y", start=0) +
   theme(legend.position = "none")
 g5_special <-
-  ggplot(datGroup2, aes(x ="", y = special/10000, fill = group)) + 
+  ggplot(data_english, aes(x ="", y = special/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   theme_classic() +
   ggtitle("Special") +
@@ -378,7 +384,7 @@ g5_special <-
   coord_polar("y", start=0) +
   theme(legend.position = "none")
 g5_tanker <-
-  ggplot(datGroup2, aes(x ="", y = tanker/10000, fill = group)) + 
+  ggplot(data_english, aes(x ="", y = tanker/10000, fill = group)) + 
   geom_bar(width = 1, stat = "identity") +
   theme_classic() +
   ggtitle("Tanker") +
@@ -413,8 +419,8 @@ ggsave(filename = figure_name,
 
 ## Construct share variables ----
 
-datGroup2 <- 
-  datGroup2 %>% 
+data_english <- 
+  data_english %>% 
   dplyr::mutate(HHI = (liner/total)^2+(special/total)^2+
                   (tramper/total)^2+(tanker/total)^2) %>% 
   dplyr::mutate(share_liner = liner/total) %>% 
@@ -427,7 +433,7 @@ datGroup2 <-
 
 # construct summary statistics table
 temp <- 
-  datGroup2 %>%
+  data_english %>%
   dplyr::mutate(tonnage_size = total/1000000,
                 tonnage_size_liner = liner/1000000,
                 tonnage_size_special = special/1000000,
@@ -505,19 +511,20 @@ x <- Hmisc::latex(
 
 # construct data for preliminary regression
 buyer_id <- 
-  datGroup2$id
+  data_english$id
 target_id <-
-  datGroup2$id
+  data_english$id
 id_new <- 
   expand.grid(buyer_id,
               target_id)
 colnames(id_new) <-
   c("buyer_id",
     "target_id")
-datGroup3 <- id_new %>% 
-  dplyr::full_join(datGroup2,
+data_english_for_reg <- 
+  id_new %>% 
+  dplyr::full_join(data_english,
                    by = c("buyer_id" = "id")) %>%
-  dplyr::full_join(datGroup2,
+  dplyr::full_join(data_english,
                    by = c("target_id" = "id")) %>% 
   dplyr::filter(buyer_id != target_id) %>% 
   #dplyr::select(group.x,group.y) %>% 
@@ -560,8 +567,8 @@ datGroup3 <- id_new %>%
                   ifelse(YasudaShintaku.x == YasudaShintaku.y, 1, 0)) %>%
   dplyr::mutate(others_xy = 
                   ifelse(others.x == others.y, 1, 0)) 
-datGroup3 <- 
-  datGroup3 %>% 
+data_english_for_reg <- 
+  data_english_for_reg %>% 
   replace(is.na(.), 0) %>%
   dplyr::mutate(bank_coverage = 
                   Fuji_xy + Kogin_xy +
@@ -584,7 +591,7 @@ res1 <-
         log(special.x*special.y+1) +
         log(tanker.x*tanker.y+1) +
         log(total.x*total.y+1),
-      data = datGroup3, 
+      data = data_english_for_reg, 
       family = "binomial")
 res2 <-
   glm(match ~ bank_coverage_ratio +
@@ -593,7 +600,7 @@ res2 <-
         log(share_special.x*share_special.y+1) +
         log(share_tramper.x*share_tramper.y+1) +
         log(share_tanker.x*share_tanker.y+1),
-      data = datGroup3,
+      data = data_english_for_reg,
       family = "binomial")
 res3 <- 
   glm(match ~ log(liner.x*liner.y+1) +
@@ -607,7 +614,7 @@ res3 <-
         log(share_special.x*share_special.y+1) + 
         log(share_tramper.x*share_tramper.y+1) +
         log(share_tanker.x*share_tanker.y+1),
-      data = datGroup3,
+      data = data_english_for_reg,
       family = "binomial")
 res4 <-
   glm(match ~ log(liner.x*liner.y+1) +
@@ -622,7 +629,7 @@ res4 <-
         log(share_tramper.x*share_tramper.y+1) +
         log(share_tanker.x*share_tanker.y+1) +
         same_type,
-      data = datGroup3, 
+      data = data_english_for_reg, 
       family = "binomial")
 res_LPM <- 
   glm(match ~ log(liner.x*liner.y+1) +
@@ -637,7 +644,7 @@ res_LPM <-
         log(share_tramper.x*share_tramper.y+1) +
         log(share_tanker.x*share_tanker.y+1) +
         same_type,
-      data = datGroup3)
+      data = data_english_for_reg)
 table_name <-
   "figuretable/regression_matching.tex"
 x <-
@@ -677,15 +684,15 @@ x <-
 
 ## (Table 2) Summary of total tonnage size for each group ----
 
-datGroup2 <-
-  datGroup2[,-c(9:26)]
-datGroup3 <-
-  datGroup2 %>% 
+data_english <-
+  data_english[,-c(9:26)]
+data_english_for_reg <-
+  data_english %>% 
   dplyr::mutate(type = recode(type, 
-                              "合併会社"="(1) main",
-                              "系列会社"="(2) affiliate",
-                              "専属会社"="(3) wholly-controlled",
-                              "グループ外"="unmatched"
+                              "合併会社" = "(1) main",
+                              "系列会社" = "(2) affiliate",
+                              "専属会社" = "(3) wholly-controlled",
+                              "グループ外" = "unmatched"
   )) %>% 
   dplyr::select(-name,
                 -firm_type) %>% 
@@ -698,22 +705,22 @@ datGroup3 <-
   dplyr::mutate(group_total_tonnage = sum(total)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(group_id)
-# write.csv(x=datGroup3, 
+# write.csv(x=data_english_for_reg, 
 #           file="output/data_for_maximum_rank_estimation.csv")
 
-datGroup3_table <- 
-  datGroup3 %>% 
+data_english_for_reg_table <- 
+  data_english_for_reg %>% 
   dplyr::filter(total > 0) %>% 
   dplyr::group_by(group, 
                   type) %>% 
   dplyr::summarise(total_tonnage = sum(total),
                    num_of_firms = dplyr::n())
 total_tonnage <-
-  datGroup3_table %>% 
+  data_english_for_reg_table %>% 
   dplyr::group_by(group) %>% 
   dplyr::summarise(total_tonnage_group = sum(total_tonnage))
-datGroup3_table <- 
-  cbind(datGroup3_table,
+data_english_for_reg_table <- 
+  cbind(data_english_for_reg_table,
         c(total_tonnage$total_tonnage_group[1], "", "",
           total_tonnage$total_tonnage_group[2], "", "",
           total_tonnage$total_tonnage_group[3], "", "",
@@ -721,32 +728,32 @@ datGroup3_table <-
           total_tonnage$total_tonnage_group[5], "", "",
           total_tonnage$total_tonnage_group[6], "", "",
           total_tonnage$total_tonnage_group[7]))
-colnames(datGroup3_table) <-
+colnames(data_english_for_reg_table) <-
   c("group",
     "firm type", 
     "total tonnage",
     "number of firms",
     "total tonnage in a group")
-datGroup3_table <- 
-  datGroup3_table[,-1]
-datGroup3_table <-
-  rbind(datGroup3_table,
-        c("",sum(datGroup3_table[,2]),
-          sum(datGroup3_table[,3]),
-          sum(datGroup3_table[,2])))
+data_english_for_reg_table <- 
+  data_english_for_reg_table[,-1]
+data_english_for_reg_table <-
+  rbind(data_english_for_reg_table,
+        c("",sum(data_english_for_reg_table[,2]),
+          sum(data_english_for_reg_table[,3]),
+          sum(data_english_for_reg_table[,2])))
 table_name <-
   "figuretable/total_tonnage_size_group_table.tex"
 x <- Hmisc::latex(
   file = table_name,
   title = "",
   booktabs = TRUE,
-  object = datGroup3_table,
+  object = data_english_for_reg_table,
   col.just = c("l", "r", "r", "r"),
   center = "none",
   table.env = FALSE,
   #cgroupTexCmd = "itshape",
   #colnamesTexCmd = "itshape",
-  #collabel.just = rep("r", dim(datGroup3_table)[2])#,
+  #collabel.just = rep("r", dim(data_english_for_reg_table)[2])#,
   rgroupTexCmd = "itshape",
   n.rgroup = c(3,3,3,3,3,3,1, 1),
   rgroup = c("Nippon Yusen", 
@@ -763,15 +770,15 @@ x <- Hmisc::latex(
 # Export dataset for maximum rank estimator ----
 
 denom = 1e6
-datGroup3_for_maximum_rank_estimation <- 
-  datGroup3 %>% 
+data_english_for_reg_for_maximum_rank_estimation <- 
+  data_english_for_reg %>% 
   dplyr::mutate(liner = liner/denom,
                 special = special/denom,
                 tramper = tramper/denom,
                 tanker = tanker/denom,
                 total = total/denom,
                 group_total_tonnage = group_total_tonnage/denom) 
-write.csv(x=datGroup3_for_maximum_rank_estimation,
+write.csv(x=data_english_for_reg_for_maximum_rank_estimation,
           file="output/data_for_maximum_rank_estimation.csv")
 
 
