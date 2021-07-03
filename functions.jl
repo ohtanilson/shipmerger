@@ -12,7 +12,7 @@ using Dates
 using DataFramesMeta
 using BlackBoxOptim
 
-export expand_grid, carrier_struct_v1, carrier_mod,
+export expand_grid, shipmerger_struct, carrier_mod,
        #ship_merger_monte_carlo
        TB_toy,IS_outdomain,TB,IS_Sell,IS_Buyer,gen_X_mat,
 	   gen_X_interaction, gen_merger_cost,
@@ -28,7 +28,15 @@ export expand_grid, carrier_struct_v1, carrier_mod,
 	   extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk,
 	   extract_target_covariates_if_ii_is_buyer,
 	   extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk,
-	   extract_buyer_covariates_if_ii_is_buyer
+	   extract_buyer_covariates_if_ii_is_buyer,
+	   # score_b_est_data,
+	   # score_bthis_full_X,
+	   # score_bthis_scale_X_only,
+	   # score_bthis_scale_and_scope_X_only,
+	   # score_bthis_x45678_merger_cost
+	   inner_construct_critical_value_CR_two_variables,
+	   outer_construct_critical_value_CR_two_variables
+
 
 
 function expand_grid(args...)
@@ -59,7 +67,7 @@ function expand_grid(args...)
 	DataFrame(Tables.table(cargs, header = Symbol.(:x, axes(cargs, 2))))
 end
 
-mutable struct carrier_struct_v1
+mutable struct shipmerger_struct
     N::Int64        # number of carrier types in each market
     PN::Int64       # number of possible acquisition bundles in each marke
     X_mat::Array{Float64,2}  # realization of random vector [X_1, X_2, ..., X_S ]
@@ -96,7 +104,7 @@ function carrier_mod(;N::Int64=4,#11,#10,#,9,
     for i =1:PN
         Bundle[i] = string(i-1,base=2,pad=N)
     end
-    m = carrier_struct_v1(N,PN,X_mat,ton_mat,ϵ_post_mat,Bundle,eta,β_0,δ_0,γ_0,ton_dim)
+    m = shipmerger_struct(N,PN,X_mat,ton_mat,ϵ_post_mat,Bundle,eta,β_0,δ_0,γ_0,ton_dim)
     return m
 end
 
@@ -126,7 +134,7 @@ function IS_outdomain(N::Integer,i::Integer,ac::Integer)
     end
 end
 
-function TB(m::carrier_struct_v1, w::Integer)    # (target indx) -> target bundle
+function TB(m::shipmerger_struct, w::Integer)    # (target indx) -> target bundle
     N = m.N
     BD = m.Bundle
     cache_TB = Vector{Int64}(undef,N)
@@ -136,7 +144,7 @@ function TB(m::carrier_struct_v1, w::Integer)    # (target indx) -> target bundl
     return cache_TB
 end
 # function that return true if t choose ac means t sell itself; return false if t acquire ac.
-function IS_Sell(m::carrier_struct_v1,t::Integer,ac::Integer)
+function IS_Sell(m::shipmerger_struct,t::Integer,ac::Integer)
     if sum(TB(m,ac)) == 1
         if TB(m,ac)[t] ==1
             return true
@@ -148,7 +156,7 @@ function IS_Sell(m::carrier_struct_v1,t::Integer,ac::Integer)
     end
 end
 
-function IS_Buyer(m::carrier_struct_v1, t::Integer, ac::Integer)
+function IS_Buyer(m::shipmerger_struct, t::Integer, ac::Integer)
 	if IS_Sell(m,t,ac) == 1
         return false # t is a seller
     else
@@ -160,7 +168,7 @@ function IS_Buyer(m::carrier_struct_v1, t::Integer, ac::Integer)
     end
 end
 
-function gen_X_mat(m::carrier_struct_v1)
+function gen_X_mat(m::shipmerger_struct)
 	ton = m.ton
 	ton_dim = m.ton_dim
 	X_dim = ton_dim*2 # size and share
@@ -176,7 +184,7 @@ function gen_X_mat(m::carrier_struct_v1)
 	return X_mat
 end
 
-function gen_X_interaction(m::carrier_struct_v1, X_mat::Array{Float64,2})
+function gen_X_interaction(m::shipmerger_struct, X_mat::Array{Float64,2})
 	dim_X_mat = size(X_mat)[2]
 	dim_X_mat_share = Int((dim_X_mat - 1)/2)
 	X_interaction = zeros(m.N, m.PN, dim_X_mat)
@@ -211,23 +219,35 @@ function gen_X_interaction(m::carrier_struct_v1, X_mat::Array{Float64,2})
 	return X_interaction, target_X
 end
 
-function gen_merger_cost(m::carrier_struct_v1)
+function gen_merger_cost(m::shipmerger_struct;
+	                     merger_cost_type = "only_num_of_targets")
 	ton = m.ton
 	buyer_X = gen_X_mat(m)
 	merger_cost = zeros(m.N,m.PN)
-	for j = 1:m.PN
-		temp_index = TB(m,j)
-		for k = 1:m.N
-			# merger cost
-			num_of_firms_in_coalition = sum(temp_index)
-			total_tonnage = sum(ton[k,:])
-			merger_cost[k,j] = num_of_firms_in_coalition/log(total_tonnage*100)
+	if merger_cost_type == "only_num_of_targets"
+		for j = 1:m.PN
+			temp_index = TB(m,j)
+			for k = 1:m.N
+				# merger cost
+				num_of_firms_in_coalition = sum(temp_index)
+				merger_cost[k,j] = num_of_firms_in_coalition
+			end
+		end
+	elseif merger_cost_type == "num_of_targets_divided_by_buyer_size"
+		for j = 1:m.PN
+			temp_index = TB(m,j)
+			for k = 1:m.N
+				# merger cost
+				num_of_firms_in_coalition = sum(temp_index)
+				total_tonnage = sum(ton[k,:])
+				merger_cost[k,j] = num_of_firms_in_coalition/log(total_tonnage*100)
+			end
 		end
 	end
 	return merger_cost
 end
 
-function gen_subsidy(m::carrier_struct_v1, threshold_tonnage::Any, subsidy_amount::Any; subsidy_type::Any)
+function gen_subsidy(m::shipmerger_struct, threshold_tonnage::Any, subsidy_amount::Any; subsidy_type::Any)
 	ton = m.ton
 	subsidy_index_mat = zeros(m.N,m.PN)
 	total_tonnage_in_coalition = zeros(m.N,m.PN)
@@ -251,7 +271,7 @@ function gen_subsidy(m::carrier_struct_v1, threshold_tonnage::Any, subsidy_amoun
 	return subsidy_index_mat, total_tonnage_in_coalition
 end
 
-function gen_utility_matrix(m::carrier_struct_v1, X_interaction::Any, threshold_tonnage::Any, subsidy_amount::Any; subsidy_type::Any)
+function gen_utility_matrix(m::shipmerger_struct, X_interaction::Any, threshold_tonnage::Any, subsidy_amount::Any; subsidy_type::Any)
 	β = m.β_0
 	γ = m.γ_0
 	δ = m.δ_0
@@ -289,7 +309,7 @@ function gen_utility_matrix(m::carrier_struct_v1, X_interaction::Any, threshold_
 	return utility
 end
 
-function solve_equilibrium(m::carrier_struct_v1,threshold_tonnage::Any,subsidy_amount::Any; subsidy_type::Any)
+function solve_equilibrium(m::shipmerger_struct,threshold_tonnage::Any,subsidy_amount::Any; subsidy_type::Any)
 	X_interaction,target_X = gen_X_interaction(m, gen_X_mat(m))
 	utility = gen_utility_matrix(m,
 	                             X_interaction,
@@ -306,7 +326,7 @@ function solve_equilibrium(m::carrier_struct_v1,threshold_tonnage::Any,subsidy_a
     JuMP.@variable(model, 0<=x[i=1:N,j=1:PN]<=1)
 	#JuMP.@variable(model, x[i=1:N,j=1:PN], binary=true)
 	# define a function to write the expression for buyers of type i=1,...,N. this expr will appear in double coinsidence condition.
-	function buyer_expression_ipopt(m::carrier_struct_v1, t::Integer)
+	function buyer_expression_ipopt(m::shipmerger_struct, t::Integer)
 		isthis(x,y) = x == y
 		sum_x_expression = 0
 		for i=1:m.N
@@ -358,7 +378,7 @@ function solve_equilibrium(m::carrier_struct_v1,threshold_tonnage::Any,subsidy_a
     return utility, matches
 end
 
-function gen_data(m::carrier_struct_v1;threshold_tonnage = 100,subsidy_amount = 100, subsidy_type = "to_buyer")
+function gen_data(m::shipmerger_struct;threshold_tonnage = 100,subsidy_amount = 100, subsidy_type = "to_buyer")
 	utility, matches = solve_equilibrium(m, threshold_tonnage, subsidy_amount, subsidy_type = subsidy_type)
 	round.(matches, digits = 2)
 	buyer_X = gen_X_mat(m)
@@ -406,7 +426,7 @@ function gen_data(m::carrier_struct_v1;threshold_tonnage = 100,subsidy_amount = 
 	  return utility, obsd
 end
 
-function score_b(m::carrier_struct_v1, beta::Vector{Float64},
+function score_b(m::shipmerger_struct, beta::Vector{Float64},
 	             data::DataFrame, num_agents::Int64,
 				 threshold_tonnage::Any, subsidy_amount::Any;
 				 subsidy_type::Any,
@@ -939,5 +959,123 @@ function gen_unmatched_utility_est(buyer1_X::Vector, beta)
 end
 
 
+
+#-------------------------------------#
+# functions for constructing CR
+# for reference
+#-------------------------------------#
+
+function inner_construct_critical_value_CR_two_variables(
+	                                 subsampled_id_list,
+	                                 data,
+									 theta,
+									 subsidy_type;
+									 calibrated_delta_list = [1],
+									 boot_num = 200,
+									 size_of_subsample = 30,
+									 info_sum = temp_info_sum)
+	liner_sum = info_sum["liner_sum"]
+	special_sum = info_sum["special_sum"]
+	tanker_sum = info_sum["tanker_sum"]
+	tramper_sum = info_sum["tramper_sum"]
+	data_main_firm = @linq data |>
+		where(:type .== "(1) main")
+	data_not_main_firm = @linq data |>
+			where(:type .!= "(1) main")
+	main_firm_id = data_main_firm.firm_id
+	fullsample_id = data.firm_id
+	subsampled_id_list_all = zeros(Int64,
+	                               boot_num,
+	                               size(data_main_firm)[1] + size_of_subsample)
+	for iter = 1:boot_num
+		Random.seed!(iter)
+	    picked_not_main_firm_id = StatsBase.sample(data_not_main_firm.firm_id,
+										   size_of_subsample,
+										   replace = false)
+	    subsampled_id_list = vcat(main_firm_id, picked_not_main_firm_id)
+		subsampled_id_list_all[iter,:] = subsampled_id_list
+	end
+	# construct a critical value
+	single_variable_index = [1:1:length(variable_list);][variable_list .== variable][1]
+	for kk = 1:length(calibrated_delta_list)
+		calibrated_delta_kk = calibrated_delta_list[kk]
+		function score_bthis_only_target_x(subsampled_id_list, data,
+										   theta, subsidy_type;
+										   calibrated_delta = calibrated_delta_kk,
+										   info_sum = info_sum)
+			#target_theta = vcat(1, zeros(3), theta) # first parameter must be normalized to 1
+			target_theta = vcat(zeros(single_variable_index-1),
+								theta[1],
+								zeros(8-single_variable_index),
+								theta[2],
+								calibrated_delta) # first parameter must be normalized to 1
+			score_res, total_num_ineq = score_b_est_data(subsampled_id_list,
+			                                             data,
+			                   							 target_theta,
+														 subsidy_type)
+			res = -1.0.*score_res .+ 100000.0 # need to be Float64 for bboptimize
+			#println("score:$(res) \n" )
+			return res, score_res, total_num_ineq
+		end
+		boot_Q = zeros(boot_num)
+		# theta = [-100,10]
+		@time for iter = 1:boot_num
+		    boot_Q[iter] = score_bthis_only_target_x(subsampled_id_list_all[iter,:],
+		                          data,
+								  theta,
+								  subsidy_type)[2]
+		end
+		full_sample_Q = score_bthis_only_target_x(fullsample_id,
+							  data,
+							  theta,
+							  subsidy_type)[2]
+	end
+	return boot_Q, full_sample_Q
+end
+
+function outer_construct_critical_value_CR_two_variables(
+	                                 subsampled_id_list,
+	                                 data,
+									 theta,
+									 subsidy_type;
+									 a_b = 42,
+									 alpha_level = 0.05,
+									 calibrated_delta_list,
+									 boot_num = 200,
+									 size_of_subsample = 30,
+									 info_sum = temp_info_sum)
+	@time boot_Q, full_sample_Q = inner_construct_critical_value_CR_two_variables(
+		                                 subsampled_id_list,
+		                                 data,
+										 theta,
+										 subsidy_type;
+										 calibrated_delta_list = calibrated_delta_list,
+										 boot_num = boot_num,
+										 size_of_subsample = size_of_subsample,
+										 info_sum = temp_info_sum)
+	# find minimizer x as a critical value
+	min_x = quantile(a_b.*(boot_Q), 0.93)
+	x_iter = min_x
+	boot_res = 0
+	while boot_res <= 1 - alpha_level
+		boot_res = mean(a_b.*(boot_Q) .<= x_iter)
+		x_iter += 1
+	end
+	#@show x_iter
+	return x_iter, full_sample_Q
+end
+# @time critical_d, full_sample_Q = outer_construct_critical_value_CR_two_variables(
+# 									 subsampled_id_list,
+# 									 data,
+# 									 [41.1, 2.64],
+# 									 subsidy_type;
+# 									 a_b = 42,
+# 									 alpha_level = 0.05,
+# 									 calibrated_delta_list,
+# 									 boot_num = 200,
+# 									 size_of_subsample = 30,
+# 									 info_sum = temp_info_sum)
+# full_sample_Q * a_n < critical_d
+# critical_d./full_sample_Q
 
 end # end module

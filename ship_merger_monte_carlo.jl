@@ -13,7 +13,7 @@ using LaTeXStrings
 using Statistics
 using Distributions
 using Dates
-include(joinpath(dirname(@__FILE__),"functions.jl"))
+include(joinpath(dirname(@__FILE__),"functions_for_monte_carlo.jl"))#merger_cost_type = "num_of_targets_divided_by_buyer_size"
 using .functions
 temp_randomseed = 1
 #--------------------------#

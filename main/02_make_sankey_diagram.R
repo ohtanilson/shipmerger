@@ -1,4 +1,15 @@
 rm(list = ls())
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(gridExtra)
+library(stargazer)
+library(entropy)
+library(cowplot)
+library(reshape2)
+library(networkD3) # for sankey diagram
+library(dplyr) # for sankey diagram
 
 # Sankey diagram based on estimated parameters ----
 
@@ -130,14 +141,14 @@ links <-
                "Group1 (amount=0.1)", "Group1 (amount=0.1)",
                "Group1 (amount=0.1)", "Group1 (amount=0.1)",
                "Group1 (amount=0.1)", "Group1 (amount=0.1)",
-               "Group2 (amount=0.1)", "Group1 (amount=0.1)",
+               "unmatched (amount=0.1)", "Group1 (amount=0.1)",
                # 2nd layer
                "Group1 (amount=0.25)", "Group1 (amount=0.25)", 
                "Group1 (amount=0.25)", "Group1 (amount=0.25)",
                "Group1 (amount=0.25)", "Group1 (amount=0.25)",
                "Group1 (amount=0.25)", "Group1 (amount=0.25)",
                "Group1 (amount=0.25)", "Group1 (amount=0.25)",
-               "Group2 (amount=0.25)", "Group1 (amount=0.25)",
+               "unmatched (amount=0.25)", "Group1 (amount=0.25)",
                # 3rd layer
                "unmatched1 (amount=0.5)", "Group1 (amount=0.5)", 
                "Group2 (amount=0.5)", "unmatched4 (amount=0.5)",
@@ -167,19 +178,20 @@ links <-
                "Group1 (amount=2.0)", "Group3 (amount=2.0)",
                "Group8 (amount=2.0)", "Group5 (amount=2.0)"), 
     target = c(# 1st layer
+      # 1st layer
       "Group1 (amount=0.1)", "Group1 (amount=0.1)", 
       "Group1 (amount=0.1)", "Group1 (amount=0.1)",
       "Group1 (amount=0.1)", "Group1 (amount=0.1)",
       "Group1 (amount=0.1)", "Group1 (amount=0.1)",
       "Group1 (amount=0.1)", "Group1 (amount=0.1)",
-      "Group2 (amount=0.1)", "Group1 (amount=0.1)",
+      "unmatched (amount=0.1)", "Group1 (amount=0.1)",
       # 2nd layer
       "Group1 (amount=0.25)", "Group1 (amount=0.25)", 
       "Group1 (amount=0.25)", "Group1 (amount=0.25)",
       "Group1 (amount=0.25)", "Group1 (amount=0.25)",
       "Group1 (amount=0.25)", "Group1 (amount=0.25)",
       "Group1 (amount=0.25)", "Group1 (amount=0.25)",
-      "Group2 (amount=0.25)", "Group1 (amount=0.25)",
+      "unmatched (amount=0.25)", "Group1 (amount=0.25)",
       # 3rd layer
       "unmatched1 (amount=0.5)", "Group1 (amount=0.5)", 
       "Group2 (amount=0.5)", "unmatched4 (amount=0.5)",
@@ -278,23 +290,23 @@ links <-
                "Group1 (threshold=2mil)", "Group8 (threshold=2mil)", 
                "Group8 (threshold=2mil)", "Group1 (threshold=2mil)",
                "Group7 (threshold=2mil)", "Group8 (threshold=2mil)",
-               "Group7 (threshold=2mil)", "Group1 (threshold=2mil)",
-               "unmatched (threshold=2mil)", "Group7 (threshold=2mil)",
-               "Group8 (threshold=2mil)", "Group7 (threshold=2mil)",
+               "Group7 (threshold=2mil)", "Group9 (threshold=2mil)",
+               "Group9 (threshold=2mil)", "Group7 (threshold=2mil)",
+               "Group8 (threshold=2mil)", "Group9 (threshold=2mil)",
                # 3rd layer
-               "Group1 (threshold=3mil)","Group8 (threshold=3mil)",
+               "Group1 (threshold=3mil)","Group9 (threshold=3mil)",
                "Group8 (threshold=3mil)","Group9 (threshold=3mil)",
                "Group9 (threshold=3mil)","Group8 (threshold=3mil)",
-               "Group1 (threshold=3mil)", "Group1 (threshold=3mil)",
-               "Group9 (threshold=3mil)", "Group1 (threshold=3mil)",
-               "Group8 (threshold=3mil)", "Group9 (threshold=3mil)",
+               "Group1 (threshold=3mil)", "Group8 (threshold=3mil)",
+               "Group9 (threshold=3mil)", "Group8 (threshold=3mil)",
+               "unmatched (threshold=3mil)", "Group9 (threshold=3mil)",
                #4th layer
                "Group10 (threshold=4mil)","Group11 (threshold=4mil)",
                "Group10 (threshold=4mil)","Group10 (threshold=4mil)",
                "Group11 (threshold=4mil)","Group11 (threshold=4mil)",
                "Group10 (threshold=4mil)", "Group11 (threshold=4mil)",
-               "Group10 (threshold=4mil)", "Group11 (threshold=4mil)",
-               "Group10 (threshold=4mil)", "unmatched12 (threshold=4mil)",
+               "Group11 (threshold=4mil)", "Group10 (threshold=4mil)",
+               "unmatched (threshold=4mil)", "unmatched12 (threshold=4mil)",
                #5th layer
                "Group12 (threshold=5mil)","Group12 (threshold=5mil)",
                "Group12 (threshold=5mil)","Group12 (threshold=5mil)",
@@ -314,23 +326,23 @@ links <-
       "Group1 (threshold=2mil)", "Group8 (threshold=2mil)", 
       "Group8 (threshold=2mil)", "Group1 (threshold=2mil)",
       "Group7 (threshold=2mil)", "Group8 (threshold=2mil)",
-      "Group7 (threshold=2mil)", "Group1 (threshold=2mil)",
-      "unmatched (threshold=2mil)", "Group7 (threshold=2mil)",
-      "Group8 (threshold=2mil)", "Group7 (threshold=2mil)",
+      "Group7 (threshold=2mil)", "Group9 (threshold=2mil)",
+      "Group9 (threshold=2mil)", "Group7 (threshold=2mil)",
+      "Group8 (threshold=2mil)", "Group9 (threshold=2mil)",
       # 3rd layer
-      "Group1 (threshold=3mil)","Group8 (threshold=3mil)",
+      "Group1 (threshold=3mil)","Group9 (threshold=3mil)",
       "Group8 (threshold=3mil)","Group9 (threshold=3mil)",
       "Group9 (threshold=3mil)","Group8 (threshold=3mil)",
-      "Group1 (threshold=3mil)", "Group1 (threshold=3mil)",
-      "Group9 (threshold=3mil)", "Group1 (threshold=3mil)",
-      "Group8 (threshold=3mil)", "Group9 (threshold=3mil)",
+      "Group1 (threshold=3mil)", "Group8 (threshold=3mil)",
+      "Group9 (threshold=3mil)", "Group8 (threshold=3mil)",
+      "unmatched (threshold=3mil)", "Group9 (threshold=3mil)",
       #4th layer
       "Group10 (threshold=4mil)","Group11 (threshold=4mil)",
       "Group10 (threshold=4mil)","Group10 (threshold=4mil)",
       "Group11 (threshold=4mil)","Group11 (threshold=4mil)",
       "Group10 (threshold=4mil)", "Group11 (threshold=4mil)",
-      "Group10 (threshold=4mil)", "Group11 (threshold=4mil)",
-      "Group10 (threshold=4mil)", "unmatched12 (threshold=4mil)",
+      "Group11 (threshold=4mil)", "Group10 (threshold=4mil)",
+      "unmatched (threshold=4mil)", "unmatched12 (threshold=4mil)",
       #5th layer
       "Group12 (threshold=5mil)","Group12 (threshold=5mil)",
       "Group12 (threshold=5mil)","Group12 (threshold=5mil)",
