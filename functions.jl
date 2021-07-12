@@ -240,7 +240,7 @@ function gen_merger_cost(m::shipmerger_struct;
 				# merger cost
 				num_of_firms_in_coalition = sum(temp_index)
 				total_tonnage = sum(ton[k,:])
-				merger_cost[k,j] = num_of_firms_in_coalition/log(total_tonnage*100)
+				merger_cost[k,j] = num_of_firms_in_coalition/log(total_tonnage*100 + 1)
 			end
 		end
 	end
@@ -721,15 +721,22 @@ end
 # used in ship_merger_score_estimation
 #------------------------------------#
 
-function extract_buyer_covariates_if_ii_is_buyer(ii, data)
+function extract_buyer_covariates_if_ii_is_buyer(ii, data;
+	                                             HHI_included = false)
 	# pick individual own covariates
 	buyer_X_scale = Vector(data[ii,5:8])
+	buyer_X_HHI = data[ii,10]
 	buyer_X_scope = Vector(data[ii,11:14])
-	res = vcat(buyer_X_scale,buyer_X_scope)
+	if HHI_included == true
+		res = vcat(buyer_X_scale,buyer_X_HHI,buyer_X_scope)
+	else
+		res = vcat(buyer_X_scale,buyer_X_scope)
+	end
 	return res
 end
 
-function extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, data)
+function extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, data;
+	                                             HHI_included = false)
 	# pick individual own covariates
 	# pick up group names
 	group_names = data[ii,4]
@@ -737,12 +744,19 @@ function extract_kk_buyer_covariates_if_if_ii_is_buyer_and_drop_member_id_kk(ii,
 	subdata = @linq data |>
 	    where(:group .== group_names)
 	deviater_X_scale = Vector(subdata[kk,5:8])
+	deviater_X_HHI = subdata[kk,10]
 	deviater_X_scope = Vector(subdata[kk,11:14])
-	res = vcat(deviater_X_scale, deviater_X_scope)
+	if HHI_included == true
+		res = vcat(deviater_X_scale, deviater_X_HHI, deviater_X_scope)
+	else
+		res = vcat(deviater_X_scale, deviater_X_scope)
+	end
 	return res
 end
 
-function extract_target_covariates_if_ii_is_buyer(ii, data; info_sum = temp_info_sum)
+function extract_target_covariates_if_ii_is_buyer(ii, data;
+	                                              info_sum = temp_info_sum,
+												  HHI_included = false)
 	#global liner_sum, special_sum, tanker_sum, tramper_sum
 	liner_sum = info_sum["liner_sum"]
 	special_sum = info_sum["special_sum"]
@@ -778,12 +792,21 @@ function extract_target_covariates_if_ii_is_buyer(ii, data; info_sum = temp_info
 	target_special_share = (target_special_sum-buyer_X_scale[2])/(target_total_sum-buyer_total_sum)
 	target_tramper_share = (target_tramper_sum-buyer_X_scale[3])/(target_total_sum-buyer_total_sum)
 	target_tanker_share = (target_tanker_sum-buyer_X_scale[4])/(target_total_sum-buyer_total_sum)
-	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
-	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	if HHI_included == true
+		target_HHI = target_liner_share^2 + target_special_share^2 + target_tramper_share^2 + target_tanker_share^2
+		res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+		       target_HHI,
+		       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	else
+		res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+		       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	end
 	return res
 end
 
-function extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, data; info_sum = temp_info_sum)
+function extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, data;
+	                                                                    info_sum = temp_info_sum,
+																		HHI_included = false)
 	#global liner_sum, special_sum, tanker_sum, tramper_sum
 	liner_sum = info_sum["liner_sum"]
 	special_sum = info_sum["special_sum"]
@@ -834,13 +857,22 @@ function extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, 
 	target_special_sum = target_special_sum - deviater_X_scale[2]
 	target_tramper_sum = target_tramper_sum - deviater_X_scale[3]
 	target_tanker_sum = target_tanker_sum - deviater_X_scale[4]
-	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
-	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	if HHI_included == true
+		target_HHI = target_liner_share^2 + target_special_share^2 + target_tramper_share^2 + target_tanker_share^2
+		res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+		       target_HHI,
+		       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	else
+		res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+		       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	end
 	return res
 end
 
 
-function extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(ii, kk, data;info_sum = temp_info_sum)
+function extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(ii, kk, data;
+	                                                                     info_sum = temp_info_sum,
+																		 HHI_included = false)
 	#global liner_sum, special_sum, tanker_sum, tramper_sum
 	liner_sum = info_sum["liner_sum"]
 	special_sum = info_sum["special_sum"]
@@ -888,17 +920,31 @@ function extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(ii, kk
 	target_special_sum = target_special_sum + unmatched_X_scale[2]
 	target_tramper_sum = target_tramper_sum + unmatched_X_scale[3]
 	target_tanker_sum = target_tanker_sum + unmatched_X_scale[4]
-	res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+	if HHI_included == true
+		target_HHI = target_liner_share^2 + target_special_share^2 + target_tramper_share^2 + target_tanker_share^2
+		res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
+		       target_HHI,
+		       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	else
+		res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
 	       target_liner_share, target_special_share, target_tramper_share, target_tanker_share)
+	end
+	return res
 end
 
-function gen_merger_cost_for_buyer_ii(ii, buyer1_X, target1_X, data)
+function gen_merger_cost_for_buyer_ii(ii, buyer1_X, target1_X, data;
+	                     merger_cost_type = "only_num_of_targets"#"num_of_targets_divided_by_buyer_size"
+						 )
 	subdata = @linq data |>
 		where(:group .== data[ii,4])
 	# construct swapped matches
 	num_of_firms_in_coalition = size(subdata, 1)
 	total_tonnage = sum(buyer1_X[1:4]) + sum(target1_X[1:4])
-	merger_cost = num_of_firms_in_coalition/log(total_tonnage*100 + 1) # 1million ton = 1 translated into 1ton=1
+	if merger_cost_type == "only_num_of_targets"
+		merger_cost = num_of_firms_in_coalition# 1million ton = 1 translated into 1ton=1
+	elseif merger_cost_type == "num_of_targets_divided_by_buyer_size"
+		merger_cost = num_of_firms_in_coalition/log(total_tonnage*100 + 1) # 1million ton = 1 translated into 1ton=1
+	end
 	#merger_cost = num_of_firms_in_coalition/total_tonnage
 	return merger_cost
 end

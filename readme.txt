@@ -29,13 +29,15 @@ You can replicate all results by following processes sequentially.
   This generates sankey diagram in Figure 9. 
   Input data is manually assigned based on results on ship_merger_counterfactual.jl.
 
-
 #-----------------------------------------#
 # Matching Maximum Rank Estimation (Julia)
 #-----------------------------------------#
+- ship_merger_score_estimation_HHI.jl
+    (1). the simplest matching maximum rank estimation in Appendix
+         (4 hours for 50 point-estimates, 6 hours for CI bootstrapping 200)
 - shipmerger/ship_merger_score_estimation.jl
   This computes 8 specifications with bootstrap 95% CI for
-    (1). multivariate matching maximum rank estimation in Table 10
+    (1). multivariate matching maximum rank estimation in Appendix
          (22 hours for 200 point-estimates, 21 hours for CI bootstrapping 200)
     (2). matching maximum rank estimation with two variables in Table 5 
          (39 hours for 200 point-estimates, 38 hours for CI bootstrapping 200)
