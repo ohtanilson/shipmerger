@@ -49,7 +49,7 @@ d <-
                 Greek = grosstons_greek,
                 Liberia = grosstons_liberia) %>% 
   tidyr::gather(key = "variable", value = "value", -year) %>% 
-  #Liberia is the major country regarding the flag of convenience ships, 
+  # Liberia is the major country regarding the flag of convenience ships, 
   # but it does not reflect economic activity in the shipping industry.
   dplyr::filter(variable != "Liberia")
 
