@@ -40,13 +40,13 @@ you_want_to_run_finding_merger_compositions = "not_run"
 # assign theta_hat
 model_specification = "two_variables_main_firms_only" # it allows other specifications restored in julia_merger_result folder to be used
 # choose subsidy specification
-temp_subsidy_type = "shared"
+temp_subsidy_type = "to_buyer"#"shared"
 # choose model column
-file_num = 1
+file_num = 1 # model number
 file_name_variable_list = ["x1","x2","x3","x4","x5","x6","x7","x8"]
 file_name_variable = file_name_variable_list[file_num]
 size_of_subsample_temp = 0 # only 12 main firms
-calibrated_delta = 1000
+calibrated_delta = 400
 myests_point_scope_X_only = readdlm("julia_merger_result/myests_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
 num_correct_ineq_scope_X_only = readdlm("julia_merger_result/num_correct_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
 num_total_ineq_scope_X_only = readdlm("julia_merger_result/num_total_ineq_subsample_size_0_$(temp_subsidy_type)_subsidy_only_$(file_name_variable)_merger_cost.txt",',',Float64)
@@ -91,9 +91,9 @@ include("ship_merger_counterfactual_functions.jl")
 #---------------------------------------------------------#
 # test a single computation and find a positive constant
 #---------------------------------------------------------#
-temp_model_id = 1
+temp_model_id = 1 # model choice
 theta_hat = theta_hat_all_models[:,temp_model_id]
-positive_constant = 135 # reasonable starting lower bound for all random seeds
+positive_constant = 0#135 # reasonable starting lower bound for all random seeds
 number_of_groups_temp = 6
 while number_of_groups_temp > 0
 	# find positive constant term for correcting unmatched and matched
@@ -102,7 +102,7 @@ while number_of_groups_temp > 0
 							randomseed = 1,
 							threshold_tonnage = 1, # 1 million
 							subsidy_amount = 0,#1,#0,
-							subsidy_type = "shared")
+							subsidy_type = temp_subsidy_type)
 	modified_utility = copy(utility)
 	# shift positive constants for capturing the unmatched environment
 	for i = 1:m.N
@@ -128,7 +128,7 @@ end
 # simulate counterfactual matches for each scenario
 #--------------------------------------------------------#
 threshold_tonnage_list = [1, 2, 3, 4, 5, 7.5]# 6dim
-subsidy_amount_list = [0, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5] # 9dim
+subsidy_amount_list = [0, 0.1, 0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2] # 9dim
 model_list = [1, 2, 3]
 iter_end = 20
 Threads.nthreads()
@@ -150,7 +150,7 @@ if you_want_to_run_counterfactual == "run"
 										randomseed = kk,
 										threshold_tonnage = threshold_tonnage_iter, # 1 million
 										subsidy_amount = subsidy_amount_iter,
-										subsidy_type = "shared")
+										subsidy_type = temp_subsidy_type)
 				modified_utility = copy(utility)
 				#positive_constant = 135
 				for i = 1:m.N

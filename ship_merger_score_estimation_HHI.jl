@@ -37,7 +37,7 @@ temp_info_sum = Dict([("liner_sum", combine(gdf, [:liner] => sum)),
 include("ship_merger_score_estimation_point_estimates_and_confidence_intervals_HHI.jl")
 
 # assign subsidy type
-temp_subsidy_type = "shared" # or "to_buyer"
+temp_subsidy_type = "to_buyer" # or "shared"
 
 #----------------------------------------------#
 # assign output options
@@ -46,7 +46,7 @@ temp_subsidy_type = "shared" # or "to_buyer"
 # "not_run" justs read current restored results
 # and generates Latex output for the paper.
 #----------------------------------------------#
-want_to_run_only_HHI_estimation = "run" # change to "run" if you want to run estimation
+want_to_run_only_HHI_estimation = "not_run" # change to "run" if you want to run estimation
 
 #------------------------------------------#
 # point estimate of multivariate estimation
@@ -54,7 +54,7 @@ want_to_run_only_HHI_estimation = "run" # change to "run" if you want to run est
 size_of_fullsample = length(data.firm_id)-12
 common_num_its_bootstrap = 200
 common_num_steps_DE = 100
-temp_calibrated_delta = 5
+temp_calibrated_delta = 20
 @time if want_to_run_only_HHI_estimation == "run"
 	@time point_estimate_only_HHI(temp_subsidy_type,
 	                     num_steps_DE_temp = common_num_steps_DE,#50,

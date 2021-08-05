@@ -280,10 +280,10 @@ function iterate_estimation_only_HHI(data,
 		end
 		subsampled_id_list = vcat(main_firm_id, picked_not_main_firm_id)
 		# Estimation
-		temp_search_domain = [(-200.0,200.0)]
+		temp_search_domain = [(-300.0,300.0)]
 		m_res = BlackBoxOptim.bboptimize(theta -> score_bthis(subsampled_id_list, data, theta, subsidy_type,
 										              calibrated_delta = temp_calibrated_delta)[1];
-		                                SearchRange = vcat(temp_search_domain[1],(-100.0, 2000.0)),
+		                                SearchRange = vcat(temp_search_domain[1],(-10.0, 20.0)),
 										NumDimensions = param_dim,
 										Method = :de_rand_1_bin,
 										MaxSteps = num_steps_DE)

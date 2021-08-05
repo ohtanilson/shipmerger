@@ -6,8 +6,8 @@
 myests_point_HHI_only = readdlm("julia_merger_result/myests_subsample_size_$(size_of_fullsample)_$(temp_subsidy_type)_subsidy_HHI_only.txt",',',Float64)
 num_correct_ineq_HHI_only = readdlm("julia_merger_result/num_correct_ineq_subsample_size_$(size_of_fullsample)_$(temp_subsidy_type)_subsidy_HHI_only.txt",',',Float64)
 num_total_ineq_HHI_only = readdlm("julia_merger_result/num_total_ineq_subsample_size_$(size_of_fullsample)_$(temp_subsidy_type)_subsidy_HHI_only.txt",',',Float64)
-accuracy_HHI_only = vec(num_correct_ineq_scale_X_only./num_total_ineq_scale_X_only)
-final_ests_point_HHI_only = round.(myests_point_scale_X_only[findmax(accuracy_scale_X_only)[2],:],digits=2)
+accuracy_HHI_only = vec(num_correct_ineq_HHI_only./num_total_ineq_HHI_only)
+final_ests_point_HHI_only = round.(myests_point_HHI_only[findmax(accuracy_HHI_only)[2],:],digits=2)
 myests_CI_HHI_only = readdlm("julia_merger_result/CI_myests_subsample_size_$(size_of_fullsample)_$(temp_subsidy_type)_subsidy_HHI_only.txt",',',Float64)
 # CI
 #beta = theta[1:8]

@@ -26,7 +26,7 @@ temp_randomseed = 1
 					 N = 8,
 					 β_0 = 0.0,# coefficient of covariates
 					 δ_0 = 1.0,# coefficient of subsidy
-					 γ_0 = 4.0,# coefficient of additional merger cost
+					 γ_0 = 1.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 
 #-----------------------------------#

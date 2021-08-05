@@ -24,7 +24,7 @@ temp_randomseed = 1
 					 N = 8,
 					 β_0 = 0.0,# coefficient of covariates
 					 δ_0 = 1.0,# coefficient of subsidy
-					 γ_0 = 4.0,# coefficient of additional merger cost
+					 γ_0 = 1.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 @show m.ton
 temp_threshold_tonnage = 1
@@ -53,7 +53,7 @@ temp_subsidy_type = "shared"
 					 N = 8,
 					 β_0 = 0.0,# coefficient of covariates
 					 δ_0 = 1.0,# coefficient of subsidy
-					 γ_0 = 4.0,# coefficient of additional merger cost
+					 γ_0 = 1.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 utility, obsd = gen_data(m,
                 threshold_tonnage =　temp_threshold_tonnage,
@@ -278,7 +278,7 @@ function maxscore_mc_temp(num_agents::Int64;
 					 subsidy_type = "to_buyer",
 					 β_0_temp = 0.0,
 					 δ_0_temp = 1.0,
-					 γ_0_temp = 4.0,
+					 γ_0_temp = 1.0,
 					 search_range_temp = (-20.0, 20.0))
     start = Dates.unix2datetime(time())
 	param_dim = 3
@@ -356,14 +356,14 @@ end
 					 N = 8,
 					 β_0 = 0.0,# coefficient of covariates
 					 δ_0 = 1.0,# coefficient of subsidy
-					 γ_0 = 4.0,# coefficient of additional merger cost
+					 γ_0 = 1.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 
 temp_simulate_num = 1000
 #----------------------------------------------#
 # plot subsidy (to buyer)
 #----------------------------------------------#
-you_want_run = "not_run"
+you_want_run = "run"
 if you_want_run == "run"
     @time res_theta, ~, ~, ~, ~, ~, subsidy_used_or_not_index, all_unmatched_or_not_index = maxscore_mc_temp(8,num_its = temp_simulate_num,
                                                                                                                threshold_tonnage = 1,
@@ -448,7 +448,7 @@ RMSE_gamma_without_subsidy_to_buyer = RMSE(res_theta_solved[subsidy_used_or_not_
 #----------------------------------------------#
 # plot subsidy (shared)
 #----------------------------------------------#
-you_want_run = "not_run"
+you_want_run = "run"
 if you_want_run == "run"
 	@time res_theta, ~, ~, ~, ~, ~, subsidy_used_or_not_index, all_unmatched_or_not_index = maxscore_mc_temp(8, num_its = temp_simulate_num,
 	                                                                                                                      threshold_tonnage = 100,
@@ -471,7 +471,7 @@ for i = 1:size(res_theta)[1], j = 1:size(res_theta)[2]
 	end
 end
 
-res_correct_ineq./num_all_ineq
+
 Plots.histogram(res_theta_solved[subsidy_used_or_not_index.<1,1],
                 bins = 60,
                 ylabel = "count",
@@ -564,7 +564,7 @@ temp_subsidy_type = "shared"
 					 N = 8,
 					 β_0 = 0.0,# coefficient of covariates
 					 δ_0 = 1.0,# coefficient of subsidy
-					 γ_0 = 15.0,# coefficient of additional merger cost
+					 γ_0 = 5.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 utility, obsd = gen_data(m,
                 threshold_tonnage =　temp_threshold_tonnage,
@@ -584,7 +584,7 @@ if you_want_run == "run"
 						 subsidy_type = temp_subsidy_type,
 						 β_0_temp = 0.0,
 						 δ_0_temp = 1.0,
-						 γ_0_temp = 15.0,
+						 γ_0_temp = 5.0,
 						 search_range_temp = (-10.0,40.0))
 	open("julia_merger_result/res_theta_no_merger_$temp_subsidy_type.txt", "w") do io
 		DelimitedFiles.writedlm(io, res_theta,",")
@@ -651,7 +651,7 @@ if you_want_run == "run"
 						 subsidy_type = temp_subsidy_type,
 						 β_0_temp = 0.0,
 						 δ_0_temp = 1.0,
-						 γ_0_temp = 15.0,
+						 γ_0_temp = 5.0,
 						 search_range_temp = (-10.0,40.0))
 	open("julia_merger_result/res_theta_no_merger_$temp_subsidy_type.txt", "w") do io
 		DelimitedFiles.writedlm(io, res_theta,",")
@@ -712,7 +712,7 @@ savefig("julia_merger_figure/histogram_gamma_no_merger_$temp_subsidy_type")
 					 N = 8,
 					 β_0 = 0.0,# coefficient of covariates
 					 δ_0 = 1.0,# coefficient of subsidy
-					 γ_0 = 15.0,# coefficient of additional merger cost
+					 γ_0 = 5.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 utility, obsd = gen_data(m,
                 threshold_tonnage =　temp_threshold_tonnage,
@@ -746,7 +746,7 @@ savefig("julia_merger_figure/contour_beta_gamma_no_merger_$(temp_subsidy_type)_s
 #--------------------------#
 
 N_list = [2:1:7;]
-seed_list = [4,4,4,5,4,6] # to show illustrative bounds
+seed_list = [4,4,4,11,5,6] # to show illustrative bounds
 @time for ii = 1:length(N_list)
 	@show N_iter = N_list[ii]
 	@time m = carrier_mod(randomseed = seed_list[ii],#1
@@ -754,7 +754,7 @@ seed_list = [4,4,4,5,4,6] # to show illustrative bounds
 					 N = N_iter,
 					 β_0 = 0.0,# coefficient of covariates
 					 δ_0 = 1.0,# coefficient of subsidy
-					 γ_0 = 4.0,# coefficient of additional merger cost
+					 γ_0 = 1.0,# coefficient of additional merger cost
 					 ton_dim= 2)
 	utility, obsd = gen_data(m,
 	                threshold_tonnage =　temp_threshold_tonnage,

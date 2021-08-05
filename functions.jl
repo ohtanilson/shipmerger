@@ -788,10 +788,14 @@ function extract_target_covariates_if_ii_is_buyer(ii, data;
 		end
 	end
 	# construct scope covariates
-	target_liner_share = (target_liner_sum-buyer_X_scale[1])/(target_total_sum-buyer_total_sum)
-	target_special_share = (target_special_sum-buyer_X_scale[2])/(target_total_sum-buyer_total_sum)
-	target_tramper_share = (target_tramper_sum-buyer_X_scale[3])/(target_total_sum-buyer_total_sum)
-	target_tanker_share = (target_tanker_sum-buyer_X_scale[4])/(target_total_sum-buyer_total_sum)
+	# target_liner_share = (target_liner_sum-buyer_X_scale[1])/(target_total_sum-buyer_total_sum)
+	# target_special_share = (target_special_sum-buyer_X_scale[2])/(target_total_sum-buyer_total_sum)
+	# target_tramper_share = (target_tramper_sum-buyer_X_scale[3])/(target_total_sum-buyer_total_sum)
+	# target_tanker_share = (target_tanker_sum-buyer_X_scale[4])/(target_total_sum-buyer_total_sum)
+	target_liner_share = (target_liner_sum)/(target_total_sum)
+	target_special_share = (target_special_sum)/(target_total_sum)
+	target_tramper_share = (target_tramper_sum)/(target_total_sum)
+	target_tanker_share = (target_tanker_sum)/(target_total_sum)
 	if HHI_included == true
 		target_HHI = target_liner_share^2 + target_special_share^2 + target_tramper_share^2 + target_tanker_share^2
 		res = vcat(target_liner_sum, target_special_sum, target_tramper_sum, target_tanker_sum,
@@ -844,14 +848,22 @@ function extract_target_covariates_if_ii_is_buyer_and_drop_member_id_kk(ii, kk, 
 		end
 	end
 	# construct scope covariates
-	target_liner_share = (target_liner_sum-buyer_X_scale[1]-deviater_X_scale[1])/
-	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
-	target_special_share = (target_special_sum-buyer_X_scale[2]-deviater_X_scale[2])/
-	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
-	target_tramper_share = (target_tramper_sum-buyer_X_scale[3]-deviater_X_scale[3])/
-	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
-	target_tanker_share = (target_tanker_sum-buyer_X_scale[4]-deviater_X_scale[4])/
-	                     (target_total_sum-buyer_total_sum-deviater_total_sum)
+	# target_liner_share = (target_liner_sum-buyer_X_scale[1]-deviater_X_scale[1])/
+	#                      (target_total_sum-buyer_total_sum-deviater_total_sum)
+	# target_special_share = (target_special_sum-buyer_X_scale[2]-deviater_X_scale[2])/
+	#                      (target_total_sum-buyer_total_sum-deviater_total_sum)
+	# target_tramper_share = (target_tramper_sum-buyer_X_scale[3]-deviater_X_scale[3])/
+	#                      (target_total_sum-buyer_total_sum-deviater_total_sum)
+	# target_tanker_share = (target_tanker_sum-buyer_X_scale[4]-deviater_X_scale[4])/
+	#                      (target_total_sum-buyer_total_sum-deviater_total_sum)
+	target_liner_share = (target_liner_sum-deviater_X_scale[1])/
+	                     (target_total_sum-deviater_total_sum)
+	target_special_share = (target_special_sum-deviater_X_scale[2])/
+	                     (target_total_sum-deviater_total_sum)
+	target_tramper_share = (target_tramper_sum-deviater_X_scale[3])/
+	                     (target_total_sum-deviater_total_sum)
+	target_tanker_share = (target_tanker_sum-deviater_X_scale[4])/
+	                     (target_total_sum-deviater_total_sum)
 	# modification dropping deviator firm kk
 	target_liner_sum = target_liner_sum - deviater_X_scale[1]
 	target_special_sum = target_special_sum - deviater_X_scale[2]
@@ -907,14 +919,22 @@ function extract_target_covariates_if_ii_is_buyer_and_adding_unmatched_kk(ii, kk
 		end
 	end
 	# construct scope covariates
-	target_liner_share = (target_liner_sum-buyer_X_scale[1]+unmatched_X_scale[1])/
-	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	# target_liner_share = (target_liner_sum-buyer_X_scale[1]+unmatched_X_scale[1])/
+	#                      (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	# target_special_share = (target_special_sum-buyer_X_scale[2]+unmatched_X_scale[2])/
+	#                      (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	# target_tramper_share = (target_tramper_sum-buyer_X_scale[3]+unmatched_X_scale[3])/
+	#                      (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	# target_tanker_share = (target_tanker_sum-buyer_X_scale[4]+unmatched_X_scale[4])/
+	#                      (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	target_liner_share = (target_liner_sum+unmatched_X_scale[1])/
+	                     (target_total_sum+unmatched_total_sum)
 	target_special_share = (target_special_sum-buyer_X_scale[2]+unmatched_X_scale[2])/
-	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	                     (target_total_sum+unmatched_total_sum)
 	target_tramper_share = (target_tramper_sum-buyer_X_scale[3]+unmatched_X_scale[3])/
-	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	                     (target_total_sum+unmatched_total_sum)
 	target_tanker_share = (target_tanker_sum-buyer_X_scale[4]+unmatched_X_scale[4])/
-	                     (target_total_sum-buyer_total_sum+unmatched_total_sum)
+	                     (target_total_sum+unmatched_total_sum)
 	# modification adding unmatched kk
 	target_liner_sum = target_liner_sum + unmatched_X_scale[1]
 	target_special_sum = target_special_sum + unmatched_X_scale[2]
@@ -997,8 +1017,8 @@ function gen_unmatched_utility_est(buyer1_X::Vector, beta)
 		#interaction_X_beta = beta.*log.(buyer1_X.+1)
 		buyer1_X_total = sum(buyer1_X[1:4])
 		#interaction_X_beta = 1.0*buyer1_X_total .+ beta.*buyer1_X
-		#interaction_X_beta = 1.0*buyer1_X_total.*buyer1_X_total .+ beta.*buyer1_X.*buyer1_X
-		interaction_X_beta = 1.0*buyer1_X_total.*0.01 .+ beta.*buyer1_X.*0.01 # specify unmatched = match with 0.01
+		interaction_X_beta = 1.0*buyer1_X_total.*buyer1_X_total .+ beta.*buyer1_X.*buyer1_X
+		#interaction_X_beta = 1.0*buyer1_X_total.*0.01 .+ beta.*buyer1_X.*0.01 # specify unmatched = match with 0.01
 		#interaction_X_beta = beta.*buyer1_X
 		utility = sum(interaction_X_beta)
 	return utility

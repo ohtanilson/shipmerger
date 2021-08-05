@@ -24,6 +24,8 @@ different_index = zeros(length(threshold_tonnage_list),
 		end
 	end
 end
+
+
 most_frequently_observed_allcation_index = zeros(length(threshold_tonnage_list),
                                                  length(subsidy_amount_list))
 @time for nn = 1:length(threshold_tonnage_list), mm = 1:length(subsidy_amount_list)
@@ -44,12 +46,14 @@ target_matches_list = zeros(
 end
 # Case 1: actual amount with different thresholds
 println("*****\nCase 1: actual amount with different thresholds\n******")
-temp_matches = target_matches_list[:,6,:,:] # actual amount scenario
+println("firms selling themselves but not acquired by others are rounded off
+ via pertubation and probabilistic matching steps for showing integer matching outcomes.")
+temp_matches = target_matches_list[:,9,:,:] # actual amount scenario
 for temp_threshold = 1:length(threshold_tonnage_list)
 	println("*****threshold $(threshold_tonnage_list[temp_threshold])******************")
 	for ii = 1:m.N
-		m.Bundle[temp_matches[temp_threshold,ii,:].>0]
 		if m.Bundle[temp_matches[temp_threshold,ii,:].>0] != "000000000000"
+			#@show sum(temp_matches[temp_threshold,ii,:].>0)
 			maxbundle = findmax(temp_matches[temp_threshold,ii,:])[2]
 		    println("firm $ii buys $(m.Bundle[maxbundle])")
 		else
@@ -60,51 +64,52 @@ end
 #-----------------------#
 # interpretable results
 #-----------------------#
+
 println("
-threshold_tonnage_list[temp_threshold] = 1.0
-1 buys 4
+threshold_tonnage_list[temp_threshold] = $(threshold_tonnage_list[1])
+1 buys 3
 2 buys 9
 5 buys 10
-6 buys 3
+6 buys 4
 11 buys 7
 12 buys 8
 ")
 
 println("
-threshold_tonnage_list[temp_threshold] = 2.0
-1 buys 4
-5 buys 7,10
+threshold_tonnage_list[temp_threshold] = $(threshold_tonnage_list[2])
+5 buys 1,9
 6 buys 2,3,11
-12 buys 2(duplicated),8,9
-2 is duplicated because the allocation is 0.5 equally
+12 buys 4,8
+unmatched 1
+7,10 is sold to some group but canceled out via probabilistic matching
+so that I assign these to each group equally.
 ")
 
 println("
-threshold_tonnage_list[temp_threshold] = 3.0
-1 buys 7,10
-5 buys 2,4,9,12
-6 buys 2(duplicated),3,8,10
-11 sells to whom?
-2 is duplicated because the allocation is 0.5 equally
+threshold_tonnage_list[temp_threshold] = $(threshold_tonnage_list[3])
+5 buys 2,3,7
+6 buys 1,8,9,12
+4,10,11 are sold to some group but canceled out via probabilistic matching
+so that I assign these to each group equally.
 ")
 
 println("
-threshold_tonnage_list[temp_threshold] = 4.0
-1 buys 3,4,7,10
-6 buys 2,3(duplicated),5,8,9,12
-11 unmatched
-3 is duplicated because the allocation is 0.5 equally
+threshold_tonnage_list[temp_threshold] = $(threshold_tonnage_list[4])
+5 buys 2,3,8,9,10,12
+6 buys 1,4,7,9,11
+9 are sold to two groups via probabilistic matching
+so that I assign 9 to the group 6.
 ")
 
 println("
-threshold_tonnage_list[temp_threshold] = 5.0
-1 buys 2,3,4,6,7,8,9,10
-11 unmatched
-12 unmatched
+threshold_tonnage_list[temp_threshold] = $(threshold_tonnage_list[5])
+6 buys 3,4,5,7,8,9,10,12
+1,2,11 are sold to some group but canceled out via probabilistic matching
+so that I assign these to the group.
 ")
 
 println("
-threshold_tonnage_list[temp_threshold] = 7.5
+threshold_tonnage_list[temp_threshold] = $(threshold_tonnage_list[6])
 1 buys 2,3,4,5,6,7,8,9,10,11,12
 ")
 
@@ -128,85 +133,79 @@ end
 # interpretable results
 #-----------------------#
 println("
-subsidy_amount_list[temp_amount] = 0.0
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[1])
 all unmatched
 ")
 println("
-subsidy_amount_list[temp_amount] = 0.1
-1 buys 23456789,10,12
-11 unmatched
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[2])
+all unmatched
 ")
 println("
-subsidy_amount_list[temp_amount] = 0.25
-1 buys 23456789,10,12
-11 unmatched
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[3])
+all unmatched
 ")
 println("
-subsidy_amount_list[temp_amount] = 0.5
-1 unmatched
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[4])
+5 buys 2
+6 buys 7
+11 buys 9,10
+12 buys 8
+1,3,4 unmatched
+")
+
+println("
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[5])
+5 buys 2
+6 buys 7
+11 buys 9,10
+12 buys 8
+1,3,4 unmatched
+")
+println("
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[6])
+5 buys 9
+6 buys 7
+11 buys 2,10
+12 buys 8
+1,3,4 unmatched
+")
+
+println("
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[7])
+1 buys 3
 2 buys 9
-4 unmatched
 5 buys 10
-6 buys 3
+6 buys 4
 11 buys 7
 12 buys 8
 ")
 
 println("
-subsidy_amount_list[temp_amount] = 0.75
-1 buys 4
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[8])
+1 buys 3
 2 buys 9
 5 buys 10
-6 buys 3
-11 buys 7
-12 buys 8
-")
-println("
-subsidy_amount_list[temp_amount] = 1.0
-1 buys 4
-2 buys 9
-5 buys 10
-6 buys 3
+6 buys 4
 11 buys 7
 12 buys 8
 ")
 
 println("
-subsidy_amount_list[temp_amount] = 2.0
-1 buys 4
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[9])
+1 buys 3
 2 buys 9
 5 buys 10
-6 buys 7
-11 buys 3
+6 buys 4
+11 buys 7
 12 buys 8
 ")
 
 println("
-subsidy_amount_list[temp_amount] = 3.0
-1 buys 4
+subsidy_amount_list[temp_amount] = $(subsidy_amount_list[10])
+1 buys 3
 2 buys 9
 5 buys 10
-6 buys 7
-11 buys 3
-12 buys 8
-")
-
-println("
-subsidy_amount_list[temp_amount] = 4.0
-1 buys 4
-2 buys 9
-5 buys 10
-6 buys 7
-11 buys 3
-12 buys 8
-")
-
-println("
-subsidy_amount_list[temp_amount] = 5.0
-1 buys 4
-2 buys 9
-5 buys 10
-6 buys 7
-11 buys 3
+6 buys 4
+11 buys 7
 12 buys 8
 ")

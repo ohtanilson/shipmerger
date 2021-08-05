@@ -68,17 +68,17 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 		Statistics.quantile(-myests_CI_x45678_merger_cost[:,6], [0.025,0.975])
 		),digits=2)
 	total_ineq_all = Int64(num_total_ineq_x45678_merger_cost[findmax(accuracy_x45678_merger_cost)[2]])
-	LaTeXTabulars.latex_tabular("julia_merger_table/score_results_temp_$(temp_subsidy_type)_subsidy.tex",
+	LaTeXTabulars.latex_tabular("julia_merger_table/score_results_multivariate_$(temp_subsidy_type)_subsidy.tex",
 	              Tabular("@{\\extracolsep{5pt}}lccccc"),
 	              [Rule(:top),
 				   ["","","", "Value Function", "", ""],
 	               ["","",
 				   "Point Estimate", "Point Estimate", "Point Estimate", "Point Estimate"],
 				   ["","",
-				   "[95\\% CI Set Identified]", "[95\\% CI Set Identified]", "[95\\% CI Set Identified]", "[95\\% CI Set Identified]"],
+				   "[95\\% CI]", "[95\\% CI]", "[95\\% CI]", "[95\\% CI]"],
 				   Rule(:mid),
 
-				   ["Measure of Scale variables", "", "", "", "", ""],
+				   ["Scale variables", "", "", "", "", ""],
 				   #beta_0
 				   ["", "", "", "", ""],
 				   ["total\$_{b}\$ \$\\times\$ total\$_{t}\$", L"\beta_0", "+1", "+1", "+1", "+1"],
@@ -117,9 +117,9 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 				   "[$(CI_full_X_only_table[1,4]), $(CI_full_X_only_table[2,4])]",
 				   "[$(CI_x45678_merger_cost_table[1,1]), $(CI_x45678_merger_cost_table[2,1])]"],
 				   #beta_5
-				   ["Measure of Share variables", "", "", "", "", ""],
+				   ["Share variables", "", "", "", "", ""],
 				   ["", "", "", "", "", ""],
-	               ["share of liner\$_{b}\$ \$\\times\$ share of liner\$_{t}\$", L"\beta_5",
+	               ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_5",
 				    "", final_ests_point_scope_X_only[1], final_ests_point_full_X_only[5],
 					 final_ests_point_x45678_merger_cost[2]],
 				   ["" , "" ,
@@ -128,7 +128,7 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 				   "[$(CI_full_X_only_table[1,5]), $(CI_full_X_only_table[2,5])]",
 				   "[$(CI_x45678_merger_cost_table[1,2]), $(CI_x45678_merger_cost_table[2,2])]"],
 				   #beta_6
-				   ["share of tramper\$_{b}\$ \$\\times\$ share of tramper\$_{t}\$", L"\beta_6",
+				   ["tramper\$_{b}\$ \$\\times\$ tramper\$_{t}\$", L"\beta_6",
 				    "", final_ests_point_scope_X_only[2], final_ests_point_full_X_only[6],
 					 final_ests_point_x45678_merger_cost[3]],
 				   ["" , "" ,
@@ -137,7 +137,7 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 				   "[$(CI_full_X_only_table[1,6]), $(CI_full_X_only_table[2,6])]",
 				   "[$(CI_x45678_merger_cost_table[1,3]), $(CI_x45678_merger_cost_table[2,3])]"],
 				   #beta_7
-	               ["share of special\$_{b}\$ \$\\times\$ share of special\$_{t}\$", L"\beta_7",
+	               ["special\$_{b}\$ \$\\times\$ special\$_{t}\$", L"\beta_7",
 				    "", final_ests_point_scope_X_only[3], final_ests_point_full_X_only[7],
 					 final_ests_point_x45678_merger_cost[4]],
 				   ["" , "" ,
@@ -146,7 +146,7 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 				   "[$(CI_full_X_only_table[1,7]), $(CI_full_X_only_table[2,7])]",
 				   "[$(CI_x45678_merger_cost_table[1,4]), $(CI_x45678_merger_cost_table[2,4])]"],
 				   #beta_8
-	               ["share of tanker\$_{b}\$ \$\\times\$ share of tanker\$_{t}\$", L"\beta_8",
+	               ["tanker\$_{b}\$ \$\\times\$ tanker\$_{t}\$", L"\beta_8",
 				   "", final_ests_point_scope_X_only[4], final_ests_point_full_X_only[8],
 				   final_ests_point_x45678_merger_cost[5]],
 				   ["" , "" ,
@@ -166,7 +166,7 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 				   "[$(CI_full_X_only_table[1,9]), $(CI_full_X_only_table[2,9])]",
 				   "[$(CI_x45678_merger_cost_table[1,6]), $(CI_x45678_merger_cost_table[2,6])]"],
 				   #delta subsidy sensitivity
-	               ["subsidy sensitivity (\$s^{\\text{shared}}\$)", L"\delta",
+	               ["subsidy sensitivity", L"\delta",
 				   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
 				   5, 5, 5, 5],
 				   ["", "", "", "", "", ""],
@@ -332,7 +332,7 @@ end
 generate_score_table_model_1234(temp_subsidy_type = temp_subsidy_type,
 								size_of_subsample_temp = size_of_fullsample)
 # find point-estimate LB of model 2
-if want_to_run_plotting == "run"
+if 1 == 2 # if you want to check, switch 1 to 2
     @time plot_point_estimate_histogram(temp_subsidy_type)
 	#0.201591 seconds (261.57 k allocations: 10.609 MiB)
     # @time plot_point_estimate_histogram("to_buyer")

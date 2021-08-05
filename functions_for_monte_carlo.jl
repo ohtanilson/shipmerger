@@ -221,7 +221,7 @@ function gen_X_interaction(m::shipmerger_struct, X_mat::Array{Float64,2})
 end
 # For monte carlo simulations, merger_cost_type = "num_of_targets_divided_by_buyer_size"
 function gen_merger_cost(m::shipmerger_struct;
-	                     merger_cost_type = "num_of_targets_divided_by_buyer_size")
+	                     merger_cost_type = "only_num_of_targets")
 	ton = m.ton
 	buyer_X = gen_X_mat(m)
 	merger_cost = zeros(m.N,m.PN)

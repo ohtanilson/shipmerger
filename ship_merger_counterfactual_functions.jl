@@ -56,7 +56,8 @@ function gen_utility_matrix_counterfactual(theta_hat::Vector,
 	    if IS_Sell(m,i,j)
 		    # match with himself = (unmatched)
 			buyer1_X_total = sum(buyer1_X[1:4])
-			interaction_X_beta_unmatched = 1.0*buyer1_X_total.*0.01 .+ beta.*buyer1_X.*0.01 # specify unmatched = match with 0.01
+			#interaction_X_beta_unmatched = 1.0*buyer1_X_total.*0.01 .+ beta.*buyer1_X.*0.01 # specify unmatched = match with 0.01
+			interaction_X_beta_unmatched = 1.0*buyer1_X_total.*buyer1_X_total .+ beta.*buyer1_X.*buyer1_X
 		    utility[i,j] = sum(interaction_X_beta_unmatched) + m.ϵ_mat[i,j]
 		else
 			utility[i,j] = payoff_obs_match1 + m.ϵ_mat[i,j] # ad hoc scaling
@@ -165,41 +166,42 @@ function gen_merger_composition(m::shipmerger_struct, matches)
 	end
 end
 
-
-function iterate_simulation_counterfactual(model_id, theta_hat_all_models,
-	                        data,
-	                        threshold_tonnage_list,
-							subsidy_amount_list;
-	                        iter_end = 1)
-	theta_hat = theta_hat_all_models[:,model_id]
-	for nn = 1:length(threshold_tonnage_list), mm = 1:length(subsidy_amount_list)
-		number_of_groups = zeros(iter_end)
-		number_of_unmatched = zeros(iter_end)
-		matches_list = zeros(m.N, m.PN)
-		threshold_tonnage_iter = threshold_tonnage_list[nn]
-		subsidy_amount_iter = subsidy_amount_list[mm]
-	    @time for kk = 1:iter_end
-		    utility = gen_utility_matrix_counterfactual(theta_hat, data,
-									randomseed = kk,
-									threshold_tonnage = threshold_tonnage_iter, # 1 million
-									subsidy_amount = subsidy_amount_iter,
-									subsidy_type = "shared")
-		    matches = solve_equilibrium_counterfactual(m, utility)
-			@show theta_hat
-			@show kk, threshold_tonnage_iter, subsidy_amount_iter
-		    @show number_of_groups[kk], number_of_unmatched[kk] = gen_merger_composition(m, matches)
-			open("julia_merger_result/counterfactual_matches_iter_$(kk)_model_$(model_id)_threshold_tonnage_$(threshold_tonnage_iter)_subsidy_amount_$(subsidy_amount_iter).txt", "w") do io
-				DelimitedFiles.writedlm(io, matches,",")
-			end
-			println("\nthreshold_tonnage = $(threshold_tonnage_iter) and subsidy_amount = $(subsidy_amount_iter) iter = $(kk)\n")
-			println("num of groups = $(number_of_groups[kk]) and num of unmatched = $(number_of_unmatched[kk])\n")
-	    end
-		open("julia_merger_result/counterfactual_number_of_groups_model_$(model_id)_threshold_tonnage_$(threshold_tonnage_iter)_subsidy_amount_$(subsidy_amount_iter).txt", "w") do io
-			DelimitedFiles.writedlm(io, number_of_groups,",")
-		end
-		open("julia_merger_result/counterfactual_number_of_unmatched_model_$(model_id)_threshold_tonnage_$(threshold_tonnage_iter)_subsidy_amount_$(subsidy_amount_iter).txt", "w") do io
-			DelimitedFiles.writedlm(io, number_of_unmatched,",")
-		end
-	end
-	#return number_of_groups, number_of_unmatched
-end
+#
+# function iterate_simulation_counterfactual(model_id, theta_hat_all_models,
+# 	                        data,
+# 	                        threshold_tonnage_list,
+# 							subsidy_amount_list;
+# 	                        iter_end = 1,
+# 							temp_subsidy_type = "to_buyer")
+# 	theta_hat = theta_hat_all_models[:,model_id]
+# 	for nn = 1:length(threshold_tonnage_list), mm = 1:length(subsidy_amount_list)
+# 		number_of_groups = zeros(iter_end)
+# 		number_of_unmatched = zeros(iter_end)
+# 		matches_list = zeros(m.N, m.PN)
+# 		threshold_tonnage_iter = threshold_tonnage_list[nn]
+# 		subsidy_amount_iter = subsidy_amount_list[mm]
+# 	    @time for kk = 1:iter_end
+# 		    utility = gen_utility_matrix_counterfactual(theta_hat, data,
+# 									randomseed = kk,
+# 									threshold_tonnage = threshold_tonnage_iter, # 1 million
+# 									subsidy_amount = subsidy_amount_iter,
+# 									subsidy_type = temp_subsidy_type)
+# 		    matches = solve_equilibrium_counterfactual(m, utility)
+# 			@show theta_hat
+# 			@show kk, threshold_tonnage_iter, subsidy_amount_iter
+# 		    @show number_of_groups[kk], number_of_unmatched[kk] = gen_merger_composition(m, matches)
+# 			open("julia_merger_result/counterfactual_matches_iter_$(kk)_model_$(model_id)_threshold_tonnage_$(threshold_tonnage_iter)_subsidy_amount_$(subsidy_amount_iter).txt", "w") do io
+# 				DelimitedFiles.writedlm(io, matches,",")
+# 			end
+# 			println("\nthreshold_tonnage = $(threshold_tonnage_iter) and subsidy_amount = $(subsidy_amount_iter) iter = $(kk)\n")
+# 			println("num of groups = $(number_of_groups[kk]) and num of unmatched = $(number_of_unmatched[kk])\n")
+# 	    end
+# 		open("julia_merger_result/counterfactual_number_of_groups_model_$(model_id)_threshold_tonnage_$(threshold_tonnage_iter)_subsidy_amount_$(subsidy_amount_iter).txt", "w") do io
+# 			DelimitedFiles.writedlm(io, number_of_groups,",")
+# 		end
+# 		open("julia_merger_result/counterfactual_number_of_unmatched_model_$(model_id)_threshold_tonnage_$(threshold_tonnage_iter)_subsidy_amount_$(subsidy_amount_iter).txt", "w") do io
+# 			DelimitedFiles.writedlm(io, number_of_unmatched,",")
+# 		end
+# 	end
+# 	#return number_of_groups, number_of_unmatched
+# end

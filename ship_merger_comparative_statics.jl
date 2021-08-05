@@ -104,7 +104,11 @@ function gen_plot_number_of_firms(m,
 		           label="Num of groups [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[ii]), γ]")
 	end
 	Plots.plot!()
+	if temp_threshold_tonnage == 1.5
+		temp_threshold_tonnage = "1_5"
+	end
 	savefig("julia_merger_figure/plot_num_of_groups_threshold_$(temp_threshold_tonnage)_$(temp_subsidy_type)_subsidy")
+
 
 	Plots.plot(domain1, mean_num_of_unmatched[:,1],
 	           label="Num of unmatched [β₀,δ₀,γ₀] = [$(m.β_0), $(domain2[1]), γ]",

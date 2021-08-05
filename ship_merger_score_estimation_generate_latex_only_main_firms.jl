@@ -44,7 +44,7 @@ for ii = 1:length(file_name_variable_list)
 end
 
 total_ineq_all = Int64(num_total_ineq_all[8,findmax(accuracy_all[8,:])[2]])
-LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(temp_subsidy_type)_subsidy_main_firms_only.tex",
+LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(temp_subsidy_type)_subsidy_main_firms_only_delta_$(temp_calibrated_delta_list[1]).tex",
 			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
 			  [Rule(:top),
 			   ["","","", "", "", "", "", "", "", ""],

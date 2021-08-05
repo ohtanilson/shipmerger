@@ -48,7 +48,10 @@ d <-
                 Soviet = grosstons_soviet,
                 Greek = grosstons_greek,
                 Liberia = grosstons_liberia) %>% 
-  tidyr::gather(key = "variable", value = "value", -year) 
+  tidyr::gather(key = "variable", value = "value", -year) %>% 
+  #Liberia is the major country regarding the flag of convenience ships, 
+  # but it does not reflect economic activity in the shipping industry.
+  dplyr::filter(variable != "Liberia")
 
 x <- 
   ggplot(d, aes(x = year, y = value)) + 
@@ -681,6 +684,8 @@ x <-
                                "Logit",
                                "OLS")),
             omit.stat = c("f", "ll"),
+            star.cutoffs = NA,
+            omit.table.layout = "n",
             model.names = FALSE,
             out = table_name
   )
