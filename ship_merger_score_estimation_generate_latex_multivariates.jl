@@ -168,7 +168,10 @@ function generate_score_table_model_1234(;temp_subsidy_type = "shared",
 				   #delta subsidy sensitivity
 	               ["subsidy sensitivity", L"\delta",
 				   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
-				   5, 5, 5, 5],
+				   temp_calibrated_delta_list,
+				   temp_calibrated_delta_list,
+				   temp_calibrated_delta_list,
+				   temp_calibrated_delta_list],
 				   ["", "", "", "", "", ""],
 	               Rule(),           # a nice \hline to make it ugly
 				   ["\$\\sharp\$ Inequalities in Point Estimate" , "" ,
