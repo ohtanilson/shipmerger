@@ -56,6 +56,7 @@ want_to_run_only_main_firms = "not_run"
 size_of_fullsample = length(data.firm_id)-12
 common_num_its_bootstrap = 200
 common_num_steps_DE = 100
+temp_calibrated_delta_list = 20
 
 @time if want_to_run_multivariate_estimation == "run"
 	@time point_estimate(temp_subsidy_type,
@@ -63,7 +64,7 @@ common_num_steps_DE = 100
 	                     num_its_temp = 50,#20,
 						 #num_its_temp = 2,
 						 size_of_fullsample = size_of_fullsample,
-						 temp_temp_calibrated_delta = 20)
+						 temp_temp_calibrated_delta = temp_calibrated_delta_list)
 	#@time point_estimate(num_steps_DE_temp = 100, num_its_temp = 2)
 	#1007.291976 seconds (5.74 G allocations: 557.036 GiB, 6.62% gc time)
 	#@time point_estimate(num_steps_DE_temp = 100,  num_its_temp = 10)
@@ -77,7 +78,7 @@ end
 	                   #num_its_bootstrap = 2,
 	                   num_steps_DE_temp = common_num_steps_DE,
 					   size_of_subsample_temp = size_of_fullsample,
-					   temp_temp_calibrated_delta = 20,
+					   temp_temp_calibrated_delta = temp_calibrated_delta_list,
 					   temp_sampling_method = "bootstrap")
 	#34558.137605 seconds (162.34 G allocations: 15.437 TiB, 5.96% gc time)
 	#@time point_estimate(num_steps_DE_temp = 50,  num_its_bootstrap = 200)
