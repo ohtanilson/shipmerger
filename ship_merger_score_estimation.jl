@@ -50,6 +50,11 @@ want_to_run_multivariate_estimation = "not_run" # change to "run" if you want to
 want_to_run_two_variable_estimation = "not_run"
 want_to_run_only_main_firms = "not_run"
 
+mean_of_x0_from_summary_stats = 0.110
+mean_of_x_from_summary_stats = [0.031, 0.015, 0.030, 0.035,
+                                0.104, 0.117, 0.192, 0.587]
+sd_of_x_from_summary_stats = [0.112, 0.033, 0.071, 0.055,
+                              0.235, 0.244, 0.351, 0.417]
 #------------------------------------------#
 # point estimate of multivariate estimation
 #------------------------------------------#

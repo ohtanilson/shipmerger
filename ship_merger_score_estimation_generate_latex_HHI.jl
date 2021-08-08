@@ -18,7 +18,7 @@ CI_all_table[:,:] = round.(hcat(
 	Statistics.quantile(myests_CI_HHI_only[:,1], [0.025,0.975]),
 	Statistics.quantile(-myests_CI_HHI_only[:,2], [0.025,0.975])
 	),digits=1)
-
+total_ineq_all_full_samples = 17864
 total_ineq_all = Int64(num_total_ineq_HHI_only[findmax(accuracy_HHI_only[:])[2]])
 LaTeXTabulars.latex_tabular("julia_merger_table/score_results_HHI_only_$(temp_subsidy_type)_subsidy.tex",
 			  Tabular("@{\\extracolsep{5pt}}lcc"),
@@ -49,8 +49,8 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_HHI_only_$(temp_su
 			   temp_calibrated_delta],
 			   ["", "", "", "", "", "", "", "", "", ""],
 			   Rule(),           # a nice \hline to make it ugly
-			   ["\$\\sharp\$ Inequalities (Point)" , "" ,
-				total_ineq_all],
+			   ["\$\\sharp\$ Inequalities" , "" ,
+				total_ineq_all_full_samples],
 				#=["\\Correct Ineq" , "" ,
  			   Int(num_correct_ineq_all[1,findmax(accuracy_all[1,:])[2]]),
  			   Int(num_correct_ineq_all[2,findmax(accuracy_all[2,:])[2]]),

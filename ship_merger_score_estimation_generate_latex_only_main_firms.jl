@@ -48,6 +48,7 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(te
 			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
 			  [Rule(:top),
 			   ["","","", "", "", "", "", "", "", ""],
+               ["","","(1)", "(2)", "(3)", "(4)", "(5)", "(6)", "(7)", "(8)"],
 			   #["","",
 			   #"Point Est", "Point", "Point", "Point", "Point", "Point", "Point", "Point"],
 			   ["","",
