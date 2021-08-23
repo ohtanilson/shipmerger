@@ -137,7 +137,7 @@ total_tonnage_table <-
                   recode(type, 
                          "合併会社" = "main",
                          "系列会社" = "affiliate",
-                         "専属会社" = "wholly-controlled",
+                         "専属会社" = "wholly controlled",
                          "グループ外" = "unmatched"
                   ))
 x <- 
@@ -177,7 +177,7 @@ total_tonnage_table <-
                   recode(type, 
                          "合併会社" = "main",
                          "系列会社" = "affiliate",
-                         "専属会社" = "wholly-controlled",
+                         "専属会社" = "wholly controlled",
                          "グループ外" = "unmatched"
                   ))
 x <- 
@@ -224,7 +224,7 @@ data_english <-
   dplyr::mutate(firm_type = recode(type, 
                                    "合併会社" = "main",
                                    "系列会社" = "affiliate",
-                                   "専属会社" = "wholly-controlled",
+                                   "専属会社" = "wholly controlled",
                                    "グループ外" = "unmatched"
   )) %>% 
   dplyr::filter(group != "nodata")
@@ -269,7 +269,7 @@ x <-
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   #theme_classic() +
-  ylab("total tonnage size (10000 DW ton)") +
+  ylab("total tonnage size (10,000 DW ton)") +
   xlab("") +
   labs(fill = "carrier type") +
   geom_hline(yintercept = 100, linetype = "longdash") + 
@@ -301,7 +301,7 @@ x <-
   #theme_classic() +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("total tonnage size (10000 DW ton)") +
+  xlab("total tonnage size (10,000 DW ton)") +
   ylab("count (firm level)") +
   xlim(0,105) +
   ylim(0,7) + 
@@ -338,7 +338,7 @@ x <-
   #theme_classic() +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("total tonnage size (10000 DW ton)") +
+  xlab("total tonnage size (10,000 DW ton)") +
   ylab("count (firm-type level)") +
   xlim(0,70) +
   ylim(0,7) + 
@@ -700,7 +700,7 @@ data_english_for_reg <-
   dplyr::mutate(type = recode(type, 
                               "合併会社" = "(1) main",
                               "系列会社" = "(2) affiliate",
-                              "専属会社" = "(3) wholly-controlled",
+                              "専属会社" = "(3) wholly controlled",
                               "グループ外" = "unmatched"
   )) %>% 
   dplyr::select(-name,
