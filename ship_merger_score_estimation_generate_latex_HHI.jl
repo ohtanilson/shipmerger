@@ -35,9 +35,7 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_HHI_only_$(temp_su
 			   ["HHI\$_{b}\$ \$\\times\$ HHI\$_{t}\$", L"\beta_{HHI}",
 				final_ests_point_HHI_only[1]],
 			   ["" , "" ,
-			   "[$(CI_all_table[1,1]), $(CI_all_table[2,1])]",
-			   "", "", "",
-			   "", "", "", ""],
+			   "[$(CI_all_table[1,1]), $(CI_all_table[2,1])]"],
 			   #gamma
 			   ["merger cost", "-\$\\gamma\$",
 			   -final_ests_point_HHI_only[2]],
@@ -47,7 +45,7 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_HHI_only_$(temp_su
 			   ["subsidy sensitivity", L"\delta",
 			   #final_ests_point_scale_X_only[6], final_ests_point_scope_X_only[6], final_ests_point_full_X_only[10]],
 			   temp_calibrated_delta],
-			   ["", "", "", "", "", "", "", "", "", ""],
+			   ["", "", ""],
 			   Rule(),           # a nice \hline to make it ugly
 			   ["\$\\sharp\$ Inequalities" , "" ,
 				total_ineq_all_full_samples],
