@@ -269,7 +269,7 @@ x <-
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
   #theme_classic() +
-  ylab("total tonnage size (10,000 DW ton)") +
+  ylab("total tonnage size (10,000 (D/W) tons)") +
   xlab("") +
   labs(fill = "carrier type") +
   geom_hline(yintercept = 100, linetype = "longdash") + 
@@ -301,7 +301,7 @@ x <-
   #theme_classic() +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("total tonnage size (10,000 DW ton)") +
+  xlab("total tonnage size (10,000 (D/W) tons)") +
   ylab("count (firm level)") +
   xlim(0,105) +
   ylim(0,7) + 
@@ -338,7 +338,7 @@ x <-
   #theme_classic() +
   #ggtitle("Histogram of tonnage size for each merger group") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("total tonnage size (10,000 DW ton)") +
+  xlab("total tonnage size (10,000 (D/W) tons)") +
   ylab("count (firm-type level)") +
   xlim(0,70) +
   ylim(0,7) + 
@@ -511,7 +511,7 @@ x <- Hmisc::latex(
   collabel.just = rep("r", dim(temp)[2]),
   rgroupTexCmd = "itshape",
   n.rgroup = c(5,5),
-  rgroup = c("Size variables (million D/W)", 
+  rgroup = c("Size variables (million (D/W) tons)", 
              "Specialization variables (percentage share)")
 )
 
