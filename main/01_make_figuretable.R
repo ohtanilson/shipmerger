@@ -74,6 +74,7 @@ ggplot2::ggsave(filename = figure_name,
        width = 10,
        height = 7)
 
+
 # Load main data ----
 
 data <- 
