@@ -1,4 +1,3 @@
-# public
 # Estimating Endogenous Coalitional Mergers: Merger Costs and Assortativeness of Size and Specialization.
 # written by Suguru Otani, 2021.08.05
 
