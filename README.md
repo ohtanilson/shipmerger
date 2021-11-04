@@ -87,8 +87,8 @@ The following intermediate scripts are used only in shipmerger/ship_merger_count
 - shipmerger/ship_merger_counterfactual_functions.jl
 
 
-# For Appendices (Julia)
-#-------------------------------#
+## For Appendices (Julia)
+
 You can run the following files for generating results in Appendices.
 - shipmerger/ship_merger_score_estimation_HHI.jl
 - shipmerger/ship_merger_monte_carlo.jl
