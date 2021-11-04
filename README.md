@@ -22,9 +22,8 @@ You can replicate all results by following processes sequentially.
 However, as randomness of DE algorithm and sampling, some results may vary. 
 To keep a record of my final results, I restore all intermediate files in shipmerger/julia_merger_result.
 
-#---------------------------------------------------#
-# Data Cleaning and Reduced Form Analysis (Rproject)
-#---------------------------------------------------#
+
+## Data Cleaning and Reduced Form Analysis (Rproject)
 - shipmerger/main/01_make_figuretable.R
   This cleans raw data file (210627firmdata_processed.csv) in shipmerger/input.
   Then, this produces cleaned data file (data_for_maximum_rank_estimation.csv) for Julia in shipmerger/output.
@@ -34,9 +33,9 @@ To keep a record of my final results, I restore all intermediate files in shipme
   This generates sankey diagram in Figure 6. 
   Input data is manually assigned based on results on ship_merger_counterfactual.jl.
 
-#-----------------------------------------#
-# Matching Maximum Rank Estimation (Julia)
-#-----------------------------------------#
+
+## Matching Maximum Rank Estimation (Julia)
+
 - ship_merger_score_estimation_HHI.jl
     (1). the simplest matching maximum rank estimation in Appendix
          (4 hours for 50 point-estimates, 6 hours for CI bootstrapping 200)
@@ -61,18 +60,17 @@ To keep a record of my final results, I restore all intermediate files in shipme
   temp_subsidy_type = "shared" into temp_subsidy_type = "to_buyer" on line 40,
   you can run all processes for robustness checks with another subsidy specification shown in Monte Carlo Section.
 
-#-----------------------------------------#
-# Counterfactual simulation (Julia)
-#-----------------------------------------#
+
+## Counterfactual simulation (Julia)
 - shipmerger/ship_merger_counterfactual.jl
   It takes 100 hours (360402.808865 seconds) to compute 20 simulated matching outcome 
   for 60 scenarios (6 subsidy amounts * 10 subsidy thresholds). 
 
 
 
-#--------------------------------------#
-# Auxiliary files and datasets (Julia)
-#--------------------------------------#
+
+## Auxiliary files and datasets (Julia)
+
 The following scripts are loaded only as module and data in ship_merger_score_estimation.jl.
 - shipmerger/functions.jl
 - shipmerger/output/data_for_maximum_rank_estimation.csv
@@ -89,7 +87,7 @@ The following intermediate scripts are used only in shipmerger/ship_merger_count
 - shipmerger/ship_merger_counterfactual_for_sankey_diagrams.jl
 - shipmerger/ship_merger_counterfactual_functions.jl
 
-#-------------------------------#
+
 # For Appendices (Julia)
 #-------------------------------#
 You can run the following files for generating results in Appendices.
