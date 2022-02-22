@@ -699,10 +699,10 @@ data_english <-
 data_english_for_reg <-
   data_english %>% 
   dplyr::mutate(type = recode(type, 
-                              "合併会社" = "(1) main",
-                              "系列会社" = "(2) affiliate",
-                              "専属会社" = "(3) wholly controlled",
-                              "グループ外" = "unmatched"
+                              "合併会社" = "(1) Main",
+                              "系列会社" = "(2) Affiliate",
+                              "専属会社" = "(3) Wholly controlled",
+                              "グループ外" = "Unmatched"
   )) %>% 
   dplyr::select(-name,
                 -firm_type) %>% 
@@ -723,49 +723,92 @@ data_english_for_reg_table <-
   dplyr::filter(total > 0) %>% 
   dplyr::group_by(group, 
                   type) %>% 
-  dplyr::summarise(total_tonnage = sum(total),
+  dplyr::summarise(total_tonnage = round(sum(total)/1000000,
+                                         digits = 2),
                    num_of_firms = dplyr::n())
 total_tonnage <-
   data_english_for_reg_table %>% 
   dplyr::group_by(group) %>% 
-  dplyr::summarise(total_tonnage_group = sum(total_tonnage))
+  dplyr::summarise(total_tonnage_group = 
+                     sum(total_tonnage))
+sum_of_num_of_firms <-
+  data_english_for_reg_table %>% 
+  dplyr::group_by(group) %>% 
+  dplyr::summarise(sum_of_num_of_firms = 
+                     sum(num_of_firms))
+# data_english_for_reg_table <- 
+#   cbind(data_english_for_reg_table,
+#         c(total_tonnage$total_tonnage_group[1], "", "",
+#           total_tonnage$total_tonnage_group[2], "", "",
+#           total_tonnage$total_tonnage_group[3], "", "",
+#           total_tonnage$total_tonnage_group[4], "", "",
+#           total_tonnage$total_tonnage_group[5], "", "",
+#           total_tonnage$total_tonnage_group[6], "", "",
+#           total_tonnage$total_tonnage_group[7]))
 data_english_for_reg_table <- 
-  cbind(data_english_for_reg_table,
-        c(total_tonnage$total_tonnage_group[1], "", "",
-          total_tonnage$total_tonnage_group[2], "", "",
-          total_tonnage$total_tonnage_group[3], "", "",
-          total_tonnage$total_tonnage_group[4], "", "",
-          total_tonnage$total_tonnage_group[5], "", "",
-          total_tonnage$total_tonnage_group[6], "", "",
-          total_tonnage$total_tonnage_group[7]))
+  data_english_for_reg_table %>%
+  tidyr::as_tibble() %>% 
+  dplyr::add_row(group = "",
+                 type = "Total",
+                 total_tonnage = total_tonnage$total_tonnage_group[1],
+                 num_of_firms = sum_of_num_of_firms$sum_of_num_of_firms[1],
+                 .before = 4) %>% 
+  dplyr::add_row(group = "",
+                 type = "Total",
+                 total_tonnage = total_tonnage$total_tonnage_group[2],
+                 num_of_firms = sum_of_num_of_firms$sum_of_num_of_firms[2],
+                 .before = 8) %>% 
+  dplyr::add_row(group = "",
+                 type = "Total",
+                 total_tonnage = total_tonnage$total_tonnage_group[3],
+                 num_of_firms = sum_of_num_of_firms$sum_of_num_of_firms[3],
+                 .before = 12) %>% 
+  dplyr::add_row(group = "",
+                 type = "Total",
+                 total_tonnage = total_tonnage$total_tonnage_group[4],
+                 num_of_firms = sum_of_num_of_firms$sum_of_num_of_firms[4],
+                 .before = 16) %>% 
+  dplyr::add_row(group = "",
+                 type = "Total",
+                 total_tonnage = total_tonnage$total_tonnage_group[5],
+                 num_of_firms = sum_of_num_of_firms$sum_of_num_of_firms[5],
+                 .before = 20) %>% 
+  dplyr::add_row(group = "",
+                 type = "Total",
+                 total_tonnage = total_tonnage$total_tonnage_group[6],
+                 num_of_firms = sum_of_num_of_firms$sum_of_num_of_firms[6],
+                 .before = 24) 
+
+
 colnames(data_english_for_reg_table) <-
-  c("group",
-    "firm type", 
-    "total tonnage",
-    "number of firms",
-    "total tonnage in a group")
+  c("Group",
+    "Firm type", 
+    "Total tonnage",
+    "Num of firms")
 data_english_for_reg_table <- 
   data_english_for_reg_table[,-1]
 data_english_for_reg_table <-
   rbind(data_english_for_reg_table,
-        c("",sum(data_english_for_reg_table[,2]),
-          sum(data_english_for_reg_table[,3]),
-          sum(data_english_for_reg_table[,2])))
+        c("",
+          sum(total_tonnage$total_tonnage_group),
+          sum(sum_of_num_of_firms$sum_of_num_of_firms)))
+
 table_name <-
   "figuretable/total_tonnage_size_group_table.tex"
 x <- Hmisc::latex(
   file = table_name,
   title = "",
   booktabs = TRUE,
+  rowname = "",
   object = data_english_for_reg_table,
-  col.just = c("l", "r", "r", "r"),
+  col.just = c("l", "r", "r"),
   center = "none",
   table.env = FALSE,
   #cgroupTexCmd = "itshape",
   #colnamesTexCmd = "itshape",
   #collabel.just = rep("r", dim(data_english_for_reg_table)[2])#,
   rgroupTexCmd = "itshape",
-  n.rgroup = c(3,3,3,3,3,3,1, 1),
+  n.rgroup = c(4,4,4,4,4,4,1, 1),
   rgroup = c("Nippon Yusen", 
              "Mitsui OSK Line",
              "Japan Line",
