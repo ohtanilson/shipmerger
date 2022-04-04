@@ -513,7 +513,7 @@ x <- Hmisc::latex(
   rgroupTexCmd = "itshape",
   n.rgroup = c(5,5),
   rgroup = c("Size variables (million (D/W) tons)", 
-             "Specialization variables (percentage share)")
+             "Specialization variables (\\% share)")
 )
 
 ## (Table 4) Regression ----
