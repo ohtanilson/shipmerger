@@ -1,6 +1,6 @@
 # Estimating Endogenous Coalitional Mergers: Merger Costs and Assortativeness of Size and Specialization.
 # written by Suguru Otani, 2021.08.05
-Note: The code format is adjusted to Atom editor, so open the code on Atom not Github.
+Note: The code format is adjusted to Atom editor, so I recommend to open the code on Atom to improve readability.
 
 PATH must be on shipmerger/.
 The following folders contain all R implementations and raw data.
