@@ -47,7 +47,7 @@ total_ineq_all = Int64(num_total_ineq_all[8,findmax(accuracy_all[8,:])[2]])
 LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(temp_subsidy_type)_subsidy_main_firms_only_delta_$(temp_calibrated_delta_list[1]).tex",
 			  Tabular("@{\\extracolsep{5pt}}lccccccccc"),
 			  [Rule(:top),
-			   ["","","", "", "", "", "", "", "", ""],
+			   #["","","", "", "", "", "", "", "", ""],
                ["","","(1)", "(2)", "(3)", "(4)", "(5)", "(6)", "(7)", "(8)"],
 			   #["","",
 			   #"Point Est", "Point", "Point", "Point", "Point", "Point", "Point", "Point"],
@@ -57,7 +57,7 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(te
 			   Rule(:mid),
 			   ["Scale variables", "", "", "", "", "", "", ""],
 			   #beta_0
-			   ["", "", "", "", "", "", "", "", ""],
+			   #["", "", "", "", "", "", "", "", ""],
 			   ["total\$_{b}\$ \$\\times\$ total\$_{t}\$", L"\beta_0",
 			   "+1", "+1", "+1", "+1", "+1", "+1", "+1", "+1"],
 			   ["" , "" , "(S)", "(S)", "(S)", "(S)",
@@ -93,7 +93,7 @@ LaTeXTabulars.latex_tabular("julia_merger_table/score_results_two_variables_$(te
 			   "", "", "", ""],
 			   #beta_5
 			   ["Share variables", "", "", "", "", "", "", "", "", ""],
-			   ["", "", "", "", "", "", "", "", "", ""],
+			   #["", "", "", "", "", "", "", "", "", ""],
 			   ["liner\$_{b}\$ \$\\times\$ liner\$_{t}\$", L"\beta_5",
 			   #"", "", "", "",
 			   #final_ests_point_all[5,1], "", "", ""],
